@@ -1,0 +1,22 @@
+# Core dependency
+mineru[all]>=3.2.1
+
+# Key runtime dependencies (pinned from installed versions)
+torch==2.8.0
+torchvision==0.23.0
+transformers==4.57.6
+modelscope==1.37.1
+fastapi==0.136.3
+uvicorn==0.48.0
+python-multipart==0.0.30
+pypdfium2==4.30.0
+opencv-python==4.13.0.92
+pillow==12.2.0
+numpy==2.4.6
+pandas==3.0.3
+onnxruntime==1.26.0
+lmdeploy==0.11.1
+pydantic==2.13.4
+tqdm==4.67.3
+
+# Full locked versions in requirements-full.txt

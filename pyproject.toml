@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "ocr-pipeline"
+version = "0.1.0"
+description = "文档解析工具，基于 MinerU 引擎"
+requires-python = ">=3.11"
+
+[project.scripts]
+ocr-parse = "src.cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["src*"]
