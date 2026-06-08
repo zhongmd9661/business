@@ -46,10 +46,12 @@ class OutputOrganizer:
         images_src = auto / "images"
         if images_src.exists():
             images_dst = out / "images"
-            images_src.rename(images_dst)
+            if images_dst.exists():
+                shutil.rmtree(images_dst)
+            shutil.move(images_src, images_dst)
 
         # 清理空目录
-        for d in sorted(raw_dir / stem, key=lambda p: str(p), reverse=True):
+        for d in sorted((raw_dir / stem).iterdir(), key=lambda p: str(p), reverse=True):
             if d.is_dir() and not any(d.iterdir()):
                 d.rmdir()
 
