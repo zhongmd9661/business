@@ -1,0 +1,2 @@
+class WebhookNotifier:
+    pass
