@@ -8,15 +8,8 @@ build/
 # Virtual environment
 .venv/
 
-# Data
-data/input/*
-!data/input/.gitkeep
-data/output/*
-!data/output/.gitkeep
-data/*.pdf
-data/*.png
-data/*.jpg
-data/*.docx
+# Data — runtime output
+data/
 
 # Logs
 logs/*
@@ -31,11 +24,19 @@ logs/*
 .huggingface/
 .modelscope/
 
+# Notes
+.obsidian/
+
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# Reference code (not project source)
+参考代码/
+源码/
+00规则制度/
 
 # OS
 .DS_Store
