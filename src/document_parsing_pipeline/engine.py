@@ -5,11 +5,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-os.environ["MINERU_MODEL_SOURCE"] = "modelscope"
+os.environ["MINERU_MODEL_SOURCE"] = "local"
 
 from mineru.cli import api_client as _api_client
 from mineru.cli.common import image_suffixes, office_suffixes, pdf_suffixes
 from mineru.utils.guess_suffix_or_lang import guess_suffix_by_path
+from mineru.utils.config_reader import get_local_models_dir
+from mineru.utils.enum_class import ModelPath
 
 import httpx
 from loguru import logger
@@ -28,8 +30,9 @@ class ParseOptions:
     formula: bool = True
     table: bool = True
     image_analysis: bool = True
-    return_images: bool = True
+    return_images: bool = False
     return_md: bool = True
+    return_json: bool = True
 
 
 @dataclass
@@ -42,6 +45,17 @@ class ParseResult:
     error: Optional[str] = None
 
 
+_REQUIRED_MODEL_PATHS = [
+    ModelPath.pp_doclayout_v2,
+    ModelPath.unimernet_small,
+    ModelPath.pp_formulanet_plus_m,
+    ModelPath.pytorch_paddle,
+    ModelPath.slanet_plus,
+    ModelPath.unet_structure,
+    ModelPath.paddle_table_cls,
+]
+
+
 class MinerUEngine:
     """MinerU 解析引擎，管理 LocalAPIServer 生命周期和文件解析"""
 
@@ -49,6 +63,20 @@ class MinerUEngine:
         self.options = options or ParseOptions()
         self._local_server = None
         self._http_client = None
+
+    @staticmethod
+    def _check_models_available() -> bool:
+        models_dir = get_local_models_dir()
+        if not models_dir or "pipeline" not in models_dir:
+            logger.warning("MinerU 模型路径未配置")
+            return False
+
+        pipeline_root = models_dir["pipeline"]
+        missing = [p for p in _REQUIRED_MODEL_PATHS if not Path(pipeline_root, p).exists()]
+        if missing:
+            logger.warning(f"以下模型未找到: {', '.join(missing)}")
+            return False
+        return True
 
     def _build_form_data(self):
         return _api_client.build_parse_request_form_data(
@@ -62,7 +90,7 @@ class MinerUEngine:
             start_page_id=0,
             end_page_id=None,
             return_md=self.options.return_md,
-            return_middle_json=False,
+            return_middle_json=self.options.return_json,
             return_model_output=False,
             return_content_list=False,
             return_images=self.options.return_images,
@@ -71,6 +99,14 @@ class MinerUEngine:
         )
 
     async def start(self):
+        if not self._check_models_available():
+            logger.error(
+                "MinerU 模型未就绪。请先运行以下命令下载模型：\n"
+                "  mineru-models-download -s modelscope -m pipeline\n\n"
+                "下载完成后模型将保存在本地缓存目录，后续运行不会重复下载。"
+            )
+            raise RuntimeError("MinerU 模型未就绪，请先下载模型")
+
         self._local_server = _api_client.LocalAPIServer()
         base_url = self._local_server.start()
         logger.info(f"Started local mineru-api: {base_url}")

@@ -16,7 +16,7 @@ class TestParseOptions:
         assert options.formula is True
         assert options.table is True
         assert options.image_analysis is True
-        assert options.return_images is True
+        assert options.return_images is False
         assert options.return_md is True
 
     def test_custom_values(self):

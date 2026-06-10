@@ -14,6 +14,12 @@ from src.batch_processing.xml_to_md import xml_to_markdown
 from src.document_parsing_pipeline import MinerUEngine, ParseOptions
 from src.document_parsing_pipeline.engine import ParseResult
 from src.output_visualization.organizer import OutputOrganizer
+from src.expense_review_comprehensive import (
+    FieldExtractor,
+    ComprehensiveChecker,
+    ComprehensiveReporter,
+    WebhookNotifier,
+)
 from loguru import logger
 
 
@@ -33,7 +39,7 @@ def get_batch_summary() -> str:
 
 
 def convert_xml(file_path: Path, output_dir: Path, seq: int, batch_summary: str = None) -> ParseResult:
-    """转换 XML 发票为 Markdown，输出到带序号的扁平目录"""
+    """转换 XML 发票为 Markdown，输出到识别结果目录"""
     start = time.time()
     stem = file_path.stem
     try:
@@ -42,14 +48,14 @@ def convert_xml(file_path: Path, output_dir: Path, seq: int, batch_summary: str 
         summary_text = _generate_summary(md_content, batch_summary)
         final_content = f"{summary_text}\n\n{md_content}"
 
-        file_dir = output_dir / f"{seq}_{stem}"
-        file_dir.mkdir(parents=True, exist_ok=True)
-        md_file = file_dir / f"{seq}_{stem}.md"
+        results_dir = output_dir / "识别结果"
+        results_dir.mkdir(parents=True, exist_ok=True)
+        md_file = results_dir / f"{seq}_{stem}.md"
         md_file.write_text(final_content, encoding="utf-8")
         return ParseResult(
             file_path=file_path,
             seq=seq,
-            output_dir=file_dir,
+            output_dir=results_dir,
             success=True,
             elapsed=time.time() - start,
         )
@@ -57,7 +63,7 @@ def convert_xml(file_path: Path, output_dir: Path, seq: int, batch_summary: str 
         return ParseResult(
             file_path=file_path,
             seq=seq,
-            output_dir=output_dir / f"{seq}_{stem}",
+            output_dir=output_dir / "识别结果",
             success=False,
             elapsed=time.time() - start,
             error=str(e),
@@ -72,11 +78,10 @@ async def parse_all():
     summary = get_batch_summary()
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # 创建输出和归档目录
-    output_dir = base_dir / "data" / "output" / ts
-    archive_dir = base_dir / "data" / "已识别" / f"{summary}_{ts}"
+    # 输出和归档统一使用 已识别 目录
+    output_dir = base_dir / "data" / "已识别" / f"{summary}_{ts}"
+    archive_dir = output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
-    archive_dir.mkdir(parents=True, exist_ok=True)
 
     # 收集文件（含 zip 自动解压）
     files = FileCollector.collect(input_dir)
@@ -107,9 +112,11 @@ async def parse_all():
 
             BatchRunner.log_progress(i, len(files), seq, file_path.name, "Done")
 
-            # 成功处理的文件移至归档目录
+            # 成功处理的文件移至源文件目录，带序号前缀
             if result.success:
-                file_path.rename(archive_dir / file_path.name)
+                src_dir = output_dir / "源文件"
+                src_dir.mkdir(parents=True, exist_ok=True)
+                file_path.rename(src_dir / f"{seq}_{file_path.name}")
     finally:
         await engine.stop()
 
@@ -123,8 +130,48 @@ async def parse_all():
         shutil.rmtree(raw_dir)
         logger.info("Cleaned up temporary _raw directory")
 
+    # ---- 审核：解析后对每个文档运行全面审核 ----
+    extractor = FieldExtractor()
+    checker = ComprehensiveChecker()
+    reporter = ComprehensiveReporter()
+    notifier = WebhookNotifier("http://localhost:9999/hook")
+
+    all_findings: list[tuple[str, list]] = []
+    all_fields = []
+    results_dir = output_dir / "识别结果"
+
+    if results_dir.is_dir():
+        for md_file in sorted(results_dir.glob("*.md")):
+            try:
+                content = md_file.read_text(encoding="utf-8")
+                fields = extractor.extract(content)
+                all_fields.append(fields)
+                findings = checker.check_single(fields)
+                all_findings.append((md_file.name, findings))
+                if any(f.level == "高" for f in findings):
+                    notifier.notify(findings, md_file.name)
+            except Exception as e:
+                logger.warning(f"Review failed for {md_file.name}: {e}")
+
+    # 批量跨文档检查
+    if all_fields:
+        batch_findings = checker.check_batch(all_fields)
+        for f in batch_findings:
+            logger.info(f"[跨文档] [{f.level}] {f.rule}: {f.message}")
+
+    # 生成审核报告
+    if all_findings:
+        for filename, findings in all_findings:
+            report = reporter.generate(findings, filename)
+            summary = reporter.format_summary(report)
+            logger.info(f"Review {filename}: {summary}")
+
+            if findings:
+                report_text = reporter.format_text(report)
+                report_path = output_dir / f"{filename.replace('.md', '')}_review.txt"
+                report_path.write_text(report_text, encoding="utf-8")
+
     logger.info(f"Output: {output_dir}")
-    logger.info(f"Archive: {archive_dir}")
 
 
 if __name__ == "__main__":

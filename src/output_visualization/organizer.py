@@ -17,45 +17,54 @@ class OutputOrganizer:
 
     @staticmethod
     def reorganize(raw_dir: Path, target_dir: Path, seq: int, stem: str, batch_summary: str = None) -> Path:
-        """将 MinerU 解压后的目录扁平化为 2 层结构并生成摘要。
+        """将 MinerU 解压后的目录扁平化并生成摘要。
 
-        原始: {raw_dir}/{stem}/auto/{stem}.md + {stem}/auto/images/
-        目标: {target_dir}/{seq}_{stem}/{seq}_{stem}.md + {seq}_{stem}/images/
+        原始: {raw_dir}/{stem}/auto/{stem}.md
+        目标: {target_dir}/识别结果/{seq}_{stem}.md
         """
-        out = target_dir / f"{seq}_{stem}"
-        out.mkdir(parents=True, exist_ok=True)
+        results_dir = target_dir / "识别结果"
+        results_dir.mkdir(parents=True, exist_ok=True)
 
-        auto = raw_dir / stem / "auto"
-        if not auto.exists():
-            auto = raw_dir / stem  # 兼容无 auto/ 层的情况
+        stem_dir = raw_dir / stem
+        md_dir = None
+
+        # 查找解析方法子目录（auto, office, pipeline, hybrid_*, vlm 等）
+        if stem_dir.is_dir():
+            for sub in stem_dir.iterdir():
+                if sub.is_dir():
+                    if (sub / f"{stem}.md").exists():
+                        md_dir = sub
+                        break
+            # 没找到带 md 文件的子目录，直接用 stem_dir
+            if md_dir is None:
+                md_dir = stem_dir
+
+        if md_dir is None:
+            md_dir = stem_dir
 
         # 移动 Markdown 文件并重命名
-        md_src = auto / f"{stem}.md"
+        md_src = md_dir / f"{stem}.md"
         if md_src.exists():
-            md_dst = out / f"{seq}_{stem}.md"
+            md_dst = results_dir / f"{seq}_{stem}.md"
             _add_summary(md_dst, md_src, batch_summary)
             logger.info(f"  -> {md_dst.name} (with summary)")
         else:
-            # 没有 md 文件时复制原始 md（如 xml 转换的）
-            for m in auto.glob("*.md"):
+            # 没有 md 文件时查找任意 md
+            for m in md_dir.glob("*.md"):
                 new_name = f"{seq}_{stem}.md"
-                _add_summary(out / new_name, m, batch_summary)
-                m.rename(out / new_name)
+                _add_summary(results_dir / new_name, m, batch_summary)
+                m.rename(results_dir / new_name)
 
-        # 移动 images 目录
-        images_src = auto / "images"
-        if images_src.exists():
-            images_dst = out / "images"
-            if images_dst.exists():
-                shutil.rmtree(images_dst)
-            shutil.move(images_src, images_dst)
+        # 移动中间 JSON 文件（如果返回了）
+        _move_middle_json(md_dir, stem, results_dir, seq)
 
         # 清理空目录
-        for d in sorted((raw_dir / stem).iterdir(), key=lambda p: str(p), reverse=True):
-            if d.is_dir() and not any(d.iterdir()):
-                d.rmdir()
+        if stem_dir.is_dir():
+            for d in sorted(stem_dir.iterdir(), key=lambda p: str(p), reverse=True):
+                if d.is_dir() and not any(d.iterdir()):
+                    d.rmdir()
 
-        return out
+        return results_dir
 
     @staticmethod
     def extract(result_zip_path: Path, output_dir: Path) -> Path:
@@ -138,3 +147,28 @@ def _generate_summary(content: str, batch_summary: str = None) -> str:
 
     summary = "## 摘要\n\n" + " — ".join(parts)
     return summary
+
+
+def _move_middle_json(search_dir: Path, stem: str, results_dir: Path, seq: int) -> None:
+    """查找并移动 MinerU 的中间 JSON 文件到识别结果目录。
+
+    MinerU 返回的 JSON 文件名可能是 {stem}_middle.json 或 {stem}.json，
+    可能直接放在 search_dir 下或在某个子目录中。
+    """
+    json_candidates = [f"{stem}_middle.json", f"{stem}.json"]
+
+    # 先在直接目录下找
+    for candidate in json_candidates:
+        src = search_dir / candidate
+        if src.exists():
+            dst = results_dir / f"{seq}_{stem}.json"
+            shutil.copy2(src, dst)
+            logger.info(f"  -> {dst.name}")
+            return
+
+    # 在子目录中递归查找
+    for jfile in search_dir.rglob("*middle*.json"):
+        dst = results_dir / f"{seq}_{stem}.json"
+        shutil.copy2(jfile, dst)
+        logger.info(f"  -> {dst.name}")
+        return
