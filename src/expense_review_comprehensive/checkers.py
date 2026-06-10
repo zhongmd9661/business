@@ -1,6 +1,7 @@
 """全面审核规则检查器 — 按制度类别分组"""
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import datetime
 from typing import Optional
 
@@ -9,6 +10,10 @@ from .models import (
     Finding,
     RuleCategory,
     INTERNAL_UNITS,
+    BatchReviewContext,
+    BatchFinding,
+    BatchReviewReport,
+    CategoryBatchReport,
 )
 
 # ---------------------------------------------------------------------------
@@ -695,3 +700,183 @@ class ComprehensiveChecker:
         findings.extend(cross_checker.check_duplicate_reception(fields_list))
         findings.extend(cross_checker.check_travel_mismatch(fields_list))
         return findings
+
+    def check_batch_review(
+        self, filenames: list[str], fields_list: list[ExtractedFields]
+    ) -> BatchReviewReport:
+        """整合批次所有文档作为整体审核上下文，返回批次审核报告"""
+        # 1. 构建批次上下文
+        ctx = self._build_context(filenames, fields_list)
+
+        # 2. 逐文档规则（单据完整性、禁止性规定）
+        doc_findings = self._check_per_document(filenames, fields_list)
+
+        # 3. 聚合规则（金额标准、陪同人数）
+        agg_findings = self._check_aggregated(ctx)
+
+        # 4. 跨文档规则（拆分报销、重复招待、差旅地校验）
+        cross_findings = self._check_cross_document(fields_list)
+
+        # 5. 组装报告
+        return self._build_report(ctx, doc_findings, agg_findings, cross_findings)
+
+    @staticmethod
+    def _build_context(
+        filenames: list[str], fields_list: list[ExtractedFields]
+    ) -> BatchReviewContext:
+        """聚合各文档字段为批次级指标"""
+        total_amount = 0.0
+        total_guest = 0
+        total_companion = 0
+        department = None
+        reception_type = None
+        earliest_apply = None
+        earliest_reception = None
+
+        for f in fields_list:
+            amt = f.actual_amount or f.invoice_amount
+            if amt:
+                total_amount += amt
+            if f.guest_count:
+                total_guest += f.guest_count
+            if f.companion_count:
+                total_companion += f.companion_count
+            if not department and f.department:
+                department = f.department
+            if not reception_type and f.reception_type:
+                reception_type = f.reception_type
+            if f.apply_date and (earliest_apply is None or f.apply_date < earliest_apply):
+                earliest_apply = f.apply_date
+            if f.reception_date and (earliest_reception is None or f.reception_date < earliest_reception):
+                earliest_reception = f.reception_date
+
+        documents = list(zip(filenames, fields_list))
+        return BatchReviewContext(
+            documents=documents,
+            total_amount=total_amount,
+            total_guest_count=total_guest,
+            total_companion_count=total_companion,
+            department=department,
+            reception_type=reception_type,
+            apply_date=earliest_apply,
+            reception_date=earliest_reception,
+        )
+
+    def _check_per_document(
+        self, filenames: list[str], fields_list: list[ExtractedFields]
+    ) -> list[BatchFinding]:
+        """逐文档运行单据完整性和禁止性规定检查，结果标注来源文档"""
+        findings: list[BatchFinding] = []
+        integrity_checker: DocumentIntegrityChecker = self._checkers[0]  # type: ignore
+        prohibition_checker: ProhibitionChecker = self._checkers[3]  # type: ignore
+        reimb_checker: ReimbursementComplianceChecker = self._checkers[4]  # type: ignore
+        cross_checker: CrossAuditChecker = self._checkers[5]  # type: ignore
+
+        for fname, f in zip(filenames, fields_list):
+            for finding in integrity_checker.check(f):
+                findings.append(self._to_batch_finding(finding, fname))
+            for finding in prohibition_checker.check(f):
+                findings.append(self._to_batch_finding(finding, fname))
+            for finding in reimb_checker.check(f):
+                findings.append(self._to_batch_finding(finding, fname))
+            for finding in cross_checker.check(f):
+                findings.append(self._to_batch_finding(finding, fname))
+        return findings
+
+    def _check_aggregated(self, ctx: BatchReviewContext) -> list[BatchFinding]:
+        """基于批次上下文的聚合指标运行金额标准和陪同人数检查"""
+        findings: list[BatchFinding] = []
+        amount_checker: AmountStandardChecker = self._checkers[1]  # type: ignore
+        type_checker: ReceptionTypeChecker = self._checkers[2]  # type: ignore
+
+        # 构建一个虚拟字段用于聚合规则检查
+        agg_fields = self._create_aggregated_fields(ctx)
+        for finding in amount_checker.check(agg_fields):
+            findings.append(self._to_batch_finding(finding, ""))
+        for finding in type_checker.check(agg_fields):
+            findings.append(self._to_batch_finding(finding, ""))
+        return findings
+
+    @staticmethod
+    def _create_aggregated_fields(ctx: BatchReviewContext) -> ExtractedFields:
+        """从批次上下文创建聚合字段，用于金额标准/陪同人数检查"""
+        total_people = ctx.total_guest_count + ctx.total_companion_count
+        per_person = ctx.total_amount / total_people if total_people > 0 else 0
+        # 取第一个文档的人员层级
+        level = None
+        for _, f in ctx.documents:
+            if f.personnel_level:
+                level = f.personnel_level
+                break
+        return ExtractedFields(
+            reception_date=ctx.reception_date,
+            apply_date=ctx.apply_date,
+            invoice_amount=ctx.total_amount,
+            actual_amount=ctx.total_amount,
+            per_person_amount=per_person,
+            guest_count=ctx.total_guest_count,
+            companion_count=ctx.total_companion_count,
+            reception_type=ctx.reception_type,
+            personnel_level=level,
+        )
+
+    def _check_cross_document(
+        self, fields_list: list[ExtractedFields]
+    ) -> list[BatchFinding]:
+        """跨文档规则：拆分报销、重复招待、企业状态、差旅地校验"""
+        findings: list[BatchFinding] = []
+        reimb_checker: ReimbursementComplianceChecker = self._checkers[4]  # type: ignore
+        cross_checker: CrossAuditChecker = self._checkers[5]  # type: ignore
+
+        for finding in reimb_checker.check_split_reimbursement(fields_list):
+            findings.append(self._to_batch_finding(finding, ""))
+        for finding in reimb_checker.check_mixed_expenses(fields_list):
+            findings.append(self._to_batch_finding(finding, ""))
+        for finding in cross_checker.check_enterprise_status(fields_list):
+            findings.append(self._to_batch_finding(finding, ""))
+        for finding in cross_checker.check_duplicate_reception(fields_list):
+            findings.append(self._to_batch_finding(finding, ""))
+        for finding in cross_checker.check_travel_mismatch(fields_list):
+            findings.append(self._to_batch_finding(finding, ""))
+        return findings
+
+    @staticmethod
+    def _to_batch_finding(f: Finding, document: str) -> BatchFinding:
+        return BatchFinding(
+            category=f.category,
+            rule=f.rule,
+            clause=f.clause,
+            level=f.level,
+            message=f.message,
+            document=document,
+        )
+
+    @staticmethod
+    def _build_report(
+        ctx: BatchReviewContext,
+        doc_findings: list[BatchFinding],
+        agg_findings: list[BatchFinding],
+        cross_findings: list[BatchFinding],
+    ) -> BatchReviewReport:
+        all_findings = doc_findings + agg_findings + cross_findings
+        report = BatchReviewReport(
+            batch_name="",  # placeholder, set by caller
+            document_count=len(ctx.documents),
+            department=ctx.department,
+            reception_type=ctx.reception_type,
+            all_findings=all_findings,
+        )
+
+        # 按类别分组
+        by_category: dict[RuleCategory, list[BatchFinding]] = defaultdict(list)
+        for f in all_findings:
+            by_category[f.category].append(f)
+
+        for category in RuleCategory:
+            cat_findings = by_category.get(category, [])
+            if cat_findings:
+                report.category_reports.append(
+                    CategoryBatchReport(category=category, findings=cat_findings)
+                )
+
+        return report

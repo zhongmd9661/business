@@ -5,7 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .models import Finding, RuleCategory
+from .models import Finding, RuleCategory, BatchFinding, BatchReviewReport
 
 
 @dataclass
@@ -107,6 +107,82 @@ class ComprehensiveReporter:
         """生成简要摘要"""
         parts: list[str] = []
         parts.append(f"文档: {report.filename or '未命名'}")
+        parts.append(f"风险: {'高风险' if report.has_high_risk else '无高风险'}")
+        parts.append(f"问题: {len(report.all_findings)} 条")
+
+        by_level = defaultdict(int)
+        for f in report.all_findings:
+            by_level[f.level] += 1
+        level_parts = []
+        for lvl in ("高", "中", "低", "提示"):
+            if by_level[lvl]:
+                level_parts.append(f"{lvl}: {by_level[lvl]}")
+        if level_parts:
+            parts.append(f"分级: {', '.join(level_parts)}")
+
+        return " | ".join(parts)
+
+    def generate_batch(self, report: BatchReviewReport) -> BatchReviewReport:
+        """批次审核报告（报告已由 check_batch_review 组装，此方法仅做后处理）"""
+        return report
+
+    def format_batch_text(self, report: BatchReviewReport) -> str:
+        """生成批次审核报告文本，按类别 + 文档分组展示"""
+        lines: list[str] = []
+        lines.append("=" * 70)
+        lines.append(f"全面业务招待费审核报告 — 批次: {report.batch_name}")
+        lines.append("=" * 70)
+
+        # 批次信息
+        lines.append(f"\n【批次信息】")
+        lines.append(f"  文档数: {report.document_count}")
+        if report.department:
+            lines.append(f"  部门: {report.department}")
+        if report.reception_type:
+            lines.append(f"  招待类型: {report.reception_type}")
+
+        # 总体风险判定
+        risk = "存在高风险" if report.has_high_risk else "无高风险"
+        lines.append(f"\n【总体判定】{risk}")
+        lines.append(f"发现问题: {len(report.all_findings)} 条")
+
+        by_level = defaultdict(int)
+        for f in report.all_findings:
+            by_level[f.level] += 1
+        level_parts = []
+        for lvl in ("高", "中", "低", "提示"):
+            if by_level[lvl]:
+                level_parts.append(f"{lvl}: {by_level[lvl]}")
+        if level_parts:
+            lines.append(f"分级: {', '.join(level_parts)}")
+
+        # 按类别展示
+        for cr in report.category_reports:
+            if not cr.findings:
+                continue
+            lines.append(f"\n--- [{cr.category.value}] {len(cr.findings)} 个问题 ---")
+
+            # 按文档分组
+            by_doc: dict[str, list[BatchFinding]] = defaultdict(list)
+            for f in cr.findings:
+                by_doc[f.document if f.document else "(批次总计)"].append(f)
+
+            for doc_name, doc_findings in by_doc.items():
+                lines.append(f"  [{doc_name}]")
+                for finding in doc_findings:
+                    lines.append(
+                        f"    [{finding.level}] {finding.rule}: {finding.message}"
+                    )
+                    lines.append(f"     依据: {finding.clause}")
+
+        lines.append("\n" + "=" * 70)
+        return "\n".join(lines)
+
+    def format_batch_summary(self, report: BatchReviewReport) -> str:
+        """生成批次审核简要摘要"""
+        parts: list[str] = []
+        parts.append(f"批次: {report.batch_name}")
+        parts.append(f"文档: {report.document_count}")
         parts.append(f"风险: {'高风险' if report.has_high_risk else '无高风险'}")
         parts.append(f"问题: {len(report.all_findings)} 条")
 

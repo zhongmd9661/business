@@ -107,6 +107,54 @@ class ExtractedFields:
     raw_text: str = ""
 
 
+# ---------- 批次审核上下文 ----------
+
+@dataclass
+class BatchReviewContext:
+    """聚合同批次所有文档的提取字段为批次级审核指标"""
+    documents: list[tuple[str, ExtractedFields]]
+    total_amount: float = 0.0
+    total_guest_count: int = 0
+    total_companion_count: int = 0
+    department: Optional[str] = None
+    reception_type: Optional[str] = None
+    apply_date: Optional[datetime] = None
+    reception_date: Optional[datetime] = None
+
+
+@dataclass
+class BatchFinding:
+    """批次级别的审核发现，关联到具体文档或批次整体"""
+    category: RuleCategory
+    rule: str
+    clause: str
+    level: str
+    message: str
+    document: str = ""  # 来源文档文件名，空字符串表示批次级
+
+
+@dataclass
+class CategoryBatchReport:
+    """单个规则类别的批次报告段"""
+    category: RuleCategory
+    findings: list[BatchFinding] = field(default_factory=list)
+
+
+@dataclass
+class BatchReviewReport:
+    """批次审核报告：包含批次信息、总体判定、分类报告"""
+    batch_name: str
+    document_count: int = 0
+    department: Optional[str] = None
+    reception_type: Optional[str] = None
+    category_reports: list[CategoryBatchReport] = field(default_factory=list)
+    all_findings: list[BatchFinding] = field(default_factory=list)
+
+    @property
+    def has_high_risk(self) -> bool:
+        return any(f.level == "高" for f in self.all_findings)
+
+
 def _try_date(text: str, pattern: str) -> Optional[datetime]:
     m = re.search(pattern, text)
     if not m:

@@ -19,6 +19,7 @@ from src.expense_review_comprehensive import (
     ComprehensiveChecker,
     ComprehensiveReporter,
     WebhookNotifier,
+    BatchReviewReport,
 )
 from loguru import logger
 
@@ -130,14 +131,14 @@ async def parse_all():
         shutil.rmtree(raw_dir)
         logger.info("Cleaned up temporary _raw directory")
 
-    # ---- 审核：解析后对每个文档运行全面审核 ----
+    # ---- 审核：解析后对批次运行全面审核 ----
     extractor = FieldExtractor()
     checker = ComprehensiveChecker()
     reporter = ComprehensiveReporter()
     notifier = WebhookNotifier("http://localhost:9999/hook")
 
-    all_findings: list[tuple[str, list]] = []
     all_fields = []
+    filenames = []
     results_dir = output_dir / "识别结果"
 
     if results_dir.is_dir():
@@ -146,30 +147,34 @@ async def parse_all():
                 content = md_file.read_text(encoding="utf-8")
                 fields = extractor.extract(content)
                 all_fields.append(fields)
-                findings = checker.check_single(fields)
-                all_findings.append((md_file.name, findings))
-                if any(f.level == "高" for f in findings):
-                    notifier.notify(findings, md_file.name)
+                filenames.append(md_file.name)
             except Exception as e:
                 logger.warning(f"Review failed for {md_file.name}: {e}")
 
-    # 批量跨文档检查
+    # 批次统一审核
     if all_fields:
-        batch_findings = checker.check_batch(all_fields)
-        for f in batch_findings:
-            logger.info(f"[跨文档] [{f.level}] {f.rule}: {f.message}")
+        batch_report = checker.check_batch_review(filenames, all_fields)
+        batch_report.batch_name = summary
 
-    # 生成审核报告
-    if all_findings:
-        for filename, findings in all_findings:
-            report = reporter.generate(findings, filename)
-            summary = reporter.format_summary(report)
-            logger.info(f"Review {filename}: {summary}")
+        # 简要摘要日志
+        batch_summary = reporter.format_batch_summary(batch_report)
+        logger.info(f"批次审核: {batch_summary}")
 
-            if findings:
-                report_text = reporter.format_text(report)
-                report_path = output_dir / f"{filename.replace('.md', '')}_review.txt"
-                report_path.write_text(report_text, encoding="utf-8")
+        # 输出批次报告
+        report_text = reporter.format_batch_text(batch_report)
+        report_path = output_dir / "审核报告.txt"
+        report_path.write_text(report_text, encoding="utf-8")
+        logger.info(f"批次审核报告: {report_path}")
+
+        # Webhook 通知：基于总体判定触发
+        if batch_report.has_high_risk:
+            # 将 BatchFinding 转为 Finding 用于 webhook
+            from src.expense_review_comprehensive.models import Finding
+            findings_for_webhook = [
+                Finding(f.category, f.rule, f.clause, f.level, f.message)
+                for f in batch_report.all_findings
+            ]
+            notifier.notify(findings_for_webhook, summary)
 
     logger.info(f"Output: {output_dir}")
 

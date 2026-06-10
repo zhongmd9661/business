@@ -1,0 +1,4 @@
+name: batch-expense-review
+description: "整合批次全部OCR识别结果后统一审核，取代逐文档独立审核"
+status: active
+created: 2026-06-10
