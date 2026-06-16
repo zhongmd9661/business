@@ -1,0 +1,4 @@
+name: llm-field-extraction
+description: "使用本地大模型替代正则规则进行 OCR 字段提取，提升复杂文档的提取准确率"
+status: active
+created: 2026-06-16
