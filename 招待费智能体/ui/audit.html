@@ -1071,19 +1071,18 @@
         };
         img.src = url;
       } else if (ext === 'xml' || ext === 'json' || ext === 'txt') {
-        fetch(url)
-          .then(res => {
-            if (!res.ok) throw new Error('Network error');
-            return res.text();
-          })
-          .then(text => {
-            clearTimeout(exampleLoadTimer);
-            body.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
-          })
-          .catch(() => {
-            clearTimeout(exampleLoadTimer);
-            showLoadingError();
-          });
+        // file:// 协议下 fetch 被 CORS 阻止，改用 iframe 直接加载
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.title = `${ext.toUpperCase()} 预览`;
+        iframe.style.fontFamily = '"Cascadia Code", "Fira Code", "Consolas", monospace';
+        iframe.onload = function () { clearTimeout(exampleLoadTimer); };
+        iframe.onerror = function () {
+          clearTimeout(exampleLoadTimer);
+          showLoadingError();
+        };
+        body.innerHTML = '';
+        body.appendChild(iframe);
       } else {
         clearTimeout(exampleLoadTimer);
         body.innerHTML = `<div class="modal-error">⚠️ 暂不支持预览此类型文件<br><small>${fileName}</small></div>`;
