@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>文件上传 - 招待费管理</title>
+  <title>招待费审核 - 文件上传</title>
   <style>
-    /* 复用 index.html 的基础样式 */
     * {
       margin: 0;
       padding: 0;
@@ -13,227 +12,60 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystem0Font, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
       background: #f5f7fa;
       min-height: 100vh;
       width: 100vw;
       position: relative;
       overflow-x: hidden;
-      display: flex;
-      justify
     }
 
-    /* ---- 背景光晕 (完全复用) ---- */
+    /* ---- 背景光晕 ---- */
     .bg-glow {
       position: absolute;
       border-radius: 50%;
       filter: blur(120px);
-      pointer-items: none;
+      pointer-events: none;
     }
-    .bg-glow--1 { width: 80vw; height: 80vh; top: -15%; left: 50%; transform: translateX(-50%); background: radial-gradient(ellipse, rgba(30, 64, 175, 0.06) 0%, transparent 60%); }
-    .bg-glow--2 { width: 60vw; height: 60vh; bottom: -20%; left: -5%; background: radial-gradient(ellipse, rgba(59, 130, 246, 0.04) 0%, transparent 60%); }
-    .bg-glow--3 { width: 50vw; height: 50vh; bottom: -15%; right: -5%; background: radial-gradient(ellipse, rgba(37, 99, 235, 0.04) 0%, transparent 60%); }
 
-    /* ---- 主内容容器 ---- */
+    .bg-glow--1 {
+      width: 80vw;
+      height: 80vh;
+      top: -15%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(ellipse, rgba(30, 64, 175, 0.06) 0%, transparent 60%);
+    }
+
+    .bg-glow--2 {
+      width: 60vw;
+      height: 60vh;
+      bottom: -20%;
+      left: -5%;
+      background: radial-gradient(ellipse, rgba(59, 130, 246, 0.04) 0%, transparent 60%);
+    }
+
+    .bg-glow--3 {
+      width: 50vw;
+      height: 50vh;
+      bottom: -15%;
+      right: -5%;
+      background: radial-gradient(ellipse, rgba(37, 99, 235, 0.04) 0%, transparent 60%);
+    }
+
+    /* ---- 主内容 ---- */
     .container {
       width: 100%;
-      max-width: 800px;
-      padding: 40px 24px;
+      max-width: 1200px;
+      padding: 0 clamp(24px, 4vw, 64px);
       position: relative;
       z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: auto;
-      margin-bottom: auto;
     }
 
-    .page-header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    .page-title {
-      font-size: clamp(28px, 5vw, 40px);
-      font-weight: 700;
-      color: #1e3a5f;
-      margin-bottom: 12px;
-    }
-
-    .page-subtitle {
-      font-size: 16px;
-      color: #5a7ba8;
-    }
-
-    /* ---- 上传卡片 ---- */
-    .upload-card {
-      width: 100%;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 20px;
-      padding: 40px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(30, 64, 175, 0.05);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* ---- 上传区域 (Drop Zone) ---- */
-    .drop-zone {
-      width: 100%;
-      min-height: 250px;
-      border: 2px dashed #bfdbfe;
-      border-radius: 16px;
-      background: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 30px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-bottom: 30px;
-    }
-
-    .drop-zone:hover, .drop-zone.dragover {
-      border-color: #3b82f6;
-      background: #eff6ff;
-    }
-
-    .upload-icon {
-      width: 80px;
-      height: 80px;
-      background: #eff6ff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      color: #1e40af;
-    }
-
-    .upload-icon svg {
-      width: 40px;
-      height: 40px;
-    }
-
-    .drop-zone-text {
-      font-size: 18px;
-      font-weight: 600;
-      color: #1e3a5f;
-      margin-bottom: 8px;
-    }
-
-    .drop-zone-subtext {
-      font-size: 14px;
-      color: #64748b;
-    }
-
-    /* ---- 文件列表 ---- */
-    .file-list {
-      width: 100%;
-      margin-top: 20px;
-      text-align: left;
-    }
-
-    .file-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .file-icon {
-      margin-right: 12px;
-      font-size: 24px;
-    }
-
-    .file-info {
-      flex: 1;
-      overflow: hidden;
-    }
-
-    .file-name {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      color: #1e3a5f;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .file-size {
-      font-size: 12px;
-      color: #94a3b8;
-    }
-
-    .remove-btn {
-      background: none;
-      border: none;
-      color: #dc2626;
-      cursor: pointer;
-      padding: 4px;
-      font-size: 18px;
-      transition: transform 0.2s ease;
-    }
-
-    .remove-btn:hover {
-      transform: scale(1.2);
-    }
-
-    /* ---- 操作按钮 ---- */
-    .actions {
-      width: 100%;
-      display: flex;
-      gap: 16px;
-      margin-top: 20px;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.25s ease;
-      border: none;
-    }
-
-    .btn--primary {
-      background: #1e40af;
-      color: white;
-      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
-    }
-
-    .btn--primary:hover {
-      background: #1e3a8a;
-      transform: translateY(-1px);
-    }
-
-    .btn--secondary {
-      background: #ffffff;
-      color: #64748 margin-bottom: 0;
-      border: 1px solid #e2e8f0;
-    }
-
-    .btn--secondary:hover {
-      background: #f8fafc;
-    }
-
-    /* ---- 返回按钮 (固定在左上角) ---- */
+    /* ---- 返回按钮 ---- */
     .back-link {
       position: absolute;
       top: 30px;
@@ -245,11 +77,460 @@
       align-items: center;
       gap: 8px;
       z-index: 10;
+      transition: color 0.2s ease;
     }
 
-    /* 隐藏原始 input */
-    #fileInput {
+    .back-link:hover {
+      color: #3b82f6;
+    }
+
+    .back-link svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* ---- 标题 ---- */
+    .page-header {
+      text-align: center;
+      margin: clamp(40px, 5vh, 64px) 0 clamp(24px, 3vh, 40px);
+    }
+
+    .page-title {
+      font-size: clamp(34px, 5.5vw, 60px);
+      font-weight: 700;
+      color: #1e3a5f;
+      letter-spacing: clamp(3px, 0.7vw, 10px);
+      text-shadow: 0 2px 20px rgba(30, 64, 175, 0.1);
+    }
+
+    .page-subtitle {
+      font-size: clamp(14px, 1.6vw, 20px);
+      font-weight: 400;
+      color: #5a7ba8;
+      margin-top: 10px;
+      letter-spacing: clamp(1px, 0.4vw, 4px);
+    }
+
+    /* ---- 统计栏 ---- */
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    .stat-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .stat-dot--done { background: #059669; }
+    .stat-dot--pending { background: #94a3b8; }
+    .stat-value { font-weight: 700; color: #1e3a5f; }
+
+    /* ---- 上传网格 ---- */
+    .upload-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(16px, 2.5vw, 24px);
+      width: 100%;
+      max-width: 1100px;
+      margin-bottom: clamp(32px, 4vh, 56px);
+    }
+
+    /* ---- 上传卡片 ---- */
+    .upload-card {
+      background: #ffffff;
+      border: 2px dashed #d1d9e6;
+      border-radius: clamp(14px, 2vw, 18px);
+      padding: clamp(20px, 3vw, 28px);
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: clamp(180px, 22vh, 240px);
+      justify-content: center;
+      position: relative;
+    }
+
+    .upload-card:hover {
+      border-color: #93c5fd;
+      background: #f8faff;
+      box-shadow: 0 8px 30px rgba(30, 64, 175, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .upload-card.drag-over {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      box-shadow: 0 8px 30px rgba(59, 130, 246, 0.15);
+      transform: scale(1.02);
+    }
+
+    .upload-card.has-file {
+      border-style: solid;
+      border-color: #059669;
+      background: #f0fdf4;
+    }
+
+    .upload-card.has-file:hover {
+      border-color: #059669;
+      background: #ecfdf5;
+    }
+
+    .upload-card input[type="file"] {
       display: none;
+    }
+
+    /* 序号 */
+    .upload-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1e40af;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+      transition: background 0.3s ease;
+    }
+
+    .upload-card.has-file .upload-num {
+      background: #059669;
+    }
+
+    /* 图标 */
+    .upload-icon {
+      width: clamp(48px, 6vw, 64px);
+      height: clamp(48px, 6vw, 64px);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upload-icon svg {
+      width: 100%;
+      height: 100%;
+      stroke: #94a3b8;
+      stroke-width: 1.5;
+      fill: none;
+      transition: all 0.3s ease;
+    }
+
+    .upload-card:hover .upload-icon svg { stroke: #3b82f6; }
+    .upload-card.has-file .upload-icon svg { stroke: #059669; }
+
+    /* 文件名 */
+    .upload-name {
+      font-size: clamp(14px, 1.5vw, 16px);
+      font-weight: 700;
+      color: #1e3a5f;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .upload-hint {
+      font-size: clamp(12px, 1.2vw, 13px);
+      color: #94a3b8;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    /* 已上传状态 */
+    .upload-status {
+      font-size: clamp(12px, 1.2vw, 13px);
+      font-weight: 600;
+      color: #059669;
+      display: none;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .upload-status svg {
+      width: 16px;
+      height: 16px;
+      stroke: #059669;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* 已选文件名 Chip */
+    .file-chip {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #ffffff;
+      border: 1px solid #bbf7d0;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #059669;
+      font-weight: 500;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-top: 8px;
+    }
+
+    .upload-card.has-file .file-chip { display: inline-flex; }
+
+    .file-chip svg {
+      width: 14px;
+      height: 14px;
+      stroke: #059669;
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .file-chip .file-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-chip .remove-btn {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fecaca;
+      color: #dc2626;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: background 0.2s ease;
+    }
+
+    .file-chip .remove-btn:hover { background: #fca5a5; }
+
+    /* ---- 进度条 ---- */
+    .upload-progress {
+      display: none;
+      width: 100%;
+      max-width: 1100px;
+      margin-bottom: 24px;
+    }
+
+    .upload-progress.active { display: block; }
+
+    .progress-bar-wrapper {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #1e40af, #3b82f6);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .progress-text {
+      text-align: center;
+      font-size: 14px;
+      color: #64748b;
+      margin-top: 8px;
+    }
+
+    /* ---- 底部操作栏 ---- */
+    .action-bar {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: clamp(40px, 5vh, 64px);
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: clamp(14px, 2.2vh, 18px) clamp(36px, 5vw, 56px);
+      font-size: clamp(16px, 2vw, 18px);
+      font-weight: 600;
+      color: #ffffff;
+      background: #1e40af;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: clamp(1px, 0.3vw, 3px);
+      transition: all 0.25s ease;
+      box-shadow: 0 1px 3px rgba(30, 64, 175, 0.15);
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .btn:hover {
+      background: #1e3a8a;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(30, 64, 175, 0.15);
+    }
+
+    .btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .btn--secondary {
+      background: #ffffff;
+      color: #1e40af;
+      border: 1.5px solid #bfdbfe;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .btn--secondary:hover {
+      background: #f8faff;
+      border-color: #93c5fd;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.08);
+    }
+
+    .btn--success {
+      background: #059669;
+      box-shadow: 0 1px 3px rgba(5, 150, 105, 0.15);
+    }
+
+    .btn--success:hover {
+      background: #047857;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+    }
+
+    /* ---- 模态框 ---- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      width: 90%;
+      max-width: 500px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal {
+      transform: translateY(0);
+    }
+
+    .modal-body {
+      padding: clamp(28px, 4vw, 40px);
+      text-align: center;
+    }
+
+    .modal-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-icon--success { background: #ecfdf5; }
+    .modal-icon--success svg {
+      width: 36px;
+      height: 36px;
+      stroke: #059669;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .modal-icon--error { background: #fef2f2; }
+    .modal-icon--error svg {
+      width: 36px;
+      height: 36px;
+      stroke: #dc2626;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .modal-text {
+      font-size: 16px;
+      color: #334155;
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+
+    .modal-text strong { color: #1e3a5f; }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    /* ---- 响应式 ---- */
+    @media (max-width: 900px) {
+      .upload-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .upload-grid { grid-template-columns: 1fr; }
+      .upload-card { min-height: 160px; }
+      .action-bar { flex-direction: column; }
+      .btn { width: 100%; justify-content: center; }
+      .back-link { top: 16px; left: 16px; }
     }
   </style>
 </head>
@@ -259,148 +540,517 @@
   <div class="bg-glow bg-glow--3"></div>
 
   <a href="index.html" class="back-link">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 5 5 12 12 19"></polyline></svg>
+    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="19" y1="12" x2="5" y2="12"></line>
+      <polyline points="12 5 5 12 12 19"></polyline>
+    </svg>
     返回首页
   </a>
 
   <div class="container">
     <div class="page-header">
-      <h1 class="page-title">上传待审核材料</h1>
-      <p class="page-subtitle">请上传业务招待费相关的凭证、审批单及相关佐证材料</p>
+      <h1 class="page-title">招待费审核</h1>
+      <p class="page-subtitle">上传材料 · 智能识别 · 自动审核</p>
     </div>
 
-    <div class="upload-card">
-      <!-- 隐藏的真实文件输入框 -->
-      <input type="file" id="fileInput" multiple>
+    <!-- 统计栏 -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-dot stat-dot--done" id="statDoneDot"></span>
+        已上传: <span class="stat-value" id="statDone">0</span> / 9
+      </div>
+      <div class="stat-item">
+        <span class="stat-dot stat-dot--pending"></span>
+        待上传: <span class="stat-value" id="statPending">9</span>
+      </div>
+    </div>
 
-      <!-- 自定义上传区域 -->
-      <div class="drop-zone" id="dropZone">
+    <!-- 上传网格 -->
+    <div class="upload-grid" id="uploadGrid">
+      <!-- 1. 业务招待审批单 -->
+      <div class="upload-card"
+           ondragover="handleDragOver(event, this)"
+           ondragleave="handleDragLeave(event, this)"
+           ondrop="handleDrop(event, this, 0)"
+           onclick="triggerFileInput(0)">
+        <input type="file" id="file-0" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event, 0)">
+        <div class="upload-num">1</div>
         <div class="upload-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
         </div>
-        <div class="drop-zone-text">点击或拖拽文件至此</div>
-        <div class="drop-zone-subtext">支持 PDF, JPG, PNG, XML 等格式</div>
+        <div class="upload-name">业务招待审批单</div>
+        <div class="upload-hint">点击或拖拽上传</div>
+        <div class="upload-status">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已上传
+        </div>
+        <div class="file-chip">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-name"></span>
+          <button class="remove-btn" onclick="removeFile(event, 0)" title="移除">&times;</button>
+        </div>
       </div>
 
-      <!-- 已选文件列表 -->
-      <div class="file-list" id="fileList">
-        <!-- 动态插入文件项 -->
+      <!-- 2. 业务招待待申请单 -->
+      <div class="upload-card"
+           ondragover="handleDragOver(event, this)"
+           ondragleave="handleDragLeave(event, this)"
+           ondrop="handleDrop(event, this, 1)"
+           onclick="triggerFileInput(1)">
+        <input type="file" id="file-1" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event, 1)">
+        <div class="upload-num">2</div>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-name">业务招待待申请单</div>
+        <div class="upload-hint">点击或拖拽上传</div>
+        <div class="upload-status">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已上传
+        </div>
+        <div class="file-chip">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-name"></span>
+          <button class="remove-btn" onclick="removeFile(event, 1)" title="移除">&times;</button>
+        </div>
       </div>
 
-      <!-- 操作按钮 -->
-      <div class="actions">
-        <button class="btn btn--secondary" onclick="window.location.href='index.html'">取消</button>
-        <button class="btn btn--primary" id="uploadBtn" disabled>开始上传</button>
+      <!-- 3. 业务招待费报账单 -->
+      <div class="upload-card"
+           ondragover="handleDragOver(event, this)"
+           ondragleave="handleDragLeave(event, this)"
+           ondrop="handleDrop(event, this, 2)"
+           onclick="triggerFileInput(2)">
+        <input type="file" id="file-2" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event, 2)">
+        <div class="upload-num">3</div>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-name">业务招待费报账单</div>
+        <div class="upload-hint">点击或拖拽上传</div>
+        <div class="upload-status">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已上传
+        </div>
+        <div class="file-chip">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-name"></span>
+          <button class="remove-btn" onclick="removeFile(event, 2)" title="移除">&times;</button>
+        </div>
+      </div>
+
+      <!-- 4. 招待单位经营状态 -->
+      <div class="upload-card"
+           ondragover="handleDragOver(event, this)"
+           ondragleave="handleDragLeave(event, this)"
+           ondrop="handleDrop(event, this, 3)"
+           onclick="triggerFileInput(3)">
+        <input type="file" id="file-3" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileSelect(event, 3)">
+        <div class="upload-num">4</div>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-name">招待单位经营状态</div>
+        <div class="upload-hint">点击或拖拽上传</div>
+        <div class="upload-status">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已上传
+        </div>
+        <div class="file-chip">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-name"></span>
+          <button class="remove-btn" onclick="removeFile(event, 3)" title="移除">&times;</button>
+        </div>
+      </div>
+
+      <!-- 5. 支付凭证 -->
+      <div class="upload-card"
+           ondragover="handleDragOver(event, this)"
+           ondragleave="handleDragLeave(event, this)"
+           ondrop="handleDrop(event, this, 4)"
+           onclick="triggerFileInput(4)">
+        <input type="file" id="file-4" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileSelect(event, 4)">
+        <div class="upload-num">5</div>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-name">支付凭证</div>
+        <div class="upload-hint">点击或拖拽上传</div>
+        <div class="upload-status">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已上传
+        </div>
+        <div class="file-chip">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-name"></span>
+          <button class="remove-btn" onclick="removeFile(event, 4)" title="移除">&times;</button>
+        </div>
+      </div>
+
+      <!-- 6. 支付流水证明 -->
+      <div class="upload-card"
+           ondragover="handleDragOver(event, this)"
+           ondragleave="handleDragLeave(event, this)"
+           ondrop="handleDrop(event, this, 5)"
+           onclick="triggerFileInput(5)">
+        <input type="file" id="file-5" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event, 5)">
+        <div class="upload-num">6</div>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-name">支付流水证明</div>
+        <div class="upload-hint">点击或拖拽上传</div>
+        <div class="upload-status">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已上传
+        </div>
+        <div class="file-chip">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-name"></span>
+          <button class="remove-btn" onclick="removeFile(event, 5)" title="移除">&times;</button>
+        </div>
+      </div>
+
+      <!-- 7. 【发票】XML格式 -->
+      <div class="upload-card"
+           ondragover="handleDragOver(event, this)"
+           ondragleave="handleDragLeave(event, this)"
+           ondrop="handleDrop(event, this, 6)"
+           onclick="triggerFileInput(6)">
+        <input type="file" id="file-6" accept=".xml" onchange="handleFileSelect(event, 6)">
+        <div class="upload-num">7</div>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-name">【发票】XML格式</div>
+        <div class="upload-hint">仅支持 .xml 格式</div>
+        <div class="upload-status">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已上传
+        </div>
+        <div class="file-chip">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-name"></span>
+          <button class="remove-btn" onclick="removeFile(event, 6)" title="移除">&times;</button>
+        </div>
+      </div>
+
+      <!-- 8. 【电子发票】PDF格式 -->
+      <div class="upload-card"
+           ondragover="handleDragOver(event, this)"
+           ondragleave="handleDragLeave(event, this)"
+           ondrop="handleDrop(event, this, 7)"
+           onclick="triggerFileInput(7)">
+        <input type="file" id="file-7" accept=".pdf" onchange="handleFileSelect(event, 7)">
+        <div class="upload-num">8</div>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-name">【电子发票】PDF格式</div>
+        <div class="upload-hint">仅支持 .pdf 格式</div>
+        <div class="upload-status">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已上传
+        </div>
+        <div class="file-chip">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-name"></span>
+          <button class="remove-btn" onclick="removeFile(event, 7)" title="移除">&times;</button>
+        </div>
+      </div>
+
+      <!-- 9. 活动函件 -->
+      <div class="upload-card"
+           ondragover="handleDragOver(event, this)"
+           ondragleave="handleDragLeave(event, this)"
+           ondrop="handleDrop(event, this, 8)"
+           onclick="triggerFileInput(8)">
+        <input type="file" id="file-8" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event, 8)">
+        <div class="upload-num">9</div>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-name">活动函件</div>
+        <div class="upload-hint">点击或拖拽上传</div>
+        <div class="upload-status">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已上传
+        </div>
+        <div class="file-chip">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-name"></span>
+          <button class="remove-btn" onclick="removeFile(event, 8)" title="移除">&times;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 进度条 -->
+    <div class="upload-progress" id="uploadProgress">
+      <div class="progress-bar-wrapper">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-text" id="progressText">上传中...</div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="action-bar">
+      <button class="btn btn--secondary" onclick="resetAll()">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </svg>
+        重置全部
+      </button>
+      <button class="btn" onclick="startUpload()">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        开始上传
+      </button>
+      <button class="btn btn--success" onclick="startOCR()">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        开始审核
+      </button>
+    </div>
+  </div>
+
+  <!-- 成功模态框 -->
+  <div class="modal-overlay" id="modalSuccess">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-body">
+        <div class="modal-icon modal-icon--success">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div class="modal-text" id="modalSuccessText">上传成功！</div>
+        <div class="modal-actions">
+          <button class="btn" onclick="closeModal('modalSuccess')">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 错误模态框 -->
+  <div class="modal-overlay" id="modalError">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-body">
+        <div class="modal-icon modal-icon--error">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <div class="modal-text" id="modalErrorText">请上传全部文件后再继续</div>
+        <div class="modal-actions">
+          <button class="btn" onclick="closeModal('modalError')">知道了</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const fileListContainer = document.getElementById('fileList');
-    const uploadBtn = document.getElementById('uploadBtn');
-    let selectedFiles = [];
+    const fileStore = new Array(9).fill(null);
+    const TOTAL = 9;
 
-    // 点击区域触发文件选择
-    dropZone.addEventListener('click', () => fileInput.click());
+    function triggerFileInput(index) {
+      const card = document.getElementById('card-' + index);
+      if (card && card.classList.contains('has-file')) return;
+      document.getElementById('file-' + index).click();
+    }
 
-    // 拖拽效果处理
-    ['dragenter', 'dragover'].forEach(eventName => {
-      dropZone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-      }, false);
-    });
+    function handleFileSelect(event, index) {
+      const file = event.target.files[0];
+      if (!file) return;
+      setFile(index, file);
+    }
 
-    ['dragleave', 'drop'].forEach(eventName => {
-      dropZone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-      }, false);
-    });
+    function handleDragOver(event, card) {
+      event.preventDefault();
+      event.stopPropagation();
+      card.classList.add('drag-over');
+    }
 
-    // 处理文件拖拽放入
-    dropZone.addEventListener('drop', (e) => {
-      const dt = e.dataTransfer;
-      handleFiles(dt.files);
-    });
+    function handleDragLeave(event, card) {
+      event.preventDefault();
+      event.stopPropagation();
+      // 确保是离开当前卡片才移除
+      if (!card.contains(event.relatedTarget)) {
+        card.classList.remove('drag-over');
+      }
+    }
 
-    // 处理文件选择改变
-    fileInput.addEventListener('change', (e) => {
-      handleFiles(e.target.files);
-    });
+    function handleDrop(event, card, index) {
+      event.preventDefault();
+      event.stopPropagation();
+      card.classList.remove('drag-over');
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        setFile(index, files[0]);
+      }
+    }
 
-    function handleFiles(files) {
-      const newFiles = Array.from(files);
-      // 避免重复添加相同名称的文件（简单逻辑）
-      newFiles.forEach(file => {
-        if (!selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
-          selectedFiles.push(file);
+    function setFile(index, file) {
+      fileStore[index] = file;
+      const card = document.getElementById('card-' + index);
+      if (!card) return;
+      card.classList.add('has-file');
+
+      const statusEl = card.querySelector('.upload-status');
+      if (statusEl) statusEl.style.display = 'flex';
+
+      const chip = card.querySelector('.file-chip');
+      if (chip) chip.querySelector('.file-name').textContent = file.name;
+
+      updateStats();
+    }
+
+    function removeFile(event, index) {
+      event.stopPropagation();
+      fileStore[index] = null;
+      const fileInput = document.getElementById('file-' + index);
+      if (fileInput) fileInput.value = '';
+
+      const card = document.getElementById('card-' + index);
+      if (card) card.classList.remove('has-file');
+
+      const statusEl = card ? card.querySelector('.upload-status') : null;
+      if (statusEl) statusEl.style.display = 'none';
+
+      const chip = card ? card.querySelector('.file-chip') : null;
+      if (chip) chip.querySelector('.file-name').textContent = '';
+
+      updateStats();
+    }
+
+    function updateStats() {
+      const done = fileStore.filter(f => f !== null).length;
+      document.getElementById('statDone').textContent = done;
+      document.getElementById('statPending').textContent = TOTAL - done;
+    }
+
+    function resetAll() {
+      for (let i = 0; i < TOTAL; i++) {
+        removeFile(new Event('click'), i);
+      }
+    }
+
+    function checkAllUploaded() {
+      const missing = [];
+      for (let i = 0; i < TOTAL; i++) {
+        if (!fileStore[i]) missing.push(i + 1);
+      }
+      return missing;
+    }
+
+    function showSuccess(text) {
+      document.getElementById('modalSuccessText').innerHTML = text;
+      document.getElementById('modalSuccess').classList.add('active');
+    }
+
+    function showError(text) {
+      document.getElementById('modalErrorText').innerHTML = text;
+      document.getElementById('modalError').classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function simulateUpload(callback) {
+      const progressEl = document.getElementById('uploadProgress');
+      const bar = document.getElementById('progressBar');
+      const text = document.getElementById('progressText');
+      progressEl.classList.add('active');
+      bar.style.width = '0%';
+      text.textContent = '上传中...';
+
+      let step = 0;
+      const totalSteps = 50;
+      const interval = setInterval(() => {
+        step++;
+        const pct = Math.round((step / totalSteps) * 100);
+        bar.style.width = pct + '%';
+        text.textContent = '上传中... ' + pct + '%';
+        if (step >= totalSteps) {
+          clearInterval(interval);
+          progressEl.classList.remove('active');
+          if (callback) callback();
         }
+      }, 40);
+    }
+
+    function startUpload() {
+      const missing = checkAllUploaded();
+      if (missing.length > 0) {
+        showError('请上传全部文件后再继续<br><strong>未上传: 第 ' + missing.join(', ') + ' 项</strong>');
+        return;
+      }
+      simulateUpload(() => {
+        showSuccess('全部 <strong>9 个文件</strong>上传成功！<br>点击"开始审核"进入智能审核流程');
       });
-      updateUI();
     }
 
-    function removeFile(index) {
-      selectedFiles.splice(index, 1);
-      updateUI();
+    function startOCR() {
+      const missing = checkAllUploaded();
+      if (missing.length > 0) {
+        showError('请上传全部文件后再继续<br><strong>未上传: 第 ' + missing.join(', ') + ' 项</strong>');
+        return;
+      }
+      showSuccess('<strong>9 个文件</strong>已全部就绪<br>正在启动智能审核...<br><span style="color:#94a3b8;font-size:13px;">（此处对接后端 OCR 审核 API）</span>');
+      // TODO: 调用后端审核接口
+      // fetch('/api/ocr/audit', { method: 'POST', body: formData })
     }
 
-    function formatSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    function updateUI() {
-      // 更新列表
-      fileListContainer.innerHTML = '';
-      selectedFiles.forEach((file, index) => {
-        const item = document.createElement('div');
-        item.className = 'file-item';
-
-        // 根据后缀简单判断图标
-        let icon = '📄';
-        if (file.name.endsWith('.pdf')) icon = '📕';
-        else if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) icon = '🖼️';
-        else if (file.name.endsWith('.xml')) icon = '📜';
-
-        item.innerHTML = `
-          <span class="file-icon">${icon}</span>
-          <div class="file-info">
-            <span class="file-name">${file.name}</span>
-            <span class="file-size">${formatSize(file.size)}</span>
-          </div>
-          <button class="remove-btn" onclick="removeFile(${index})">&times;</button>
-        `;
-        fileListContainer.appendChild(item);
-      });
-
-      // 更新上传按钮状态
-      uploadBtn.disabled = selectedFiles.length === 0;
-    }
-
-    // 上传逻辑模拟
-    uploadBtn.addEventListener('click', () => {
-      if (selectedFiles.length === 0) return;
-
-      uploadBtn.innerText = '正在上传...';
-      uploadBtn.disabled = true;
-
-      // 模拟异步上传过程
-      setTimeout(() => {
-        alert(`成功上传 ${selectedFiles.length} 个文件！\n(这只是个前端演示页面，实际后端逻辑需配合 API 调用)`);
-        selectedFiles = [];
-        updateUI();
-        uploadBtn.innerText = '开始上传';
-      }, 1500);
+    // ESC 关闭模态框
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal('modalSuccess');
+        closeModal('modalError');
+      }
     });
   </script>
 </body>
