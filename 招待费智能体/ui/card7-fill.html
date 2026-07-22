@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招待费智能录入</title>
+  <style>
+    :root {
+      --color-text-primary: #1a1a2e;
+      --color-text-secondary: #6b7280;
+      --color-text-placeholder: #9ca3af;
+      --color-border: #e5e7eb;
+      --color-border-focus: #3b82f6;
+      --color-border-error: #ef4444;
+      --color-bg-primary: #ffffff;
+      --color-bg-secondary: #f9fafb;
+      --color-bg-hover: #f3f4f6;
+      --color-bg-disabled: #f9fafb;
+      --color-accent: #3b82f6;
+      --color-accent-light: #eff6ff;
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-warning-bg: #fffbeb;
+      --color-error: #ef4444;
+      --color-error-bg: #fef2f2;
+      --color-info: #8b5cf6;
+      --color-info-bg: #f5f3ff;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+      --spacing-xl: 24px;
+      --spacing-2xl: 32px;
+      --spacing-3xl: 48px;
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      --font-size-xs: 12px;
+      --font-size-sm: 13px;
+      --font-size-base: 14px;
+      --font-size-lg: 15px;
+      --font-size-xl: 18px;
+      --font-size-2xl: 22px;
+      --font-size-3xl: 28px;
+      --font-weight-regular: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --line-height-normal: 1.5;
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --transition: 200ms ease;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-family); font-size: var(--font-size-base); color: var(--color-text-primary); background: var(--color-bg-secondary); line-height: var(--line-height-normal); -webkit-font-smoothing: antialiased; }
+    .page-wrapper { max-width: 960px; margin: 0 auto; padding: var(--spacing-2xl) var(--spacing-xl); }
+    .back-link { display: inline-flex; align-items: center; gap: 4px; color: var(--color-accent); font-size: var(--font-size-sm); text-decoration: none; margin-bottom: var(--spacing-lg); transition: color var(--transition); }
+    .back-link:hover { color: #2563eb; }
+    .back-link svg { width: 16px; height: 16px; }
+
+    /* Scenario selector */
+    .scenario-selector {
+      display: flex; flex-wrap: nowrap; gap: 0; margin-bottom: var(--spacing-xl);
+    }
+    .scenario-selector::-webkit-scrollbar { height: 4px; }
+    .scenario-selector::-webkit-scrollbar-thumb { background: #c5cad2; border-radius: 2px; }
+    .scenario-selector::-webkit-scrollbar { height: 4px; }
+    .scenario-selector::-webkit-scrollbar-thumb { background: #c5cad2; border-radius: 2px; }
+    .scenario-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; padding: 14px 12px;
+      border: none; border-radius: 0; background: transparent;
+      cursor: pointer; transition: all var(--transition); font-family: var(--font-family); text-align: center;
+      position: relative;
+    }
+    /* 首尾按钮圆角 */
+    .scenario-btn:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
+    .scenario-btn:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+    /* 分隔线 */
+    .scenario-btn + .scenario-btn {
+      margin-left: -1px;
+      border-left: 1px solid #e5e7eb;
+    }
+    /* 底部下划线指示器 */
+    .scenario-btn::after {
+      content: ''; position: absolute; bottom: 0; left: 20%; right: 20%;
+      height: 2px; background: transparent; transition: background var(--transition);
+    }
+    .scenario-btn:hover { background: rgba(0,0,0,0.02); }
+    .scenario-btn.active {
+      background: linear-gradient(135deg, #e8f0fe 0%, #d4e4fc 100%);
+    }
+    .scenario-btn.active::after {
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    }
+    .scenario-btn .scenario-icon {
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      border-radius: 10px; background: #f3f5f8; transition: all var(--transition);
+    }
+    .scenario-btn.active .scenario-icon {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      box-shadow: 0 2px 8px rgba(59,130,246,0.25);
+    }
+    .scenario-btn .scenario-icon svg { width: 20px; height: 20px; color: #6b7c93; transition: color var(--transition); }
+    .scenario-btn.active .scenario-icon svg { color: #ffffff; }
+    .scenario-btn .scenario-desc {
+      font-size: 14px; color: #6b7c93; font-weight: 600; line-height: 1.4;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;
+      transition: color var(--transition);
+    }
+    .scenario-btn.active .scenario-desc { color: #1e4a8a; font-weight: 700; }
+
+    /* Scenario form card */
+    .scenario-card { background: #f3f5f8; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); overflow: hidden; display: none; }
+    .scenario-card.active { display: block; }
+    .scenario-card-header { padding: var(--spacing-lg) var(--spacing-xl); border-bottom: 1px solid var(--color-border); background: #ffffff; }
+    .scenario-card-title { font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: #1e4a8a; }
+    .scenario-card-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: var(--font-weight-semibold); }
+    .scenario-card-badge.high { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .scenario-card-badge.medium { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+    .scenario-card-badge.low { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .scenario-card-body { padding: var(--spacing-xl); }
+    .scenario-definition { padding: var(--spacing-md); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--spacing-lg); line-height: 1.7; }
+    .scenario-definition.success { background: var(--color-success-bg); border-left: 3px solid var(--color-success); }
+    .scenario-definition.warning { background: var(--color-warning-bg); border-left: 3px solid var(--color-warning); }
+    .scenario-definition.info { background: var(--color-accent-light); border-left: 3px solid var(--color-accent); }
+    .scenario-definition.error { background: var(--color-error-bg); border-left: 3px solid var(--color-error); }
+
+    /* Level selector - radio buttons */
+    .level-selector { margin-bottom: var(--spacing-lg); padding: var(--spacing-md); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent); background: var(--color-accent-light); }
+    .level-selector label { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+    .level-radio-group { display: inline-flex; gap: 4px; margin-left: 8px; }
+    .level-radio { display: none; }
+    .level-radio-label {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 5px 12px; border-radius: 20px;
+      border: 1px solid var(--color-border); background: var(--color-bg-primary);
+      font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);
+      color: var(--color-text-secondary); cursor: pointer;
+      transition: all var(--transition); white-space: nowrap;
+    }
+    .level-radio-label:hover { border-color: var(--color-accent); color: var(--color-accent); }
+    .level-radio:checked + .level-radio-label {
+      background: var(--color-accent); color: #fff; border-color: var(--color-accent);
+      box-shadow: 0 1px 4px rgba(59,130,246,0.25);
+    }
+    .level-hint { margin-top: 6px; display: block; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+
+    /* Form grid - two column layout: label on top, input below */
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: var(--spacing-lg); background: linear-gradient(135deg, #f0f7ff 0%, #e8f2ff 100%); border-radius: var(--radius-md); padding: var(--spacing-xl); border: 1px solid #c8ddf5; box-shadow: inset 0 1px 4px rgba(59,130,246,0.06); }
+    .form-grid .form-field.full-width { grid-column: 1 / -1; }
+    .form-field { display: flex; flex-direction: column; gap: 6px; }
+    .form-field-label {
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-bottom: 2px;
+    }
+    .form-field-input { width: 100%; }
+    .form-field-hint { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+    .form-field-value { font-weight: var(--font-weight-semibold); color: var(--color-accent); font-size: var(--font-size-sm); }
+    .form-input { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: var(--font-size-sm); font-family: var(--font-family); transition: all var(--transition); width: 100%; }
+    .form-input:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+    .form-input-inline { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: var(--font-size-sm); font-family: var(--font-family); width: 80px; transition: all var(--transition); }
+    .form-input-inline:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+    .form-input-inline.w60 { width: 60px; }
+    .form-input-inline.w140 { width: 140px; }
+    .form-hint { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-left: 8px; }
+    .form-hint.success { color: var(--color-success); font-weight: var(--font-weight-semibold); }
+    .form-hint.warning { color: var(--color-warning); font-weight: var(--font-weight-semibold); }
+    .form-hint.error { color: var(--color-error); font-weight: var(--font-weight-semibold); }
+    .form-hint.accent { color: var(--color-accent); font-weight: var(--font-weight-semibold); }
+    .form-value { font-weight: var(--font-weight-semibold); color: var(--color-accent); }
+    .form-checkbox { margin-right: 4px; cursor: pointer; }
+    .form-checkbox-label { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: background var(--transition); font-size: var(--font-size-sm); }
+    .form-checkbox-label:hover { background: var(--color-bg-hover); }
+    .form-checkbox-label.checked { background: var(--color-accent-light); border: 1px solid var(--color-accent); }
+
+    /* Summary */
+    .summary-panel { margin-top: var(--spacing-lg); padding: var(--spacing-lg); background: var(--color-info-bg); border-radius: var(--radius-md); border-left: 3px solid var(--color-accent); }
+    .summary-panel-title { font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-md); }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--spacing-md); font-size: var(--font-size-sm); }
+    .summary-item { display: flex; justify-content: space-between; padding: var(--spacing-sm) 0; }
+    .summary-item-label { color: var(--color-text-secondary); }
+    .summary-item-value { font-weight: var(--font-weight-semibold); }
+    .summary-item-value.total { color: var(--color-error); font-size: var(--font-size-lg); }
+
+    /* Example */
+    .example-box { margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); line-height: 1.7; }
+
+    /* Standard reference */
+    .std-ref { margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); line-height: 1.8; }
+
+    /* Compliance */
+    .compliance-box { margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--color-success-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 2; }
+
+    /* 标准数值红色加粗 */
+    .std-number { color: var(--color-error); font-weight: var(--font-weight-bold); }
+
+    /* Actions */
+    .action-bar { display: flex; gap: var(--spacing-md); margin-top: var(--spacing-xl); justify-content: flex-end; }
+    .action-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-sm); font-family: var(--font-family); font-weight: var(--font-weight-medium); transition: all var(--transition); color: var(--color-text-primary); }
+    .action-btn:hover { background: var(--color-bg-hover); border-color: var(--color-accent); }
+    .action-btn.primary { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .action-btn.primary:hover { background: #2563eb; }
+    .action-btn.success { background: var(--color-success); color: #fff; border-color: var(--color-success); }
+    .action-btn.success:hover { background: #059669; }
+
+    /* Toast */
+    .save-toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 24px; background: var(--color-success); color: #fff; border-radius: var(--radius-md); font-size: var(--font-size-sm); box-shadow: var(--shadow-card-hover); opacity: 0; transform: translateY(10px); transition: all 300ms ease; pointer-events: none; z-index: 999; }
+    .save-toast.show { opacity: 1; transform: translateY(0); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-wrapper { padding: var(--spacing-xl) var(--spacing-md); }
+      .scenario-selector { flex-wrap: nowrap; }
+      .scenario-btn { padding: 12px 8px; gap: 5px; }
+      .scenario-btn:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
+      .scenario-btn:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+      .scenario-btn .scenario-icon { width: 32px; height: 32px; border-radius: 8px; }
+      .scenario-btn .scenario-icon svg { width: 18px; height: 18px; }
+      .scenario-btn .scenario-desc { font-size: 12px; max-width: 80px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-field-label { font-size: 11px; }
+      .form-input-inline { width: 60px; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .action-bar { flex-direction: column; }
+      .action-btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <a href="index.html" class="back-link">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      返回录入首页
+    </a>
+
+
+    <!-- Scenario Selector -->
+    <div class="scenario-selector">
+      <button class="scenario-btn active" onclick="selectScenario('A')">
+        <span class="scenario-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
+        </span>
+        <span class="scenario-desc">商务场景</span>
+      </button>
+      <button class="scenario-btn" onclick="selectScenario('B')">
+        <span class="scenario-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </span>
+        <span class="scenario-desc">外事招待场景</span>
+      </button>
+      <button class="scenario-btn" onclick="selectScenario('C')">
+        <span class="scenario-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>
+        </span>
+        <span class="scenario-desc">其他公务招待场景</span>
+      </button>
+      <button class="scenario-btn" onclick="selectScenario('D')">
+        <span class="scenario-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 21v3"/><path d="M15 21v3"/><path d="M21 9h-3"/><path d="M21 15h-3"/><path d="M3 9H6"/><path d="M3 15H6"/></svg>
+        </span>
+        <span class="scenario-desc">内部业务招待场景</span>
+      </button>
+      <button class="scenario-btn" onclick="selectScenario('E')">
+        <span class="scenario-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        </span>
+        <span class="scenario-desc">工作餐场景</span>
+      </button>
+      <button class="scenario-btn" onclick="selectScenario('F')">
+        <span class="scenario-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V4a2 2 0 0 0-2-2z"/><path d="M14 2v6"/><path d="M9 15l2-2 2 2"/></svg>
+        </span>
+        <span class="scenario-desc">党政军机关场景</span>
+      </button>
+    </div>
+
+    <!-- Scenario A: 商务场景 -->
+    <div id="scenario-A" class="scenario-card active">
+      <div class="scenario-card-header">
+        <span class="scenario-card-title">商务场景</span>
+      </div>
+      <div class="scenario-card-body">
+        <div class="scenario-definition info">
+          <strong>场景定义：</strong>在商业谈判或商业合作中招待客户、合资合作方、经贸联络考察团组的活动。<strong>商务场景对象不包括党政军机关工作人员和国有企业集团总部工作人员。</strong>
+        </div>
+
+        <div class="level-selector">
+          <label style="color: var(--color-error); font-weight: var(--font-weight-bold);">🧑‍💼 招待人员级别（必选）：</label>
+          <div class="level-radio-group">
+            <input type="radio" name="scenario-A-level" id="scenario-A-level-sheng" class="level-radio" value="省管中层" onchange="onLevelChange('A')">
+            <label for="scenario-A-level-sheng" class="level-radio-label">省管中层</label>
+            <input type="radio" name="scenario-A-level" id="scenario-A-level-shi" class="level-radio" value="市管中层" onchange="onLevelChange('A')">
+            <label for="scenario-A-level-shi" class="level-radio-label">市管中层</label>
+            <input type="radio" name="scenario-A-level" id="scenario-A-level-qi" class="level-radio" value="其他人员" onchange="onLevelChange('A')">
+            <label for="scenario-A-level-qi" class="level-radio-label">其他人员</label>
+          </div>
+          <span id="scenario-A-level-hint" class="level-hint"></span>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <span class="form-field-label">招待类型</span>
+            <span>□ 商务场景</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待日期</span>
+            <input type="date" id="scenario-A-date" class="form-input">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待地点</span>
+            <input type="text" id="scenario-A-location" class="form-input" placeholder="请输入招待地点">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象单位</span>
+            <input type="text" id="scenario-A-org" class="form-input" placeholder="请输入招待对象单位">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-A-guests" min="1" class="form-input-inline" placeholder="人数" oninput="onGuestsChange('A','external'); calculateScenarioA();" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人员</span>
+            <input type="text" id="scenario-A-accompany-people" class="form-input" placeholder="请输入陪同人员姓名">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-A-accompany-count" min="0" class="form-input-inline" placeholder="人数" oninput="calculateScenarioA();" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+              <span id="scenario-A-accompany-hint" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">人均餐标</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-A-per-capita" min="0" step="0.01" class="form-input-inline" placeholder="金额" oninput="calculateScenarioA();" style="width:100px;">
+              <span class="form-hint">元/人·次</span>
+              <span class="form-hint">（标准：<span id="scenario-A-std-capita">—</span>）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">餐费合计</span>
+            <span class="form-field-value"><span id="scenario-A-meal-total">¥0.00</span> 元</span>
+            <span class="form-field-hint" id="scenario-A-meal-formula">人均餐标 × 招待人数</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">白酒单价</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-A-baijiu-price" min="0" step="0.01" class="form-input-inline" placeholder="单价" oninput="calculateScenarioA();" style="width:100px;">
+              <span class="form-hint">元/500ml</span>
+              <span class="form-hint">（标准：<span id="scenario-A-std-baijiu">—</span>）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">红酒单价</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-A-wine-price" min="0" step="0.01" class="form-input-inline" placeholder="单价" oninput="calculateScenarioA();" style="width:100px;">
+              <span class="form-hint">元/750ml</span>
+              <span class="form-hint">（标准：<span id="scenario-A-std-wine">—</span>）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">纪念品</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 无</span>
+              <span>□ 有：<input type="number" id="scenario-A-gift-per" min="0" step="0.01" class="form-input-inline" placeholder="金额" oninput="calculateScenarioA();" style="width:80px;"> 元/人·次</span>
+              <span class="form-hint">（标准：<span id="scenario-A-std-gift">—</span>）</span>
+              <span id="scenario-A-gift-status" class="form-hint"></span>
+            </div>
+            <span class="form-field-hint">纪念品小计：<span id="scenario-A-gift-total" class="form-value">¥0.00</span> 元</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">酒水限制</span>
+            <span class="form-hint">标准：<span id="scenario-A-alcohol-std">—</span></span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">住宿情况</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 无</span>
+              <span>□ 有：<input type="number" id="scenario-A-rooms" min="0" class="form-input-inline w60" placeholder="间数"> 间</span>
+              <span>×</span>
+              <input type="number" id="scenario-A-room-price" min="0" step="0.01" class="form-input-inline" placeholder="单价" oninput="calculateScenarioA();" style="width:100px;">
+              <span>元/间·夜</span>
+              <span>= <span id="scenario-A-room-total" class="form-value">¥0.00</span> 元</span>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">附件清单</span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 业务招待申请单</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 发票</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 支付凭证</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 招待单位认证</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 活动函件</label>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">招待事由</span>
+            <input type="text" id="scenario-A-reason" class="form-input" placeholder="请输入招待事由">
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">招待对象身份</span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 客户</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 合资合作方</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 经贸联络团组</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-panel">
+          <div class="summary-panel-title">💰 费用汇总</div>
+          <div class="summary-grid">
+            <div class="summary-item"><span class="summary-item-label">🍽️ 餐费</span><span id="scenario-A-summary-meal" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">🍷 酒水</span><span id="scenario-A-summary-alcohol" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">🎁 纪念品</span><span id="scenario-A-summary-gift" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">🏨 住宿</span><span id="scenario-A-summary-room" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">📊 合计</span><span id="scenario-A-summary-total" class="summary-item-value total">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">📝 人均</span><span id="scenario-A-summary-per" class="summary-item-value">¥0.00/人</span></div>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <strong>📌 具体例子：</strong><br>
+          清远移动市场部<strong>张三</strong>接待<strong>华为技术有限公司清远办事处</strong>李四一行3人，洽谈5G基站共建合作事宜，在清远市清城区某酒店宴请，人均餐标280元/人，金额合计840元。
+        </div>
+
+        <div class="std-ref" id="scenario-A-std-ref">
+          <strong>📊 餐标参考（按人员级别）：</strong><br>
+          省管中层：外事/商务场景 ≤<span class="std-number">400</span>元/人·次 · 纪念品 ≤<span class="std-number">400</span>元/人·次 · 酒水 白酒≤<span class="std-number">400</span>元/500ml，红酒≤<span class="std-number">400</span>元/750ml<br>
+          市管中层：外事/商务场景 ≤<span class="std-number">300</span>元/人·次 · 纪念品 ≤<span class="std-number">300</span>元/人·次 · 酒水 白酒≤<span class="std-number">300</span>元/500ml，红酒≤<span class="std-number">300</span>元/750ml<br>
+          其他人员：外事/商务场景 ≤<span class="std-number">200</span>元/人·次 · 纪念品 ≤<span class="std-number">200</span>元/人·次 · 酒水 白酒≤<span class="std-number">200</span>元/500ml，红酒≤<span class="std-number">200</span>元/750ml
+        </div>
+
+        <div class="compliance-box">
+          <strong>合规自查：</strong>
+          <br>☐ 陪同人数符合规定（≤5人可对等，&gt;5人不超超过部分的1/2）
+          <br>☐ 人均餐标未超标
+          <br>☐ 未提供鱼翅、燕窝等禁止菜肴
+          <br>☐ 未安排在私人会所及高档娱乐场所
+          <br>☐ 未赠送现金、购物卡等禁止礼品
+        </div>
+      </div>
+    </div>
+
+    <!-- Scenario B: 外事招待 -->
+    <div id="scenario-B" class="scenario-card">
+      <div class="scenario-card-header">
+        <span class="scenario-card-title">外事招待场景</span>
+      </div>
+      <div class="scenario-card-body">
+        <div class="scenario-definition info">
+          <strong>场景定义：</strong>因公招待外宾或其他外籍关系人员的活动。
+        </div>
+
+        <div class="level-selector">
+          <label style="color: var(--color-error); font-weight: var(--font-weight-bold);">🧑‍💼 招待人员级别（必选）：</label>
+          <div class="level-radio-group">
+            <input type="radio" name="scenario-B-level" id="scenario-B-level-sheng" class="level-radio" value="省管中层" onchange="onLevelChange('B')">
+            <label for="scenario-B-level-sheng" class="level-radio-label">省管中层</label>
+            <input type="radio" name="scenario-B-level" id="scenario-B-level-shi" class="level-radio" value="市管中层" onchange="onLevelChange('B')">
+            <label for="scenario-B-level-shi" class="level-radio-label">市管中层</label>
+            <input type="radio" name="scenario-B-level" id="scenario-B-level-qi" class="level-radio" value="其他人员" onchange="onLevelChange('B')">
+            <label for="scenario-B-level-qi" class="level-radio-label">其他人员</label>
+          </div>
+          <span id="scenario-B-level-hint" class="level-hint"></span>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <span class="form-field-label">招待类型</span>
+            <span>□ 外事招待</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待日期</span>
+            <input type="date" id="scenario-B-date" class="form-input">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待地点</span>
+            <input type="text" id="scenario-B-location" class="form-input" placeholder="请输入招待地点">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象单位</span>
+            <input type="text" id="scenario-B-org" class="form-input" placeholder="请输入招待对象单位">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象国籍</span>
+            <input type="text" id="scenario-B-nationality" class="form-input" placeholder="请输入国籍">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-B-guests" min="1" class="form-input-inline" placeholder="人数" oninput="onGuestsChange('B','external'); calculateScenarioB();" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人员</span>
+            <input type="text" id="scenario-B-accompany-people" class="form-input" placeholder="请输入陪同人员姓名">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-B-accompany-count" min="0" class="form-input-inline" placeholder="人数" oninput="calculateScenarioB();" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+              <span id="scenario-B-accompany-hint" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">人均餐标</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-B-per-capita" min="0" step="0.01" class="form-input-inline" placeholder="金额" oninput="calculateScenarioB();" style="width:100px;">
+              <span class="form-hint">元/人·次</span>
+              <span class="form-hint">（标准：<span id="scenario-B-std-capita">—</span>）</span>
+              <span id="scenario-B-capita-status" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">餐费合计</span>
+            <span class="form-field-value"><span id="scenario-B-meal-total">¥0.00</span> 元</span>
+            <span class="form-field-hint" id="scenario-B-meal-formula">人均餐标 × 招待人数</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">白酒单价</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-B-baijiu-price" min="0" step="0.01" class="form-input-inline" placeholder="单价" oninput="calculateScenarioB();" style="width:100px;">
+              <span class="form-hint">元/500ml</span>
+              <span class="form-hint">（标准：<span id="scenario-B-std-baijiu">—</span>）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">红酒单价</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-B-wine-price" min="0" step="0.01" class="form-input-inline" placeholder="单价" oninput="calculateScenarioB();" style="width:100px;">
+              <span class="form-hint">元/750ml</span>
+              <span class="form-hint">（标准：<span id="scenario-B-std-wine">—</span>）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">纪念品</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 无</span>
+              <span>□ 有：<input type="number" id="scenario-B-gift-per" min="0" step="0.01" class="form-input-inline" placeholder="金额" oninput="calculateScenarioB();" style="width:80px;"> 元/人·次</span>
+              <span class="form-hint">（标准：<span id="scenario-B-std-gift">—</span>）</span>
+              <span id="scenario-B-gift-status" class="form-hint"></span>
+            </div>
+            <span class="form-field-hint">纪念品小计：<span id="scenario-B-gift-total" class="form-value">¥0.00</span> 元</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">酒水限制</span>
+            <span class="form-hint">标准：<span id="scenario-B-alcohol-std">—</span></span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">住宿情况</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 无</span>
+              <span>□ 有：<input type="number" id="scenario-B-rooms" min="0" class="form-input-inline w60" placeholder="间数"> 间</span>
+              <span>×</span>
+              <input type="number" id="scenario-B-room-price" min="0" step="0.01" class="form-input-inline" placeholder="单价" oninput="calculateScenarioB();" style="width:100px;">
+              <span>元/间·夜</span>
+              <span>= <span id="scenario-B-room-total" class="form-value">¥0.00</span> 元</span>
+              <span id="scenario-B-room-hint" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">附件清单</span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 业务招待申请单</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 发票</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 支付凭证</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 外宾认证</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 活动函件</label>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">招待事由</span>
+            <input type="text" id="scenario-B-reason" class="form-input" placeholder="请输入招待事由">
+          </div>
+        </div>
+
+        <div class="summary-panel">
+          <div class="summary-panel-title">💰 费用汇总</div>
+          <div class="summary-grid">
+            <div class="summary-item"><span class="summary-item-label">🍽️ 餐费</span><span id="scenario-B-summary-meal" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">🍷 酒水</span><span id="scenario-B-summary-alcohol" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">🎁 纪念品</span><span id="scenario-B-summary-gift" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">🏨 住宿</span><span id="scenario-B-summary-room" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">📊 合计</span><span id="scenario-B-summary-total" class="summary-item-value total">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">📝 人均</span><span id="scenario-B-summary-per" class="summary-item-value">¥0.00/人</span></div>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <strong>📌 具体例子：</strong><br>
+          清远移动网络部<strong>王五</strong>接待<strong>泰国电信协会（TOT）</strong>考察团5人，参观清远5G智慧工厂示范项目，在清远市某涉外酒店宴请，人均餐标350元/人，金额合计1750元，安排3间标准间住宿。
+        </div>
+
+        <div class="compliance-box">
+          <strong>合规自查：</strong>
+          <br>☐ 陪同人数符合规定
+          <br>☐ 人均餐标未超标
+          <br>☐ 住宿标准符合规定（一般人员单间/标准间，特别重要人员普通套间）
+          <br>☐ 未提供禁止菜肴
+          <br>☐ 纪念品符合外事招待标准
+        </div>
+      </div>
+    </div>
+
+    <!-- Scenario C: 其他公务招待 -->
+    <div id="scenario-C" class="scenario-card">
+      <div class="scenario-card-header">
+        <span class="scenario-card-title">其他公务招待场景</span>
+      </div>
+      <div class="scenario-card-body">
+        <div class="scenario-definition info">
+          <strong>场景定义：</strong>招待党政军机关工作人员（参照《党政机关国内公务接待管理规定》）、其他政府机构、事业单位的公务活动。
+        </div>
+
+        <div class="level-selector">
+          <label style="color: var(--color-error); font-weight: var(--font-weight-bold);">🧑‍💼 招待人员级别（必选）：</label>
+          <div class="level-radio-group">
+            <input type="radio" name="scenario-C-level" id="scenario-C-level-sheng" class="level-radio" value="省管中层" onchange="onLevelChange('C')">
+            <label for="scenario-C-level-sheng" class="level-radio-label">省管中层</label>
+            <input type="radio" name="scenario-C-level" id="scenario-C-level-shi" class="level-radio" value="市管中层" onchange="onLevelChange('C')">
+            <label for="scenario-C-level-shi" class="level-radio-label">市管中层</label>
+            <input type="radio" name="scenario-C-level" id="scenario-C-level-qi" class="level-radio" value="其他人员" onchange="onLevelChange('C')">
+            <label for="scenario-C-level-qi" class="level-radio-label">其他人员</label>
+          </div>
+          <span id="scenario-C-level-hint" class="level-hint"></span>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <span class="form-field-label">招待类型</span>
+            <span>□ 其他公务招待</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待日期</span>
+            <input type="date" id="scenario-C-date" class="form-input">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待地点</span>
+            <input type="text" id="scenario-C-location" class="form-input" placeholder="请输入招待地点">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象单位</span>
+            <input type="text" id="scenario-C-org" class="form-input" placeholder="请输入招待对象单位">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-C-guests" min="1" class="form-input-inline" placeholder="人数" oninput="onGuestsChange('C','external'); calculateScenarioC();" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人员</span>
+            <input type="text" id="scenario-C-accompany-people" class="form-input" placeholder="请输入陪同人员姓名">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-C-accompany-count" min="0" class="form-input-inline" placeholder="人数" oninput="calculateScenarioC();" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+              <span id="scenario-C-accompany-hint" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">人均餐标</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-C-per-capita" min="0" step="0.01" class="form-input-inline" placeholder="金额" oninput="calculateScenarioC();" style="width:100px;">
+              <span class="form-hint">元/人·次</span>
+              <span class="form-hint">（标准：<span id="scenario-C-std-capita">—</span>）</span>
+              <span id="scenario-C-capita-status" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">餐费合计</span>
+            <span class="form-field-value"><span id="scenario-C-meal-total">¥0.00</span> 元</span>
+            <span class="form-field-hint" id="scenario-C-meal-formula">人均餐标 × 招待人数</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">白酒单价</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-C-baijiu-price" min="0" step="0.01" class="form-input-inline" placeholder="单价" oninput="calculateScenarioC();" style="width:100px;">
+              <span class="form-hint">元/500ml</span>
+              <span class="form-hint">（标准：<span id="scenario-C-std-baijiu">—</span>）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">红酒单价</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-C-wine-price" min="0" step="0.01" class="form-input-inline" placeholder="单价" oninput="calculateScenarioC();" style="width:100px;">
+              <span class="form-hint">元/750ml</span>
+              <span class="form-hint">（标准：<span id="scenario-C-std-wine">—</span>）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">是否赠送纪念品</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 无</span>
+              <span class="form-hint error">（⚠️ 其他公务招待不得赠送纪念品）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">酒水限制</span>
+            <span class="form-hint">标准：<span id="scenario-C-alcohol-std">—</span></span>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">附件清单</span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 业务招待申请单</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 发票</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 支付凭证</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 招待单位认证</label>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">招待事由</span>
+            <input type="text" id="scenario-C-reason" class="form-input" placeholder="请输入招待事由">
+          </div>
+        </div>
+
+        <div class="summary-panel">
+          <div class="summary-panel-title">💰 费用汇总</div>
+          <div class="summary-grid">
+            <div class="summary-item"><span class="summary-item-label">🍽️ 餐费</span><span id="scenario-C-summary-meal" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">🍷 酒水</span><span id="scenario-C-summary-alcohol" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">📊 合计</span><span id="scenario-C-summary-total" class="summary-item-value total">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">📝 人均</span><span id="scenario-C-summary-per" class="summary-item-value">¥0.00/人</span></div>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <strong>📌 具体例子：</strong><br>
+          清远移动综合部<strong>赵六</strong>接待<strong>清远市工信局</strong>钱七一行4人，沟通清城区5G覆盖推进工作，在清远移动食堂工作餐，人均餐标120元/人，金额合计480元。
+        </div>
+
+        <div class="compliance-box">
+          <strong>合规自查：</strong>
+          <br>☐ 陪同人数符合规定
+          <br>☐ 人均餐标未超标
+          <br>☐ <strong style="color: var(--color-error);">未赠送纪念品</strong>（其他公务招待严禁赠送）
+          <br>☐ 未提供禁止菜肴
+          <br>☐ 未安排在高档娱乐场所
+        </div>
+      </div>
+    </div>
+
+    <!-- Scenario D: 内部业务招待 -->
+    <div id="scenario-D" class="scenario-card">
+      <div class="scenario-card-header">
+        <span class="scenario-card-title">内部业务招待场景</span>
+      </div>
+      <div class="scenario-card-body">
+        <div class="scenario-definition success">
+          <strong>✅ 适用条件：</strong>集团公司或外省兄弟单位到访清远公司（不同城），开展公务活动期间<strong>可安排内部业务招待或工作餐</strong>。
+        </div>
+        <div class="scenario-definition warning">
+          <strong>⚠️ 不适用条件：</strong>广东公司与同城专业公司，以及广东公司内部各单位之间开展公务活动期间，<strong>原则上不安排内部业务招待，但可视情况安排工作餐</strong>。
+        </div>
+        <div class="scenario-definition info">
+          <strong>场景定义：</strong>集团公司内部上下级单位之间、平级单位之间的公务招待活动。
+        </div>
+
+        <div class="level-selector">
+          <label style="color: var(--color-error); font-weight: var(--font-weight-bold);">🧑‍💼 招待人员级别（必选）：</label>
+          <div class="level-radio-group">
+            <input type="radio" name="scenario-D-level" id="scenario-D-level-sheng" class="level-radio" value="省管中层" onchange="onLevelChange('D')">
+            <label for="scenario-D-level-sheng" class="level-radio-label">省管中层</label>
+            <input type="radio" name="scenario-D-level" id="scenario-D-level-shi" class="level-radio" value="市管中层" onchange="onLevelChange('D')">
+            <label for="scenario-D-level-shi" class="level-radio-label">市管中层</label>
+            <input type="radio" name="scenario-D-level" id="scenario-D-level-qi" class="level-radio" value="其他人员" onchange="onLevelChange('D')">
+            <label for="scenario-D-level-qi" class="level-radio-label">其他人员</label>
+          </div>
+          <span id="scenario-D-level-hint" class="level-hint"></span>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <span class="form-field-label">招待类型</span>
+            <span>□ 内部业务招待</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待日期</span>
+            <input type="date" id="scenario-D-date" class="form-input">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待地点</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 单位食堂</span>
+              <span>□ 其他</span>
+              <input type="text" id="scenario-D-location" class="form-input" placeholder="请输入招待地点" style="max-width:200px;">
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象单位</span>
+            <input type="text" id="scenario-D-org" class="form-input" placeholder="请输入招待对象单位">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-D-guests" min="1" class="form-input-inline" placeholder="人数" oninput="onGuestsChange('D','internal'); calculateScenarioD();" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人员</span>
+            <input type="text" id="scenario-D-accompany-people" class="form-input" placeholder="请输入陪同人员姓名">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-D-accompany-count" min="0" class="form-input-inline" placeholder="人数" oninput="calculateScenarioD();" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+              <span id="scenario-D-accompany-hint" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">人均餐标</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-D-per-capita" min="0" step="0.01" class="form-input-inline" placeholder="金额" oninput="calculateScenarioD();" style="width:100px;">
+              <span class="form-hint">元/人·次</span>
+              <span class="form-hint">（标准：<span id="scenario-D-std-capita">—</span>）</span>
+              <span id="scenario-D-capita-status" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">餐费合计</span>
+            <span class="form-field-value"><span id="scenario-D-meal-total">¥0.00</span> 元</span>
+            <span class="form-field-hint" id="scenario-D-meal-formula">人均餐标 × 招待人数</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">酒水情况</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 无酒水</span>
+              <span class="form-hint warning">（内部招待不上烟酒）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">是否赠送纪念品</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 无</span>
+              <span class="form-hint error">（⚠️ 内部招待不得赠送纪念品）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">酒水限制</span>
+            <span class="form-hint">标准：<span id="scenario-D-alcohol-std">—</span></span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">是否工作餐</span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 是（≤60元/人）</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 否</label>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待人级别</span>
+            <span id="scenario-D-level-display" class="form-hint accent">—</span>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">附件清单</span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 业务招待申请单</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 发票</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 支付凭证</label>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">招待事由</span>
+            <input type="text" id="scenario-D-reason" class="form-input" placeholder="请输入招待事由">
+          </div>
+        </div>
+
+        <div class="summary-panel">
+          <div class="summary-panel-title">💰 费用汇总</div>
+          <div class="summary-grid">
+            <div class="summary-item"><span class="summary-item-label">🍽️ 餐费</span><span id="scenario-D-summary-meal" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">📊 合计</span><span id="scenario-D-summary-total" class="summary-item-value total">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">📝 人均</span><span id="scenario-D-summary-per" class="summary-item-value">¥0.00/人</span></div>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <strong>📌 具体例子：</strong><br>
+          清远移动财务部<strong>孙八</strong>接待<strong>广东移动财务部</strong>周九一行3人，交流年度预算编制工作，在清远移动食堂用餐，人均餐标100元/人，金额合计300元。<br><br>
+          <em>注：若来访单位为<strong>集团公司（北京）</strong>或<strong>外省兄弟单位</strong>（如广州公司、深圳公司），则可安排内部业务招待；若为<strong>省内同城单位</strong>，原则上不安排，可视情况安排工作餐。</em>
+        </div>
+
+        <div class="std-ref" id="scenario-D-std-ref">
+          <strong>📊 餐标参考（按招待主体）：</strong><br>
+          省管中层经理：≤<span class="std-number">150</span>元/人·次 · 不得进行商务宴请，不上烟酒、不得赠送纪念品<br>
+          市管中层经理：≤<span class="std-number">150</span>元/人·次 · 不得进行商务宴请，不上烟酒、不得赠送纪念品<br>
+          其他人员：≤<span class="std-number">100</span>元/人·次 · 不得进行商务宴请，不上烟酒、不得赠送纪念品<br><br>
+          <strong>📊 陪餐人数限制：</strong><br>
+          ≤<span class="std-number">10</span>人：≤<span class="std-number">3</span>人<br>
+          ><span class="std-number">10</span>人：不超过招待对象的三分之一
+        </div>
+
+        <div class="compliance-box">
+          <strong>合规自查：</strong>
+          <br>☐ 陪同人数符合规定（≤10人不超3人，&gt;10人不超1/3）
+          <br>☐ 人均餐标未超标（省管/市管≤150元，其他≤100元）
+          <br>☐ <strong style="color: var(--color-error);">未上烟酒</strong>
+          <br>☐ <strong style="color: var(--color-error);">未赠送纪念品</strong>
+          <br>☐ <strong style="color: var(--color-error);">未进行商务宴请</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scenario E: 工作餐 -->
+    <div id="scenario-E" class="scenario-card">
+      <div class="scenario-card-header">
+        <span class="scenario-card-title">工作餐场景</span>
+      </div>
+      <div class="scenario-card-body">
+        <div class="scenario-definition warning">
+          <strong>⚠️ 适用条件：</strong>广东公司与同城专业公司，以及广东公司内部各单位之间开展公务活动期间，<strong>原则上不安排内部业务招待，但可视情况安排工作餐</strong>。
+        </div>
+        <div class="scenario-definition info">
+          <strong>场景定义：</strong>员工在单位食堂用餐，或外出调研/出差无法在食堂用餐时就近安排的工作餐。
+        </div>
+
+        <div class="level-selector">
+          <label style="color: var(--color-error); font-weight: var(--font-weight-bold);">🧑‍💼 用餐人员级别（必选）：</label>
+          <div class="level-radio-group">
+            <input type="radio" name="scenario-E-level" id="scenario-E-level-sheng" class="level-radio" value="省管中层" onchange="onLevelChange('E')">
+            <label for="scenario-E-level-sheng" class="level-radio-label">省管中层</label>
+            <input type="radio" name="scenario-E-level" id="scenario-E-level-shi" class="level-radio" value="市管中层" onchange="onLevelChange('E')">
+            <label for="scenario-E-level-shi" class="level-radio-label">市管中层</label>
+            <input type="radio" name="scenario-E-level" id="scenario-E-level-qi" class="level-radio" value="其他人员" onchange="onLevelChange('E')">
+            <label for="scenario-E-level-qi" class="level-radio-label">其他人员</label>
+          </div>
+          <span id="scenario-E-level-hint" class="level-hint"></span>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field full-width">
+            <span class="form-field-label">用餐类型</span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 单位食堂</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 外出调研用餐</label>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">用餐日期</span>
+            <input type="date" id="scenario-E-date" class="form-input">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">用餐地点</span>
+            <input type="text" id="scenario-E-location" class="form-input" placeholder="请输入用餐地点">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">用餐人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-E-guests" min="1" class="form-input-inline" placeholder="人数" oninput="calculateScenarioE();" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">人均餐标</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-E-per-capita" min="0" step="0.01" class="form-input-inline" placeholder="金额" oninput="calculateScenarioE();" style="width:100px;">
+              <span class="form-hint">元/人</span>
+              <span class="form-hint">（标准：<span id="scenario-E-std-capita">—</span>）</span>
+              <span id="scenario-E-capita-status" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">用餐金额合计</span>
+            <span class="form-field-value"><span id="scenario-E-meal-total">¥0.00</span> 元</span>
+            <span class="form-field-hint" id="scenario-E-meal-formula">人均餐标 × 用餐人数</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">酒水限制</span>
+            <span class="form-hint">标准：<span id="scenario-E-alcohol-std">—</span></span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">出差人员交费</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 已交纳伙食补贴</span>
+              <span>□ 未交纳（需补交：<input type="number" id="scenario-E-fee" min="0" step="0.01" class="form-input-inline" placeholder="金额" style="width:80px;"> 元）</span>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">附件清单</span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 发票</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 支付凭证</label>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">用餐事由</span>
+            <input type="text" id="scenario-E-reason" class="form-input" placeholder="请输入用餐事由">
+          </div>
+        </div>
+
+        <div class="summary-panel">
+          <div class="summary-panel-title">💰 费用汇总</div>
+          <div class="summary-grid">
+            <div class="summary-item"><span class="summary-item-label">🍽️ 餐费</span><span id="scenario-E-summary-meal" class="summary-item-value">¥0.00</span></div>
+            <div class="summary-item"><span class="summary-item-label">📝 人均</span><span id="scenario-E-summary-per" class="summary-item-value">¥0.00/人</span></div>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <strong>📌 具体例子：</strong><br>
+          清远移动计财部<strong>吴十</strong>赴<strong>连州市</strong>调研乡镇宽带覆盖项目，因连州当地无食堂，在连州市区某餐馆工作餐，5人用餐，人均55元/人，金额合计275元。<br><br>
+          <em>或：清远移动与<strong>同城专业公司</strong>（如清远铁塔公司）工作人员交流项目合作，在清远移动食堂安排工作餐，人均60元/人。</em>
+        </div>
+
+        <div class="std-ref" id="scenario-E-std-ref">
+          <strong>📊 工作餐标准参考：</strong><br>
+          单位食堂：参照食堂正常标准或差旅伙食补贴（优先自助形式，不上烟酒）<br>
+          外出调研：参照上述标准就近安排（出差人员已领差旅伙食补贴的应交纳费用）
+        </div>
+
+        <div class="compliance-box">
+          <strong>合规自查：</strong>
+          <br>☐ 参照食堂正常标准或差旅伙食补贴
+          <br>☐ 优先自助形式
+          <br>☐ 不上烟酒
+          <br>☐ 出差人员已交费或明确应交金额
+        </div>
+      </div>
+    </div>
+
+    <!-- Scenario F: 党政军机关 -->
+    <div id="scenario-F" class="scenario-card">
+      <div class="scenario-card-header">
+        <span class="scenario-card-title">党政军机关场景</span>
+      </div>
+      <div class="scenario-card-body">
+        <div class="scenario-definition error">
+          <strong>⚠️ 特殊要求：</strong>招待党政军机关工作人员时，需<strong>参照《党政机关国内公务接待管理规定》</strong>执行，标准更严格。
+        </div>
+        <div class="scenario-definition info">
+          <strong>场景定义：</strong>招待党政军机关工作人员，需参照《党政机关国内公务接待管理规定》执行。
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field full-width">
+            <span class="form-field-label">招待类型</span>
+            <span>□ 参照《党政机关国内公务接待管理规定》</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待日期</span>
+            <input type="date" id="scenario-F-date" class="form-input">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待地点</span>
+            <input type="text" id="scenario-F-location" class="form-input" placeholder="请输入招待地点">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象单位</span>
+            <input type="text" id="scenario-F-org" class="form-input" placeholder="请输入招待对象单位">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待对象人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-F-guests" min="1" class="form-input-inline" placeholder="人数" oninput="onGuestsChange('F','external');" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人员</span>
+            <input type="text" id="scenario-F-accompany-people" class="form-input" placeholder="请输入陪同人员姓名">
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">陪同人数</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-F-accompany-count" min="0" class="form-input-inline" placeholder="人数" style="width:80px;">
+              <span style="color:var(--color-text-secondary);">人</span>
+              <span id="scenario-F-accompany-hint" class="form-hint"></span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">人均餐标</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="scenario-F-per-capita" min="0" step="0.01" class="form-input-inline" placeholder="金额" style="width:100px;">
+              <span class="form-hint">元/人·次</span>
+              <span class="form-hint">（参照公务接待标准执行）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">招待金额合计</span>
+            <span class="form-field-value"><span id="scenario-F-total">¥0.00</span> 元</span>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">酒水情况</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 无酒水</span>
+              <span class="form-hint error">（⚠️ 严禁酒水）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">是否赠送纪念品</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>□ 无</span>
+              <span class="form-hint error">（⚠️ 严禁赠送）</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-field-label">酒水限制</span>
+            <span class="form-hint">标准：<span id="scenario-F-alcohol-std">—</span></span>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">附件清单</span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 公务接待函</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 业务招待申请单</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 发票</label>
+              <label class="form-checkbox-label"><input type="checkbox" class="form-checkbox"> 支付凭证</label>
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <span class="form-field-label">招待事由</span>
+            <input type="text" id="scenario-F-reason" class="form-input" placeholder="请输入招待事由">
+          </div>
+        </div>
+
+        <div class="example-box">
+          <strong>📌 具体例子：</strong><br>
+          清远移动综合部<strong>郑十一</strong>接待<strong>清远市纪委监委</strong>王十二一行2人，配合调查某基站建设合规性问题，在清远移动食堂工作餐，人均餐标80元/人，金额合计160元。有正式公函。
+        </div>
+
+        <div class="compliance-box">
+          <strong>合规自查：</strong>
+          <br>☐ 已参照《党政机关国内公务接待管理规定》执行
+          <br>☐ 有正式公函
+          <br>☐ <strong style="color: var(--color-error);">未赠送任何纪念品</strong>
+          <br>☐ 未提供高档菜肴
+          <br>☐ 陪同人数符合公务接待规定
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      <button class="action-btn" onclick="resetForm()">🔄 重置表单</button>
+      <button class="action-btn" onclick="exportFormData()">📤 导出JSON</button>
+      <button class="action-btn success" onclick="saveFormData()">💾 保存草稿</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="save-toast" class="save-toast"></div>
+
+  <script>
+    // ===== 人员级别标准数据 =====
+    const DEFAULT_STANDARDS = {
+      external: [
+        { level: '省管中层', externalBanquet: '≤400元/人·次', externalGift: '≤400元/人·次', otherBanquet: '≤200元/人·次', alcohol: '白酒≤400元/500ml，红酒≤400元/750ml' },
+        { level: '市管中层', externalBanquet: '≤300元/人·次', externalGift: '≤300元/人·次', otherBanquet: '≤200元/人·次', alcohol: '白酒≤300元/500ml，红酒≤300元/750ml' },
+        { level: '其他人员', externalBanquet: '≤200元/人·次', externalGift: '≤200元/人·次', otherBanquet: '≤150元/人·次', alcohol: '白酒≤200元/500ml，红酒≤200元/750ml' },
+      ],
+      internal: [
+        { subject: '省管中层经理', standard: '≤150元/人·次', note: '不得进行商务宴请，不上烟酒、不得赠送纪念品' },
+        { subject: '市管中层经理', standard: '≤150元/人·次', note: '不得进行商务宴请，不上烟酒、不得赠送纪念品' },
+        { subject: '其他人员', standard: '≤100元/人·次', note: '不得进行商务宴请，不上烟酒、不得赠送纪念品' },
+      ],
+      workmeal: [
+        { scene: '单位食堂', standard: '参照食堂正常标准或差旅伙食补贴', note: '优先自助形式，不上烟酒' },
+        { scene: '外出调研无法在食堂用餐', standard: '参照上述标准就近安排', note: '出差人员已领差旅伙食补贴的应交纳费用' },
+      ],
+      gift: [
+        { level: '省管中层', externalGift: '≤400元/人·次', otherGift: '不得赠送' },
+        { level: '市管中层', externalGift: '≤300元/人·次', otherGift: '不得赠送' },
+        { level: '其他人员', externalGift: '≤200元/人·次', otherGift: '不得赠送' },
+      ],
+      accompany: [
+        { type: '对外业务招待', count: '≤5人', limit: '可对等' },
+        { type: '对外业务招待', count: '>5人', limit: '不超过招待对象超过部分的二分之一' },
+        { type: '内部业务招待', count: '≤10人', limit: '≤3人' },
+        { type: '内部业务招待', count: '>10人', limit: '不超过招待对象的三分之一' },
+      ]
+    };
+
+    let STANDARDS_DATA = {};
+    try {
+      const saved = localStorage.getItem('audit-standards-custom');
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.external) STANDARDS_DATA.external = data.external;
+        if (data.internal) STANDARDS_DATA.internal = data.internal;
+        if (data.workmeal) STANDARDS_DATA.workmeal = data.workmeal;
+        if (data.gift) STANDARDS_DATA.gift = data.gift;
+        if (data.accompany) STANDARDS_DATA.accompany = data.accompany;
+      }
+    } catch (e) {}
+    if (!STANDARDS_DATA.external) STANDARDS_DATA.external = DEFAULT_STANDARDS.external;
+    if (!STANDARDS_DATA.internal) STANDARDS_DATA.internal = DEFAULT_STANDARDS.internal;
+    if (!STANDARDS_DATA.workmeal) STANDARDS_DATA.workmeal = DEFAULT_STANDARDS.workmeal;
+    if (!STANDARDS_DATA.gift) STANDARDS_DATA.gift = DEFAULT_STANDARDS.gift;
+    if (!STANDARDS_DATA.accompany) STANDARDS_DATA.accompany = DEFAULT_STANDARDS.accompany;
+
+    // ===== 场景切换 =====
+    function selectScenario(scenario) {
+      // Update buttons
+      document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      // Update cards
+      document.querySelectorAll('.scenario-card').forEach(card => card.classList.remove('active'));
+      document.getElementById('scenario-' + scenario).classList.add('active');
+    }
+
+    // ===== 人员级别自动关联标准 =====
+    function onLevelChange(scenario) {
+      const radio = document.querySelector('input[name="scenario-' + scenario + '-level"]:checked');
+      const levelHint = document.getElementById('scenario-' + scenario + '-level-hint');
+      if (!levelHint) return;
+
+      const level = radio ? radio.value : '';
+      if (!level) {
+        levelHint.innerHTML = '';
+        return;
+      }
+
+      let standard = null;
+      let scenarioType = '';
+
+      switch (scenario) {
+        case 'A':
+        case 'B':
+          standard = STANDARDS_DATA.external.find(s => s.level === level);
+          scenarioType = '外事/商务';
+          break;
+        case 'C':
+          standard = STANDARDS_DATA.external.find(s => s.level === level);
+          scenarioType = '其他公务';
+          break;
+        case 'D':
+          standard = STANDARDS_DATA.internal.find(s => s.subject === level);
+          scenarioType = '内部业务';
+          break;
+        case 'E':
+          standard = STANDARDS_DATA.workmeal.find(s => s.scene === '单位食堂');
+          scenarioType = '工作餐';
+          break;
+        case 'F':
+          standard = STANDARDS_DATA.external.find(s => s.level === '省管中层');
+          scenarioType = '党政军机关';
+          break;
+      }
+
+      if (!standard) return;
+
+      if (scenario === 'A' || scenario === 'B') {
+        const stdCapita = document.getElementById('scenario-' + scenario + '-std-capita');
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+
+        if (stdCapita) stdCapita.innerHTML = '<span class="std-number">' + standard.externalBanquet + '</span>';
+        if (stdBaijiu) stdBaijiu.innerHTML = '<span class="std-number">' + standard.alcohol.split('，')[0] + '</span>';
+        if (stdWine) stdWine.innerHTML = '<span class="std-number">' + standard.alcohol.split('，')[1] + '</span>';
+        if (stdGift) stdGift.innerHTML = '<span class="std-number">' + standard.externalGift + '</span>';
+
+        levelHint.innerHTML = '<span class="form-hint success">✓ 已关联标准</span>';
+
+        const alcoholLimit = document.getElementById('scenario-' + scenario + '-alcohol-limit');
+        const alcoholStd = document.getElementById('scenario-' + scenario + '-alcohol-std');
+        if (alcoholLimit && alcoholStd) {
+          alcoholStd.textContent = standard.alcohol;
+          alcoholLimit.innerHTML = '标准：<span class="form-hint accent">' + standard.alcohol + '</span>';
+        }
+
+      } else if (scenario === 'C') {
+        const stdCapita = document.getElementById('scenario-' + scenario + '-std-capita');
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+
+        if (stdCapita) stdCapita.innerHTML = '<span class="std-number">' + standard.otherBanquet + '</span>';
+        if (stdBaijiu) stdBaijiu.innerHTML = '<span class="std-number">≤100元/瓶</span>';
+        if (stdWine) stdWine.innerHTML = '<span class="std-number">≤100元/瓶</span>';
+        if (stdGift) stdGift.innerHTML = '<span class="std-number">不得赠送</span>';
+
+        levelHint.innerHTML = '<span class="form-hint warning">⚠️ 注意：其他公务招待不得赠送纪念品</span>';
+
+        const alcoholLimit = document.getElementById('scenario-' + scenario + '-alcohol-limit');
+        const alcoholStd = document.getElementById('scenario-' + scenario + '-alcohol-std');
+        if (alcoholLimit && alcoholStd) {
+          alcoholStd.textContent = '≤100元/瓶';
+          alcoholLimit.innerHTML = '标准：<span class="form-hint warning">≤100元/瓶</span>';
+        }
+
+      } else if (scenario === 'D') {
+        const stdCapita = document.getElementById('scenario-' + scenario + '-std-capita');
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+        const levelDisplay = document.getElementById('scenario-' + scenario + '-level-display');
+
+        if (stdCapita) stdCapita.innerHTML = '<span class="std-number">' + standard.standard + '</span>';
+        if (stdBaijiu) stdBaijiu.innerHTML = '<span class="std-number">不得提供</span>';
+        if (stdWine) stdWine.innerHTML = '<span class="std-number">不得提供</span>';
+        if (stdGift) stdGift.innerHTML = '<span class="std-number">不得赠送</span>';
+
+        if (levelDisplay) levelDisplay.textContent = level;
+
+        levelHint.innerHTML = '<span class="form-hint warning">⚠️ 注意：内部招待不得赠送纪念品，不上烟酒</span>';
+
+        const alcoholLimit = document.getElementById('scenario-' + scenario + '-alcohol-limit');
+        const alcoholStd = document.getElementById('scenario-' + scenario + '-alcohol-std');
+        if (alcoholLimit && alcoholStd) {
+          alcoholStd.textContent = '不得提供';
+          alcoholLimit.innerHTML = '标准：<span class="form-hint error">不得提供</span>';
+        }
+
+      } else if (scenario === 'E') {
+        const stdCapita = document.getElementById('scenario-' + scenario + '-std-capita');
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+
+        if (stdCapita) stdCapita.innerHTML = '<span class="std-number">≤60元/人</span>';
+        if (stdBaijiu) stdBaijiu.innerHTML = '<span class="std-number">不得提供</span>';
+        if (stdWine) stdWine.innerHTML = '<span class="std-number">不得提供</span>';
+        if (stdGift) stdGift.innerHTML = '<span class="std-number">不得赠送</span>';
+
+        levelHint.innerHTML = '<span class="form-hint warning">⚠️ 注意：工作餐不上烟酒，不得赠送纪念品</span>';
+
+        const alcoholLimit = document.getElementById('scenario-' + scenario + '-alcohol-limit');
+        const alcoholStd = document.getElementById('scenario-' + scenario + '-alcohol-std');
+        if (alcoholLimit && alcoholStd) {
+          alcoholStd.textContent = '不得提供';
+          alcoholLimit.innerHTML = '标准：<span class="form-hint error">不得提供</span>';
+        }
+
+      } else if (scenario === 'F') {
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+
+        if (stdBaijiu) stdBaijiu.innerHTML = '<span class="std-number">严禁提供</span>';
+        if (stdWine) stdWine.innerHTML = '<span class="std-number">严禁提供</span>';
+        if (stdGift) stdGift.innerHTML = '<span class="std-number">严禁赠送</span>';
+
+        levelHint.innerHTML = '<span class="form-hint error">❌ 严禁提供酒水、严禁赠送纪念品</span>';
+
+        const alcoholLimit = document.getElementById('scenario-' + scenario + '-alcohol-limit');
+        const alcoholStd = document.getElementById('scenario-' + scenario + '-alcohol-std');
+        if (alcoholLimit && alcoholStd) {
+          alcoholStd.textContent = '严禁提供';
+          alcoholLimit.innerHTML = '标准：<span class="form-hint error">严禁提供</span>';
+        }
+      }
+    }
+
+    // ===== 陪餐人数自动计算 =====
+    function calculateAccompanying(type, guests) {
+      guests = Math.max(0, Math.floor(guests));
+      if (guests <= 0) return { max: 0, formula: '招待人数为0，无需陪餐' };
+
+      if (type === 'external') {
+        if (guests <= 5) {
+          return { max: guests, formula: '≤' + guests + '人（招待对象≤5人，陪餐可对等）' };
+        } else {
+          const max = 5 + Math.floor((guests - 5) / 2);
+          return { max: max, formula: '≤' + max + '人（招待对象>5人，陪餐≤5+(招待对象-5)/2）' };
+        }
+      } else {
+        if (guests <= 10) {
+          return { max: 3, formula: '≤3人（招待对象≤10人，陪餐≤3）' };
+        } else {
+          const max = Math.floor(guests / 3);
+          return { max: max, formula: '≤' + max + '人（招待对象>10人，陪餐≤招待对象/3）' };
+        }
+      }
+    }
+
+    function onGuestsChange(scenario, type) {
+      const guestsInput = document.getElementById('scenario-' + scenario + '-guests');
+      const accompanyInput = document.getElementById('scenario-' + scenario + '-accompany-count');
+      const hintSpan = document.getElementById('scenario-' + scenario + '-accompany-hint');
+      if (!guestsInput || !accompanyInput || !hintSpan) return;
+
+      const guests = parseInt(guestsInput.value) || 0;
+      const result = calculateAccompanying(type, guests);
+
+      hintSpan.innerHTML = '<span class="form-hint accent">陪餐上限：' + result.max + '人</span> &nbsp; <span style="font-size:10px;color:var(--color-text-secondary);">(' + result.formula + ')</span>';
+
+      const currentAccompany = parseInt(accompanyInput.value) || 0;
+      if (currentAccompany > result.max && currentAccompany > 0) {
+        hintSpan.innerHTML += ' <span class="form-hint error">⚠️ 超标！</span>';
+      }
+    }
+
+    // ===== 费用自动计算 =====
+    function calculateScenarioA() {
+      const perCapita = parseFloat(document.getElementById('scenario-A-per-capita').value) || 0;
+      const guests = parseInt(document.getElementById('scenario-A-guests').value) || 0;
+      const baijiuPrice = parseFloat(document.getElementById('scenario-A-baijiu-price').value) || 0;
+      const winePrice = parseFloat(document.getElementById('scenario-A-wine-price').value) || 0;
+      const giftPer = parseFloat(document.getElementById('scenario-A-gift-per').value) || 0;
+      const rooms = parseInt(document.getElementById('scenario-A-rooms').value) || 0;
+      const roomPrice = parseFloat(document.getElementById('scenario-A-room-price').value) || 0;
+
+      const mealTotal = perCapita * guests;
+      const alcoholTotal = (baijiuPrice * 0.5 + winePrice * 0.75) * guests;
+      const giftTotal = giftPer * guests;
+      const roomTotal = rooms * roomPrice;
+      const total = mealTotal + alcoholTotal + giftTotal + roomTotal;
+      const per = guests > 0 ? total / guests : 0;
+
+      document.getElementById('scenario-A-meal-total').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-A-gift-total').textContent = '¥' + giftTotal.toFixed(2);
+      document.getElementById('scenario-A-room-total').textContent = '¥' + roomTotal.toFixed(2);
+      document.getElementById('scenario-A-summary-meal').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-A-summary-alcohol').textContent = '¥' + alcoholTotal.toFixed(2);
+      document.getElementById('scenario-A-summary-gift').textContent = '¥' + giftTotal.toFixed(2);
+      document.getElementById('scenario-A-summary-room').textContent = '¥' + roomTotal.toFixed(2);
+      document.getElementById('scenario-A-summary-total').textContent = '¥' + total.toFixed(2);
+      document.getElementById('scenario-A-summary-per').textContent = '¥' + per.toFixed(2) + '/人';
+
+      // Validate per-capita
+      const level = document.querySelector('input[name="scenario-A-level"]:checked');
+      if (level && perCapita > 0) {
+        const std = STANDARDS_DATA.external.find(s => s.level === level.value);
+        if (std) {
+          const maxBanquet = parseInt(std.externalBanquet.replace(/[^\d]/g, ''));
+          const status = document.getElementById('scenario-A-capita-status');
+          if (perCapita > maxBanquet) {
+            status.textContent = '⚠️ 超标！';
+            status.className = 'form-hint error';
+          } else {
+            status.textContent = '✓ 未超标';
+            status.className = 'form-hint success';
+          }
+        }
+      }
+    }
+
+    function calculateScenarioB() {
+      const perCapita = parseFloat(document.getElementById('scenario-B-per-capita').value) || 0;
+      const guests = parseInt(document.getElementById('scenario-B-guests').value) || 0;
+      const baijiuPrice = parseFloat(document.getElementById('scenario-B-baijiu-price').value) || 0;
+      const winePrice = parseFloat(document.getElementById('scenario-B-wine-price').value) || 0;
+      const giftPer = parseFloat(document.getElementById('scenario-B-gift-per').value) || 0;
+      const rooms = parseInt(document.getElementById('scenario-B-rooms').value) || 0;
+      const roomPrice = parseFloat(document.getElementById('scenario-B-room-price').value) || 0;
+
+      const mealTotal = perCapita * guests;
+      const alcoholTotal = (baijiuPrice * 0.5 + winePrice * 0.75) * guests;
+      const giftTotal = giftPer * guests;
+      const roomTotal = rooms * roomPrice;
+      const total = mealTotal + alcoholTotal + giftTotal + roomTotal;
+      const per = guests > 0 ? total / guests : 0;
+
+      document.getElementById('scenario-B-meal-total').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-B-gift-total').textContent = '¥' + giftTotal.toFixed(2);
+      document.getElementById('scenario-B-room-total').textContent = '¥' + roomTotal.toFixed(2);
+      document.getElementById('scenario-B-summary-meal').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-B-summary-alcohol').textContent = '¥' + alcoholTotal.toFixed(2);
+      document.getElementById('scenario-B-summary-gift').textContent = '¥' + giftTotal.toFixed(2);
+      document.getElementById('scenario-B-summary-room').textContent = '¥' + roomTotal.toFixed(2);
+      document.getElementById('scenario-B-summary-total').textContent = '¥' + total.toFixed(2);
+      document.getElementById('scenario-B-summary-per').textContent = '¥' + per.toFixed(2) + '/人';
+
+      const level = document.querySelector('input[name="scenario-B-level"]:checked');
+      if (level && perCapita > 0) {
+        const std = STANDARDS_DATA.external.find(s => s.level === level.value);
+        if (std) {
+          const maxBanquet = parseInt(std.externalBanquet.replace(/[^\d]/g, ''));
+          const status = document.getElementById('scenario-B-capita-status');
+          if (perCapita > maxBanquet) {
+            status.textContent = '⚠️ 超标！';
+            status.className = 'form-hint error';
+          } else {
+            status.textContent = '✓ 未超标';
+            status.className = 'form-hint success';
+          }
+        }
+      }
+    }
+
+    function calculateScenarioC() {
+      const perCapita = parseFloat(document.getElementById('scenario-C-per-capita').value) || 0;
+      const guests = parseInt(document.getElementById('scenario-C-guests').value) || 0;
+      const baijiuPrice = parseFloat(document.getElementById('scenario-C-baijiu-price').value) || 0;
+      const winePrice = parseFloat(document.getElementById('scenario-C-wine-price').value) || 0;
+
+      const mealTotal = perCapita * guests;
+      const alcoholTotal = (baijiuPrice * 0.5 + winePrice * 0.75) * guests;
+      const total = mealTotal + alcoholTotal;
+      const per = guests > 0 ? total / guests : 0;
+
+      document.getElementById('scenario-C-meal-total').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-C-summary-meal').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-C-summary-alcohol').textContent = '¥' + alcoholTotal.toFixed(2);
+      document.getElementById('scenario-C-summary-total').textContent = '¥' + total.toFixed(2);
+      document.getElementById('scenario-C-summary-per').textContent = '¥' + per.toFixed(2) + '/人';
+
+      const level = document.querySelector('input[name="scenario-C-level"]:checked');
+      if (level && perCapita > 0) {
+        const std = STANDARDS_DATA.external.find(s => s.level === level.value);
+        if (std) {
+          const maxBanquet = parseInt(std.otherBanquet.replace(/[^\d]/g, ''));
+          const status = document.getElementById('scenario-C-capita-status');
+          if (perCapita > maxBanquet) {
+            status.textContent = '⚠️ 超标！';
+            status.className = 'form-hint error';
+          } else {
+            status.textContent = '✓ 未超标';
+            status.className = 'form-hint success';
+          }
+        }
+      }
+    }
+
+    function calculateScenarioD() {
+      const perCapita = parseFloat(document.getElementById('scenario-D-per-capita').value) || 0;
+      const guests = parseInt(document.getElementById('scenario-D-guests').value) || 0;
+
+      const mealTotal = perCapita * guests;
+      const total = mealTotal;
+      const per = guests > 0 ? total / guests : 0;
+
+      document.getElementById('scenario-D-meal-total').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-D-summary-meal').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-D-summary-total').textContent = '¥' + total.toFixed(2);
+      document.getElementById('scenario-D-summary-per').textContent = '¥' + per.toFixed(2) + '/人';
+
+      const level = document.querySelector('input[name="scenario-D-level"]:checked');
+      if (level && perCapita > 0) {
+        const std = STANDARDS_DATA.internal.find(s => s.subject === level.value);
+        if (std) {
+          const maxBanquet = parseInt(std.standard.replace(/[^\d]/g, ''));
+          const status = document.getElementById('scenario-D-capita-status');
+          if (perCapita > maxBanquet) {
+            status.textContent = '⚠️ 超标！';
+            status.className = 'form-hint error';
+          } else {
+            status.textContent = '✓ 未超标';
+            status.className = 'form-hint success';
+          }
+        }
+      }
+    }
+
+    function calculateScenarioE() {
+      const perCapita = parseFloat(document.getElementById('scenario-E-per-capita').value) || 0;
+      const guests = parseInt(document.getElementById('scenario-E-guests').value) || 0;
+
+      const mealTotal = perCapita * guests;
+      const total = mealTotal;
+      const per = guests > 0 ? total / guests : 0;
+
+      document.getElementById('scenario-E-meal-total').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-E-summary-meal').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-E-summary-per').textContent = '¥' + per.toFixed(2) + '/人';
+
+      // Validate per-capita for workmeal
+      const status = document.getElementById('scenario-E-capita-status');
+      if (perCapita > 60) {
+        status.textContent = '⚠️ 超标！工作餐≤60元/人';
+        status.className = 'form-hint error';
+      } else if (perCapita > 0) {
+        status.textContent = '✓ 未超标';
+        status.className = 'form-hint success';
+      }
+    }
+
+    // ===== 导出/保存 =====
+    function getFormData(scenario) {
+      const data = { scenario: scenario, timestamp: new Date().toISOString() };
+
+      const fields = ['date', 'location', 'org', 'guests', 'accompanyPeople', 'accompanyCount', 'perCapita', 'baijiuPrice', 'winePrice', 'giftPer', 'rooms', 'roomPrice', 'reason'];
+      fields.forEach(f => {
+        const el = document.getElementById('scenario-' + scenario + '-' + f);
+        if (el) data[f] = el.value;
+      });
+
+      if (scenario === 'B') {
+        const el = document.getElementById('scenario-B-nationality');
+        if (el) data.nationality = el.value;
+      }
+      if (scenario === 'E') {
+        const el = document.getElementById('scenario-E-fee');
+        if (el) data.fee = el.value;
+      }
+
+      return data;
+    }
+
+    function saveFormData() {
+      const activeCard = document.querySelector('.scenario-card.active');
+      if (!activeCard) return;
+      const scenario = activeCard.id.replace('scenario-', '');
+      const data = getFormData(scenario);
+      localStorage.setItem('fill-scenario-' + scenario, JSON.stringify(data));
+      showToast('✅ 场景' + scenario + ' 数据已保存至浏览器本地存储');
+    }
+
+    function loadFormData(scenario) {
+      const saved = localStorage.getItem('fill-scenario-' + scenario);
+      if (!saved) return;
+      try {
+        const data = JSON.parse(saved);
+        const fields = ['date', 'location', 'org', 'guests', 'accompanyPeople', 'accompanyCount', 'perCapita', 'baijiuPrice', 'winePrice', 'giftPer', 'rooms', 'roomPrice', 'reason'];
+        fields.forEach(f => {
+          const el = document.getElementById('scenario-' + scenario + '-' + f);
+          if (el && data[f]) el.value = data[f];
+        });
+        if (scenario === 'B' && data.nationality) {
+          const el = document.getElementById('scenario-B-nationality');
+          if (el) el.value = data.nationality;
+        }
+        if (scenario === 'E' && data.fee) {
+          const el = document.getElementById('scenario-E-fee');
+          if (el) el.value = data.fee;
+        }
+      } catch (e) {
+        console.warn('Failed to load saved data:', e);
+      }
+    }
+
+    function exportFormData() {
+      const activeCard = document.querySelector('.scenario-card.active');
+      if (!activeCard) return;
+      const scenario = activeCard.id.replace('scenario-', '');
+      const data = getFormData(scenario);
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '招待费场景' + scenario + '_' + new Date().toISOString().slice(0,10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ 场景' + scenario + ' 数据已导出为JSON文件');
+    }
+
+    function resetForm() {
+      const activeCard = document.querySelector('.scenario-card.active');
+      if (!activeCard) return;
+      const scenario = activeCard.id.replace('scenario-', '');
+      const inputs = activeCard.querySelectorAll('input[type="text"], input[type="number"], input[type="date"]');
+      inputs.forEach(input => input.value = '');
+      const checkboxes = activeCard.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = false);
+      const selects = activeCard.querySelectorAll('select');
+      selects.forEach(sel => sel.value = '');
+      // Reset radio buttons
+      const radios = activeCard.querySelectorAll('input[type="radio"]');
+      radios.forEach(r => r.checked = false);
+      // Reset hints
+      const hint = document.getElementById('scenario-' + scenario + '-level-hint');
+      if (hint) hint.innerHTML = '';
+      showToast('🔄 场景' + scenario + ' 表单已重置');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('save-toast');
+      toast.textContent = msg;
+      toast.style.background = msg.includes('✅') ? 'var(--color-success)' : (msg.includes('⚠️') ? 'var(--color-warning)' : 'var(--color-info)');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ===== 初始化 =====
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load saved data for active scenario
+      const activeCard = document.querySelector('.scenario-card.active');
+      if (activeCard) {
+        const scenario = activeCard.id.replace('scenario-', '');
+        loadFormData(scenario);
+      }
+    });
+  </script>
+</body>
+</html>

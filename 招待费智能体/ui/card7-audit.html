@@ -1,0 +1,2364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>审核标准 - 招待费录入</title>
+  <style>
+    :root {
+      --color-text-primary: #1a1a2e;
+      --color-text-secondary: #6b7280;
+      --color-text-placeholder: #9ca3af;
+      --color-border: #e5e7eb;
+      --color-border-focus: #3b82f6;
+      --color-border-error: #ef4444;
+      --color-bg-primary: #ffffff;
+      --color-bg-secondary: #f9fafb;
+      --color-bg-hover: #f3f4f6;
+      --color-bg-disabled: #f9fafb;
+      --color-accent: #3b82f6;
+      --color-accent-light: #eff6ff;
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-warning-bg: #fffbeb;
+      --color-error: #ef4444;
+      --color-error-bg: #fef2f2;
+      --color-info: #8b5cf6;
+      --color-info-bg: #f5f3ff;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+      --spacing-xl: 24px;
+      --spacing-2xl: 32px;
+      --spacing-3xl: 48px;
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      --font-size-xs: 12px;
+      --font-size-sm: 13px;
+      --font-size-base: 14px;
+      --font-size-lg: 15px;
+      --font-size-xl: 18px;
+      --font-size-2xl: 22px;
+      --font-size-3xl: 28px;
+      --font-weight-regular: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --line-height-normal: 1.5;
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --transition: 200ms ease;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-family); font-size: var(--font-size-base); color: var(--color-text-primary); background: var(--color-bg-secondary); line-height: var(--line-height-normal); -webkit-font-smoothing: antialiased; }
+    .page-wrapper { max-width: 1280px; margin: 0 auto; padding: var(--spacing-2xl) var(--spacing-xl); }
+    .page-header { margin-bottom: var(--spacing-3xl); text-align: center; }
+    .page-header h1 { font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin-bottom: var(--spacing-sm); letter-spacing: -0.5px; }
+    .page-header p { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+    .back-link { display: inline-flex; align-items: center; gap: 4px; color: var(--color-accent); font-size: var(--font-size-sm); text-decoration: none; margin-bottom: var(--spacing-lg); transition: color var(--transition); }
+    .back-link:hover { color: #2563eb; }
+    .back-link svg { width: 16px; height: 16px; }
+
+    /* Tabs */
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid var(--color-border); margin-bottom: var(--spacing-xl); overflow-x: auto; }
+    .tab-item { padding: var(--spacing-md) var(--spacing-xl); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-secondary); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all var(--transition); white-space: nowrap; font-family: var(--font-family); }
+    .tab-item:hover { color: var(--color-text-primary); }
+    .tab-item.active { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+    .tab-item .tab-icon { margin-right: 6px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Cards */
+    .info-card { background: var(--color-bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); padding: var(--spacing-xl); margin-bottom: var(--spacing-lg); transition: box-shadow var(--transition); }
+    .info-card:hover { box-shadow: var(--shadow-card-hover); }
+    .info-card-header { display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md); }
+    .info-card-icon { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .info-card-icon.blue { background: #eff6ff; }
+    .info-card-icon.green { background: #ecfdf5; }
+    .info-card-icon.purple { background: #f5f3ff; }
+    .info-card-icon.orange { background: #fff7ed; }
+    .info-card-title { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); }
+    .info-card-subtitle { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+
+    /* Rules */
+    .rule-card { background: var(--color-bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); margin-bottom: var(--spacing-lg); overflow: hidden; }
+    .rule-header { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-lg) var(--spacing-xl); cursor: pointer; transition: background var(--transition); user-select: none; }
+    .rule-header:hover { background: var(--color-bg-hover); }
+    .rule-header-left { display: flex; align-items: center; gap: var(--spacing-md); flex-wrap: wrap; }
+    .rule-severity { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: var(--font-weight-semibold); }
+    .rule-severity.high { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .rule-severity.medium { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+    .rule-severity.low { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .rule-title { font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); }
+    .rule-toggle { width: 20px; height: 20px; transition: transform var(--transition); color: var(--color-text-secondary); }
+    .rule-card.expanded .rule-toggle { transform: rotate(180deg); }
+    .rule-body { max-height: 0; overflow: hidden; transition: max-height 300ms ease; }
+    .rule-card.expanded .rule-body { max-height: 3000px; }
+    .rule-body-inner { padding: 0 var(--spacing-xl) var(--spacing-lg); }
+    .rule-divider { height: 1px; background: var(--color-border); margin-bottom: var(--spacing-lg); }
+    .rule-section-title { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin-bottom: var(--spacing-sm); }
+    .rule-section-content { font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: 1.7; }
+    .rule-table { width: 100%; border-collapse: collapse; margin-top: var(--spacing-sm); font-size: var(--font-size-xs); }
+    .rule-table th, .rule-table td { padding: 8px 12px; text-align: left; border: 1px solid var(--color-border); }
+    .rule-table th { background: var(--color-bg-secondary); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+    .rule-table td { color: var(--color-text-secondary); }
+    .rule-table code { background: var(--color-bg-hover); padding: 1px 4px; border-radius: 3px; font-size: 11px; color: var(--color-accent); }
+
+    /* Edit mode */
+    .edit-bar { display: none; align-items: center; gap: var(--spacing-md); padding: var(--spacing-md) var(--spacing-xl); background: var(--color-accent-light); border-bottom: 1px solid var(--color-accent); font-size: var(--font-size-sm); }
+    .edit-bar.visible { display: flex; }
+    .edit-bar button { padding: 4px 12px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); transition: all var(--transition); }
+    .edit-bar button:hover { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .edit-bar button.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .source-ref { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: var(--color-info); background: var(--color-info-bg); padding: 1px 6px; border-radius: 3px; cursor: help; white-space: nowrap; }
+    .source-ref:hover { opacity: 0.8; }
+    .edit-indicator { display: none; align-items: center; gap: 3px; font-size: 10px; color: var(--color-warning); margin-left: auto; }
+    .edit-indicator.visible { display: flex; }
+    .rule-card.editing { border-color: var(--color-warning); box-shadow: 0 0 0 1px var(--color-warning-bg); }
+    .rule-editable { border: 1px dashed var(--color-warning); padding: 8px; border-radius: var(--radius-sm); background: #fffdf5; min-height: 1.7em; outline: none; }
+    .rule-editable:focus { border-color: var(--color-accent); background: #fff; }
+    .rule-editable table { width: 100%; border-collapse: collapse; }
+    .rule-editable table td, .rule-editable table th { border: 1px solid var(--color-border); padding: 4px 8px; min-width: 60px; }
+    .rule-editable code { background: var(--color-bg-hover); padding: 1px 4px; border-radius: 3px; font-size: 11px; color: var(--color-accent); }
+    .save-toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 24px; background: var(--color-success); color: #fff; border-radius: var(--radius-md); font-size: var(--font-size-sm); box-shadow: var(--shadow-card-hover); opacity: 0; transform: translateY(10px); transition: all 300ms ease; pointer-events: none; z-index: 999; }
+    .save-toast.show { opacity: 1; transform: translateY(0); }
+    .edit-toggle-btn { margin-left: 8px; padding: 2px 8px; font-size: 11px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--color-bg-primary); cursor: pointer; font-family: var(--font-family); transition: all var(--transition); }
+    .edit-toggle-btn:hover { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .edit-toggle-btn.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+
+    /* Scenario standard cells */
+    .std-cell { display: inline; padding: 1px 2px; border-radius: 2px; }
+    .std-editable { background: #fffdf5; cursor: text; border-bottom: 1px dashed var(--color-warning); }
+    .std-editable:focus { background: #fff; outline: 1px solid var(--color-accent); }
+    .scenario-std-ref { margin-top: 8px; padding: 8px 12px; background: var(--color-info-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); line-height: 1.7; }
+
+    /* File list */
+    .file-list { list-style: none; }
+    .file-item { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-sm); transition: background var(--transition); }
+    .file-item:hover { background: var(--color-bg-hover); }
+    .file-icon { font-size: 16px; flex-shrink: 0; }
+    .file-name { font-size: var(--font-size-sm); color: var(--color-text-primary); flex: 1; }
+    .file-meta { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+    .file-badge { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: var(--font-weight-medium); }
+    .file-badge.docx { background: #eff6ff; color: #2563eb; }
+    .file-badge.md { background: #f5f3ff; color: #7c3aed; }
+    .file-badge.pdf { background: #fef2f2; color: #dc2626; }
+    .file-badge.jpg { background: #ecfdf5; color: #059669; }
+    .file-badge.png { background: #ecfdf5; color: #059669; }
+    .file-badge.xls { background: #f0fdf4; color: #16a34a; }
+    .file-badge.xml { background: #fffbeb; color: #d97706; }
+    .file-badge.folder { background: #fff7ed; color: #ea580c; }
+
+    /* Open file link */
+    .open-file-link {
+      display: inline-flex; align-items: center; gap: 3px; font-size: 10px;
+      color: var(--color-accent); background: var(--color-accent-light);
+      padding: 1px 6px; border-radius: 3px; cursor: pointer;
+      border: 1px solid transparent; transition: all var(--transition);
+      text-decoration: none; white-space: nowrap;
+    }
+    .open-file-link:hover { background: var(--color-accent); color: #fff; }
+
+    /* Summary table */
+    .summary-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+    .summary-table th, .summary-table td { padding: 10px 14px; text-align: left; border: 1px solid var(--color-border); }
+    .summary-table th { background: var(--color-bg-secondary); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); font-size: var(--font-size-xs); }
+    .summary-table td { color: var(--color-text-secondary); }
+    .summary-table tr:hover td { background: var(--color-bg-hover); }
+
+    /* Case cards */
+    .case-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--spacing-lg); }
+    .case-card { background: var(--color-bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); overflow: hidden; }
+    .case-card-header { padding: var(--spacing-lg); border-bottom: 1px solid var(--color-border); }
+    .case-card-title { font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin-bottom: 4px; }
+    .case-card-desc { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+    .case-card-body { padding: var(--spacing-lg); }
+    .case-file-list { list-style: none; }
+    .case-file-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--color-border); font-size: var(--font-size-xs); }
+    .case-file-item:last-child { border-bottom: none; }
+    .case-file-icon { font-size: 14px; }
+    .case-file-name { color: var(--color-text-primary); flex: 1; }
+    .case-file-ext { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--color-bg-hover); color: var(--color-text-secondary); }
+
+    /* Directory tree */
+    .dir-tree { list-style: none; padding-left: 0; }
+    .dir-tree li { padding: 4px 0; font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+    .dir-tree .dir-name { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+    .dir-tree .dir-path { font-size: 10px; color: var(--color-text-placeholder); margin-left: 4px; }
+    .dir-tree ul { list-style: none; padding-left: 20px; border-left: 1px solid var(--color-border); margin-left: 8px; }
+
+    /* Open file panel */
+    .open-panel { background: var(--color-bg-primary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-lg); margin-top: var(--spacing-lg); box-shadow: var(--shadow-card); }
+    .open-panel-title { font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: 8px; }
+    .open-panel-hint { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--spacing-md); padding: var(--spacing-sm) var(--spacing-md); background: var(--color-warning-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-warning); line-height: 1.6; }
+    .open-panel-actions { display: flex; gap: var(--spacing-sm); flex-wrap: wrap; margin-top: var(--spacing-md); }
+    .open-panel-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-sm); font-family: var(--font-family); transition: all var(--transition); color: var(--color-text-primary); }
+    .open-panel-btn:hover { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .open-panel-btn.primary { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .open-panel-btn.primary:hover { background: #2563eb; }
+
+    @media (max-width: 768px) {
+      .page-wrapper { padding: var(--spacing-xl) var(--spacing-md); }
+      .page-header h1 { font-size: var(--font-size-2xl); }
+      .tab-item { padding: var(--spacing-sm) var(--spacing-md); font-size: var(--font-size-xs); }
+      .rule-header { padding: var(--spacing-md) var(--spacing-lg); }
+      .rule-body-inner { padding: 0 var(--spacing-lg) var(--spacing-md); }
+      .case-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <a href="index.html" class="back-link">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      返回录入首页
+    </a>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>📋 审核标准</h1>
+      <p>业务招待费智能审核所依据的政策法规、审核规则、参考案例与业务规范</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-bar">
+      <button class="tab-item active" onclick="switchTab(this, 'tab-policies')">
+        <span class="tab-icon">📜</span>政策法规
+      </button>
+      <button class="tab-item" onclick="switchTab(this, 'tab-rules')">
+        <span class="tab-icon">⚙️</span>审核规则
+        <button id="edit-toggle" class="edit-toggle-btn" onclick="event.stopPropagation(); toggleEditMode()" title="切换规则编辑模式" style="margin-left:8px;padding:2px 8px;font-size:11px;border-radius:4px;border:1px solid var(--color-border);background:var(--color-bg-primary);cursor:pointer;font-family:var(--font-family);">✏️ 编辑</button>
+      </button>
+      <button class="tab-item" onclick="switchTab(this, 'tab-cases')">
+        <span class="tab-icon">📂</span>参考案例
+      </button>
+      <button class="tab-item" onclick="switchTab(this, 'tab-standards')">
+        <span class="tab-icon">📊</span>业务规范
+      </button>
+      <button class="tab-item" onclick="switchTab(this, 'tab-scenarios')">
+        <span class="tab-icon">📝</span>填写场景
+        <button id="scenario-edit-toggle" class="edit-toggle-btn" onclick="event.stopPropagation(); toggleScenarioEditMode()" title="切换人员标准编辑模式" style="margin-left:8px;padding:2px 8px;font-size:11px;border-radius:4px;border:1px solid var(--color-border);background:var(--color-bg-primary);cursor:pointer;font-family:var(--font-family);">✏️ 编辑</button>
+      </button>
+      <button class="tab-item" onclick="switchTab(this, 'tab-directory')">
+        <span class="tab-icon">📁</span>目录结构
+      </button>
+    </div>
+
+    <!-- Tab 1: 政策法规 -->
+    <div id="tab-policies" class="tab-content active">
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-icon blue">📜</div>
+          <div>
+            <div class="info-card-title">中国移动广东公司清远分公司业务招待费管理办法</div>
+            <div class="info-card-subtitle">V9.0 · 2025年7月9日发布</div>
+          </div>
+        </div>
+        <div class="file-list" id="policies-file-list"></div>
+        <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+          <strong>核心内容摘要：</strong>本办法规定了业务招待费的开支范围、标准、审批流程及监督管理要求。主要内容包括：
+          <br>• <strong>开支范围</strong>：商务招待、公务接待、内部业务招待
+          <br>• <strong>费用标准</strong>：不同人员级别的餐标、住宿标准、酒水限制等
+          <br>• <strong>审批流程</strong>：事前审批 → 事中控制 → 事后报销
+          <br>• <strong>监督管理</strong>：监督检查、违规处理
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-icon green">📖</div>
+          <div>
+            <div class="info-card-title">费用标准速查</div>
+            <div class="info-card-subtitle">管理办法第15-22条核心标准</div>
+          </div>
+        </div>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>人员级别</th>
+              <th>外事商务招待</th>
+              <th>其他公务招待</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>省管中层</td><td>≤400元/人</td><td>≤200元/人</td></tr>
+            <tr><td>市管中层</td><td>≤300元/人</td><td>≤200元/人</td></tr>
+            <tr><td>其他人员</td><td>≤200元/人</td><td>≤150元/人</td></tr>
+          </tbody>
+        </table>
+        <table class="summary-table" style="margin-top: var(--spacing-md);">
+          <thead>
+            <tr>
+              <th>招待类型</th>
+              <th>标准</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>内部业务招待（省管/市管中层）</td><td>≤150元/人</td></tr>
+            <tr><td>内部业务招待（其他人员）</td><td>≤100元/人</td></tr>
+            <tr><td>工作餐</td><td>≤60元/人</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 2: 审核规则 -->
+    <div id="tab-rules" class="tab-content">
+      <!-- Rule summary -->
+      <div class="info-card" style="margin-bottom: var(--spacing-xl);">
+        <div class="info-card-header">
+          <div class="info-card-icon purple">📐</div>
+          <div>
+            <div class="info-card-title">审核规则汇总</div>
+            <div class="info-card-subtitle" id="rules-subtitle">加载中...</div>
+          </div>
+        </div>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">#</th>
+              <th>规则名称</th>
+              <th>严重程度</th>
+              <th>校验类型</th>
+              <th>标准来源</th>
+            </tr>
+          </thead>
+          <tbody id="rules-summary-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Rules will be dynamically rendered -->
+      <div id="rules-container"></div>
+    </div>
+
+    <!-- Tab 3: 参考案例 -->
+    <div id="tab-cases" class="tab-content">
+      <div class="info-card" style="margin-bottom: var(--spacing-xl);">
+        <div class="info-card-header">
+          <div class="info-card-icon orange">📂</div>
+          <div>
+            <div class="info-card-title">参考案例目录</div>
+            <div class="info-card-subtitle">存放审核参考案例的证明材料，用于智能体训练和验证</div>
+          </div>
+        </div>
+        <div class="file-list" id="cases-summary-list"></div>
+      </div>
+      <div id="cases-container"></div>
+    </div>
+
+    <!-- Tab 4: 业务规范 -->
+    <div id="tab-standards" class="tab-content">
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-icon blue">📊</div>
+          <div>
+            <div class="info-card-title">业务招待费审查风险点</div>
+            <div class="info-card-subtitle">综合部编制的审查风险点文档</div>
+          </div>
+        </div>
+        <div class="file-list" id="risk-point-list"></div>
+        <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+          <strong>文档说明：</strong>该文档由综合部编制，汇总了业务招待费审查中的各类风险点，涵盖招待对象、费用标准、票据合规、审批流程等方面。
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-icon green">📈</div>
+          <div>
+            <div class="info-card-title">业务招待费审查看板</div>
+            <div class="info-card-subtitle">2026年7月8日版本</div>
+          </div>
+        </div>
+        <div class="file-list" id="dashboard-list"></div>
+        <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+          <strong>文档说明：</strong>审查看板用于跟踪和管理业务招待费审核工作进度，包含审核状态、风险等级、处理结果等关键信息。
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-icon purple">📋</div>
+          <div>
+            <div class="info-card-title">校对规则</div>
+            <div class="info-card-subtitle">批次审核跨文档一致性校验标准</div>
+          </div>
+        </div>
+        <div class="file-list" id="rules-md-list"></div>
+        <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+          <strong>文档说明：</strong>定义批次审核时的跨文档一致性校验标准，每条规则对应一个校验检查项，实现时应记录规则编号、严重程度与判定依据。共6条规则：金额一致性、日期一致性、招待标准合规性、招待单位经营状态、支付凭证一致性、活动函件日期一致性。
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 6: 填写场景 -->
+    <div id="tab-scenarios" class="tab-content">
+      <div class="info-card" style="margin-bottom: var(--spacing-xl);">
+        <div class="info-card-header">
+          <div class="info-card-icon orange">📝</div>
+          <div>
+            <div class="info-card-title">业务招待填写场景指南</div>
+            <div class="info-card-subtitle">清远移动员工业务招待费报销填写模板（依据《业务招待费管理办法V9.0》）</div>
+          </div>
+        </div>
+        <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+          <strong>💡 快速选择指南：</strong>
+          <br>• 客户、供应商、合资合作方 → <strong>场景A 商务招待</strong>
+          <br>• 外宾、外籍关系人员 → <strong>场景B 外事招待</strong>
+          <br>• 政府机关（非党政军）、事业单位 → <strong>场景C 其他公务招待</strong>
+          <br>• 党政军机关工作人员 → <strong>场景F 公务接待</strong>
+          <br>• 广东移动内部上下级/平级单位 → <strong>场景D 内部业务招待 或 场景E 工作餐</strong>（见下方说明）
+          <br>• 自己部门/同事工作用餐 → <strong>场景E 工作餐</strong>
+        </div>
+      </div>
+
+      <!-- 内部公务招待规则说明 -->
+      <div class="info-card" style="margin-bottom: var(--spacing-xl); border-left: 4px solid var(--color-accent);">
+        <div class="info-card-header">
+          <div class="info-card-icon blue">📌</div>
+          <div>
+            <div class="info-card-title">内部公务招待：内部业务招待 vs 工作餐 适用规则</div>
+            <div class="info-card-subtitle">清远移动员工需特别注意区分</div>
+          </div>
+        </div>
+        <div style="margin-top: var(--spacing-md);">
+          <div style="padding: var(--spacing-md); background: var(--color-success-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-success); margin-bottom: var(--spacing-md);">
+            <strong style="color: var(--color-success);">✅ 可安排内部业务招待 或 工作餐 的场景：</strong>
+            <br>集团公司或外省兄弟单位到访清远公司（不同城），开展公务活动期间
+          </div>
+          <div style="padding: var(--spacing-md); background: var(--color-warning-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-warning);">
+            <strong style="color: var(--color-warning);">⚠️ 原则上不安排内部业务招待，可视情况安排工作餐 的场景：</strong>
+            <br>广东公司与同城专业公司，以及广东公司内部各单位之间开展公务活动期间
+          </div>
+        </div>
+      </div>
+
+      <!-- 人员级别标准（可编辑） -->
+      <div class="info-card" style="margin-bottom: var(--spacing-xl); border-left: 4px solid var(--color-success);" id="standards-card">
+        <div class="info-card-header">
+          <div class="info-card-icon green">📊</div>
+          <div>
+            <div class="info-card-title">开展人员级别标准（依据《业务招待费管理办法V9.0》第15-22条）</div>
+            <div class="info-card-subtitle" id="standards-subtitle">点击顶部「✏️ 编辑」可修改标准，保存至浏览器本地存储</div>
+          </div>
+        </div>
+
+        <!-- 对外业务招待标准 -->
+        <div style="margin-top: var(--spacing-md);">
+          <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin-bottom: var(--spacing-sm);">一、对外业务招待标准</div>
+          <table class="summary-table" id="external-standards-table">
+            <thead><tr><th style="width:80px;">人员级别</th><th>外事/商务招待<br>宴请标准</th><th>外事/商务招待<br>纪念品标准</th><th>其他公务招待<br>宴请标准</th><th>酒水限制</th></tr></thead>
+            <tbody id="external-standards-body"></tbody>
+          </table>
+        </div>
+
+        <!-- 内部业务招待标准 -->
+        <div style="margin-top: var(--spacing-xl);">
+          <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin-bottom: var(--spacing-sm);">二、内部业务招待标准</div>
+          <table class="summary-table" id="internal-standards-table">
+            <thead><tr><th style="width:80px;">招待主体</th><th>用餐标准</th><th>备注</th></tr></thead>
+            <tbody id="internal-standards-body"></tbody>
+          </table>
+        </div>
+
+        <!-- 工作餐标准 -->
+        <div style="margin-top: var(--spacing-xl);">
+          <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin-bottom: var(--spacing-sm);">三、工作餐标准</div>
+          <table class="summary-table" id="workmeal-standards-table">
+            <thead><tr><th style="width:80px;">场景</th><th>标准</th><th>备注</th></tr></thead>
+            <tbody id="workmeal-standards-body"></tbody>
+          </table>
+        </div>
+
+        <!-- 住宿标准 -->
+        <div style="margin-top: var(--spacing-xl);">
+          <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin-bottom: var(--spacing-sm);">四、商务招待住宿标准</div>
+          <table class="summary-table" id="accommodation-standards-table">
+            <thead><tr><th style="width:80px;">场景</th><th>标准</th><th>备注</th></tr></thead>
+            <tbody id="accommodation-standards-body"></tbody>
+          </table>
+        </div>
+
+        <!-- 纪念品标准 -->
+        <div style="margin-top: var(--spacing-xl);">
+          <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin-bottom: var(--spacing-sm);">五、纪念品标准</div>
+          <table class="summary-table" id="gift-standards-table">
+            <thead><tr><th style="width:80px;">人员级别</th><th>外事/商务招待</th><th>其他公务招待</th></tr></thead>
+            <tbody id="gift-standards-body"></tbody>
+          </table>
+        </div>
+
+        <!-- 陪同人数标准 -->
+        <div style="margin-top: var(--spacing-xl);">
+          <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin-bottom: var(--spacing-sm);">六、陪餐人数限制</div>
+          <table class="summary-table" id="accompany-standards-table">
+            <thead><tr><th style="width:80px;">招待类型</th><th>招待对象人数</th><th>陪餐人数上限</th></tr></thead>
+            <tbody id="accompany-standards-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 场景A -->
+      <div class="rule-card" id="scenario-A" style="margin-bottom: var(--spacing-lg);">
+        <div class="rule-header" onclick="toggleScenario(this.closest('.rule-card'))">
+          <div class="rule-header-left">
+            <span class="rule-severity high">场景A</span>
+            <span class="rule-title">商务招待（招待客户/合资合作方/经贸联络团组）</span>
+          </div>
+          <svg class="rule-toggle" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="rule-body">
+          <div class="rule-body-inner">
+            <div style="padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>场景定义：</strong>在商业谈判或商业合作中招待客户、合资合作方、经贸联络考察团组的活动。<strong>商务招待对象不包括党政军机关工作人员和国有企业集团总部工作人员。</strong>招待党政军机关工作人员需参照《党政机关国内公务接待管理规定》执行。
+            </div>
+            <!-- 开展招待人员级别选择 -->
+            <div style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: var(--color-accent-light); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <label style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">
+                🧑‍💼 开展招待人员级别（自动关联标准）：
+              </label>
+              <select id="scenario-A-level" onchange="onLevelChange('A')" style="margin-left: 8px; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--font-size-sm); font-family: var(--font-family);">
+                <option value="">— 请选择 —</option>
+                <option value="省管中层">省管中层</option>
+                <option value="市管中层">市管中层</option>
+                <option value="其他人员">其他人员</option>
+              </select>
+              <span id="scenario-A-level-hint" style="margin-left: 8px; font-size: var(--font-size-xs); color: var(--color-text-secondary);"></span>
+            </div>
+            <table class="summary-table">
+              <thead><tr><th>项目</th><th>填写内容</th></tr></thead>
+              <tbody>
+                <tr><td style="width:120px;"><strong>招待类型</strong></td><td>□ 商务招待</td></tr>
+                <tr><td><strong>招待日期</strong></td><td><input type="date" id="scenario-A-date" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);"></td></tr>
+                <tr><td><strong>招待地点</strong></td><td><input type="text" id="scenario-A-location" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象单位</strong></td><td><input type="text" id="scenario-A-org" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象人数</strong></td><td><input type="number" id="scenario-A-guests" min="1" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人（其中：<input type="text" id="scenario-A-guests-detail" placeholder="__________等__人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:140px;">）</td></tr>
+                <tr><td><strong>陪同人员</strong></td><td><input type="text" id="scenario-A-accompany-people" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>陪同人数</strong></td><td><input type="number" id="scenario-A-accompany-count" min="0" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人 <span id="scenario-A-accompany-hint" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);margin-left:8px;"></span></td></tr>
+                <tr><td><strong>人均餐标</strong></td><td><input type="number" id="scenario-A-per-capita" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 元/人·次 （标准：<span id="scenario-A-std-capita">—</span> 元/人·次以内） <span id="scenario-A-capita-status" style="font-size:var(--font-size-xs);font-weight:bold;margin-left:4px;"></span></td></tr>
+                <tr><td><strong>餐费合计</strong></td><td><span id="scenario-A-meal-total" style="font-weight:bold;color:var(--color-accent);">¥0.00</span> 元（<span id="scenario-A-meal-formula">人均餐标 × 招待人数</span>）</td></tr>
+                <tr><td><strong>酒水情况</strong></td><td>□ 无酒水 &nbsp; 白酒：<input type="number" id="scenario-A-baijiu-price" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;" oninput="calculateScenarioA()"> 元/500ml（标准：<span id="scenario-A-std-baijiu">—</span>） &nbsp; 红酒：<input type="number" id="scenario-A-wine-price" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;" oninput="calculateScenarioA()"> 元/750ml（标准：<span id="scenario-A-std-wine">—</span>）</td></tr>
+                <tr><td><strong>是否赠送纪念品</strong></td><td>□ 无 &nbsp; □ 有：<input type="number" id="scenario-A-gift-per" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;" oninput="calculateScenarioA()"> 元/人·次（标准：<span id="scenario-A-std-gift">—</span> 元/人·次以内） <span id="scenario-A-gift-status" style="font-size:var(--font-size-xs);font-weight:bold;margin-left:4px;"></span> &nbsp; 纪念品小计：<span id="scenario-A-gift-total" style="font-weight:bold;">¥0.00</span> 元</td></tr>
+                <tr><td><strong>酒水限制</strong></td><td><span id="scenario-A-alcohol-limit" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);">标准：<span id="scenario-A-alcohol-std">—</span></span></td></tr>
+                <tr><td><strong>住宿情况</strong></td><td>□ 无 &nbsp; □ 有：<input type="number" id="scenario-A-rooms" min="0" placeholder="____间" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:60px;"> 间 × <input type="number" id="scenario-A-room-price" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 元/间·夜 = <span id="scenario-A-room-total" style="font-weight:bold;">¥0.00</span> 元</td></tr>
+                <tr><td><strong>附件清单</strong></td><td>□ 业务招待申请单 □ 发票 □ 支付凭证 □ 招待单位认证 □ 活动函件</td></tr>
+                <tr><td><strong>招待事由</strong></td><td><input type="text" id="scenario-A-reason" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象身份</strong></td><td><label><input type="checkbox" id="scenario-A-type-client"> 客户</label> &nbsp; <label><input type="checkbox" id="scenario-A-type-partner"> 合资合作方</label> &nbsp; <label><input type="checkbox" id="scenario-A-type-group"> 经贸联络团组</label></td></tr>
+              </tbody>
+            </table>
+            <!-- 费用汇总 -->
+            <div id="scenario-A-summary" style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <strong>💰 费用汇总</strong>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;font-size:var(--font-size-sm);">
+                <div>🍽️ 餐费：<span id="scenario-A-summary-meal" style="font-weight:bold;">¥0.00</span></div>
+                <div>🍷 酒水：<span id="scenario-A-summary-alcohol" style="font-weight:bold;">¥0.00</span></div>
+                <div>🎁 纪念品：<span id="scenario-A-summary-gift" style="font-weight:bold;">¥0.00</span></div>
+                <div>🏨 住宿：<span id="scenario-A-summary-room" style="font-weight:bold;">¥0.00</span></div>
+                <div>📊 合计：<span id="scenario-A-summary-total" style="font-weight:bold;color:var(--color-error);font-size:var(--font-size-lg);">¥0.00</span></div>
+                <div>📝 人均：<span id="scenario-A-summary-per" style="font-weight:bold;">¥0.00</span> /人</div>
+              </div>
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); line-height: 1.7;">
+              <strong>📌 具体例子：</strong><br>
+              清远移动市场部<strong>张三</strong>接待<strong>华为技术有限公司清远办事处</strong>李四一行3人，洽谈5G基站共建合作事宜，在清远市清城区某酒店宴请，人均餐标280元/人，金额合计840元。
+            </div>
+            <div class="scenario-std-ref">
+              <strong>📊 餐标参考（按人员级别）：</strong><br>
+              省管中层：外事/商务 ≤400元/人·次 · 纪念品 ≤400元/人·次 · 酒水 白酒≤400元/500ml，红酒≤400元/750ml<br>
+              市管中层：外事/商务 ≤300元/人·次 · 纪念品 ≤300元/人·次 · 酒水 白酒≤300元/500ml，红酒≤300元/750ml<br>
+              其他人员：外事/商务 ≤200元/人·次 · 纪念品 ≤200元/人·次 · 酒水 白酒≤200元/500ml，红酒≤200元/750ml
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-success-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+              <strong>合规自查：</strong>
+              <br>☐ 陪同人数符合规定（≤5人可对等，&gt;5人不超超过部分的1/2）
+              <br>☐ 人均餐标未超标
+              <br>☐ 未提供鱼翅、燕窝等禁止菜肴
+              <br>☐ 未安排在私人会所及高档娱乐场所
+              <br>☐ 未赠送现金、购物卡等禁止礼品
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 场景B -->
+      <div class="rule-card" id="scenario-B" style="margin-bottom: var(--spacing-lg);">
+        <div class="rule-header" onclick="toggleScenario(this.closest('.rule-card'))">
+          <div class="rule-header-left">
+            <span class="rule-severity high">场景B</span>
+            <span class="rule-title">外事招待（招待外宾/外籍关系人员）</span>
+          </div>
+          <svg class="rule-toggle" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="rule-body">
+          <div class="rule-body-inner">
+            <div style="padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>场景定义：</strong>因公招待外宾或其他外籍关系人员的活动。
+            </div>
+            <div style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: var(--color-accent-light); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <label style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">
+                🧑‍💼 开展招待人员级别（自动关联标准）：
+              </label>
+              <select id="scenario-B-level" onchange="onLevelChange('B')" style="margin-left: 8px; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--font-size-sm); font-family: var(--font-family);">
+                <option value="">— 请选择 —</option>
+                <option value="省管中层">省管中层</option>
+                <option value="市管中层">市管中层</option>
+                <option value="其他人员">其他人员</option>
+              </select>
+              <span id="scenario-B-level-hint" style="margin-left: 8px; font-size: var(--font-size-xs); color: var(--color-text-secondary);"></span>
+            </div>
+            <table class="summary-table">
+              <thead><tr><th>项目</th><th>填写内容</th></tr></thead>
+              <tbody>
+                <tr><td style="width:120px;"><strong>招待类型</strong></td><td>□ 外事招待</td></tr>
+                <tr><td><strong>招待日期</strong></td><td><input type="date" id="scenario-B-date" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);"></td></tr>
+                <tr><td><strong>招待地点</strong></td><td><input type="text" id="scenario-B-location" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象单位</strong></td><td><input type="text" id="scenario-B-org" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象国籍</strong></td><td><input type="text" id="scenario-B-nationality" placeholder="________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象人数</strong></td><td><input type="number" id="scenario-B-guests" min="1" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人（其中：<input type="text" id="scenario-B-guests-detail" placeholder="__________等__人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:140px;">）</td></tr>
+                <tr><td><strong>陪同人员</strong></td><td><input type="text" id="scenario-B-accompany-people" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>陪同人数</strong></td><td><input type="number" id="scenario-B-accompany-count" min="0" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人 <span id="scenario-B-accompany-hint" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);margin-left:8px;"></span></td></tr>
+                <tr><td><strong>人均餐标</strong></td><td><input type="number" id="scenario-B-per-capita" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 元/人·次 （标准：<span id="scenario-B-std-capita">—</span> 元/人·次以内） <span id="scenario-B-capita-status" style="font-size:var(--font-size-xs);font-weight:bold;margin-left:4px;"></span></td></tr>
+                <tr><td><strong>餐费合计</strong></td><td><span id="scenario-B-meal-total" style="font-weight:bold;color:var(--color-accent);">¥0.00</span> 元（<span id="scenario-B-meal-formula">人均餐标 × 招待人数</span>）</td></tr>
+                <tr><td><strong>酒水情况</strong></td><td>□ 无酒水 &nbsp; 白酒：<input type="number" id="scenario-B-baijiu-price" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;" oninput="calculateScenarioB()"> 元/500ml（标准：<span id="scenario-B-std-baijiu">—</span>） &nbsp; 红酒：<input type="number" id="scenario-B-wine-price" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;" oninput="calculateScenarioB()"> 元/750ml（标准：<span id="scenario-B-std-wine">—</span>）</td></tr>
+                <tr><td><strong>是否赠送纪念品</strong></td><td>□ 无 &nbsp; □ 有：<input type="number" id="scenario-B-gift-per" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;" oninput="calculateScenarioB()"> 元/人·次（标准：<span id="scenario-B-std-gift">—</span> 元/人·次以内） <span id="scenario-B-gift-status" style="font-size:var(--font-size-xs);font-weight:bold;margin-left:4px;"></span> &nbsp; 纪念品小计：<span id="scenario-B-gift-total" style="font-weight:bold;">¥0.00</span> 元</td></tr>
+                <tr><td><strong>酒水限制</strong></td><td><span id="scenario-B-alcohol-limit" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);">标准：<span id="scenario-B-alcohol-std">—</span></span></td></tr>
+                <tr><td><strong>住宿情况</strong></td><td>□ 无 &nbsp; □ 有：<input type="number" id="scenario-B-rooms" min="0" placeholder="____间" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:60px;"> 间 × <input type="number" id="scenario-B-room-price" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 元/间·夜 = <span id="scenario-B-room-total" style="font-weight:bold;">¥0.00</span> 元（<span id="scenario-B-room-hint" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);"></span>）</td></tr>
+                <tr><td><strong>附件清单</strong></td><td>□ 业务招待申请单 □ 发票 □ 支付凭证 □ 外宾认证 □ 活动函件</td></tr>
+                <tr><td><strong>招待事由</strong></td><td><input type="text" id="scenario-B-reason" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+              </tbody>
+            </table>
+            <div id="scenario-B-summary" style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <strong>💰 费用汇总</strong>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;font-size:var(--font-size-sm);">
+                <div>🍽️ 餐费：<span id="scenario-B-summary-meal" style="font-weight:bold;">¥0.00</span></div>
+                <div>🍷 酒水：<span id="scenario-B-summary-alcohol" style="font-weight:bold;">¥0.00</span></div>
+                <div>🎁 纪念品：<span id="scenario-B-summary-gift" style="font-weight:bold;">¥0.00</span></div>
+                <div>🏨 住宿：<span id="scenario-B-summary-room" style="font-weight:bold;">¥0.00</span></div>
+                <div>📊 合计：<span id="scenario-B-summary-total" style="font-weight:bold;color:var(--color-error);font-size:var(--font-size-lg);">¥0.00</span></div>
+                <div>📝 人均：<span id="scenario-B-summary-per" style="font-weight:bold;">¥0.00</span> /人</div>
+              </div>
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); line-height: 1.7;">
+              <strong>📌 具体例子：</strong><br>
+              清远移动网络部<strong>王五</strong>接待<strong>泰国电信协会（TOT）</strong>考察团5人，参观清远5G智慧工厂示范项目，在清远市某涉外酒店宴请，人均餐标350元/人，金额合计1750元，安排3间标准间住宿。
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-success-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+              <strong>合规自查：</strong>
+              <br>☐ 陪同人数符合规定
+              <br>☐ 人均餐标未超标
+              <br>☐ 住宿标准符合规定（一般人员单间/标准间，特别重要人员普通套间）
+              <br>☐ 未提供禁止菜肴
+              <br>☐ 纪念品符合外事招待标准
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 场景C -->
+      <div class="rule-card" id="scenario-C" style="margin-bottom: var(--spacing-lg);">
+        <div class="rule-header" onclick="toggleScenario(this.closest('.rule-card'))">
+          <div class="rule-header-left">
+            <span class="rule-severity medium">场景C</span>
+            <span class="rule-title">其他公务招待（非商务/非外事的公务活动）</span>
+          </div>
+          <svg class="rule-toggle" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="rule-body">
+          <div class="rule-body-inner">
+            <div style="padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>场景定义：</strong>招待党政军机关工作人员（参照《党政机关国内公务接待管理规定》）、其他政府机构、事业单位的公务活动。
+            </div>
+            <div style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: var(--color-accent-light); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <label style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">
+                🧑‍💼 开展招待人员级别（自动关联标准）：
+              </label>
+              <select id="scenario-C-level" onchange="onLevelChange('C')" style="margin-left: 8px; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--font-size-sm); font-family: var(--font-family);">
+                <option value="">— 请选择 —</option>
+                <option value="省管中层">省管中层</option>
+                <option value="市管中层">市管中层</option>
+                <option value="其他人员">其他人员</option>
+              </select>
+              <span id="scenario-C-level-hint" style="margin-left: 8px; font-size: var(--font-size-xs); color: var(--color-text-secondary);"></span>
+            </div>
+            <table class="summary-table">
+              <thead><tr><th>项目</th><th>填写内容</th></tr></thead>
+              <tbody>
+                <tr><td style="width:120px;"><strong>招待类型</strong></td><td>□ 其他公务招待</td></tr>
+                <tr><td><strong>招待日期</strong></td><td><input type="date" id="scenario-C-date" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);"></td></tr>
+                <tr><td><strong>招待地点</strong></td><td><input type="text" id="scenario-C-location" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象单位</strong></td><td><input type="text" id="scenario-C-org" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象人数</strong></td><td><input type="number" id="scenario-C-guests" min="1" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人（其中：<input type="text" id="scenario-C-guests-detail" placeholder="__________等__人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:140px;">）</td></tr>
+                <tr><td><strong>陪同人员</strong></td><td><input type="text" id="scenario-C-accompany-people" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>陪同人数</strong></td><td><input type="number" id="scenario-C-accompany-count" min="0" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人 <span id="scenario-C-accompany-hint" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);margin-left:8px;"></span></td></tr>
+                <tr><td><strong>人均餐标</strong></td><td><input type="number" id="scenario-C-per-capita" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 元/人·次 （标准：<span id="scenario-C-std-capita">—</span> 元/人·次以内） <span id="scenario-C-capita-status" style="font-size:var(--font-size-xs);font-weight:bold;margin-left:4px;"></span></td></tr>
+                <tr><td><strong>餐费合计</strong></td><td><span id="scenario-C-meal-total" style="font-weight:bold;color:var(--color-accent);">¥0.00</span> 元（<span id="scenario-C-meal-formula">人均餐标 × 招待人数</span>）</td></tr>
+                <tr><td><strong>酒水情况</strong></td><td>□ 无酒水 &nbsp; 白酒：<input type="number" id="scenario-C-baijiu-price" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;" oninput="calculateScenarioC()"> 元/500ml（标准：<span id="scenario-C-std-baijiu">—</span>） &nbsp; 红酒：<input type="number" id="scenario-C-wine-price" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;" oninput="calculateScenarioC()"> 元/750ml（标准：<span id="scenario-C-std-wine">—</span>）</td></tr>
+                <tr><td><strong>是否赠送纪念品</strong></td><td>□ 无（<span style="color: var(--color-error); font-weight: bold;">⚠️ 其他公务招待不得赠送纪念品</span>）</td></tr>
+                <tr><td><strong>酒水限制</strong></td><td><span id="scenario-C-alcohol-limit" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);">标准：<span id="scenario-C-alcohol-std">—</span></span></td></tr>
+                <tr><td><strong>附件清单</strong></td><td>□ 业务招待申请单 □ 发票 □ 支付凭证 □ 招待单位认证</td></tr>
+                <tr><td><strong>招待事由</strong></td><td><input type="text" id="scenario-C-reason" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+              </tbody>
+            </table>
+            <div id="scenario-C-summary" style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <strong>💰 费用汇总</strong>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;font-size:var(--font-size-sm);">
+                <div>🍽️ 餐费：<span id="scenario-C-summary-meal" style="font-weight:bold;">¥0.00</span></div>
+                <div>🍷 酒水：<span id="scenario-C-summary-alcohol" style="font-weight:bold;">¥0.00</span></div>
+                <div>📊 合计：<span id="scenario-C-summary-total" style="font-weight:bold;color:var(--color-error);font-size:var(--font-size-lg);">¥0.00</span></div>
+                <div>📝 人均：<span id="scenario-C-summary-per" style="font-weight:bold;">¥0.00</span> /人</div>
+              </div>
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); line-height: 1.7;">
+              <strong>📌 具体例子：</strong><br>
+              清远移动综合部<strong>赵六</strong>接待<strong>清远市工信局</strong>钱七一行4人，沟通清城区5G覆盖推进工作，在清远移动食堂工作餐，人均餐标120元/人，金额合计480元。
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-success-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+              <strong>合规自查：</strong>
+              <br>☐ 陪同人数符合规定
+              <br>☐ 人均餐标未超标
+              <br>☐ <strong style="color: var(--color-error);">未赠送纪念品</strong>（其他公务招待严禁赠送）
+              <br>☐ 未提供禁止菜肴
+              <br>☐ 未安排在高档娱乐场所
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 场景D -->
+      <div class="rule-card" id="scenario-D" style="margin-bottom: var(--spacing-lg);">
+        <div class="rule-header" onclick="toggleScenario(this.closest('.rule-card'))">
+          <div class="rule-header-left">
+            <span class="rule-severity medium">场景D</span>
+            <span class="rule-title">内部业务招待（集团公司内部上下级/平级单位）</span>
+          </div>
+          <svg class="rule-toggle" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="rule-body">
+          <div class="rule-body-inner">
+            <div style="padding: var(--spacing-md); background: var(--color-success-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>✅ 适用条件：</strong>集团公司或外省兄弟单位到访清远公司（不同城），开展公务活动期间<strong>可安排内部业务招待或工作餐</strong>。
+            </div>
+            <div style="padding: var(--spacing-md); background: var(--color-warning-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>⚠️ 不适用条件：</strong>广东公司与同城专业公司，以及广东公司内部各单位之间开展公务活动期间，<strong>原则上不安排内部业务招待，但可视情况安排工作餐</strong>。
+            </div>
+            <div style="padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>场景定义：</strong>集团公司内部上下级单位之间、平级单位之间的公务招待活动。
+            </div>
+            <div style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: var(--color-accent-light); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <label style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">
+                🧑‍💼 开展招待人员级别（自动关联标准）：
+              </label>
+              <select id="scenario-D-level" onchange="onLevelChange('D')" style="margin-left: 8px; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--font-size-sm); font-family: var(--font-family);">
+                <option value="">— 请选择 —</option>
+                <option value="省管中层">省管中层</option>
+                <option value="市管中层">市管中层</option>
+                <option value="其他人员">其他人员</option>
+              </select>
+              <span id="scenario-D-level-hint" style="margin-left: 8px; font-size: var(--font-size-xs); color: var(--color-text-secondary);"></span>
+            </div>
+            <table class="summary-table">
+              <thead><tr><th>项目</th><th>填写内容</th></tr></thead>
+              <tbody>
+                <tr><td style="width:120px;"><strong>招待类型</strong></td><td>□ 内部业务招待</td></tr>
+                <tr><td><strong>招待日期</strong></td><td><input type="date" id="scenario-D-date" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);"></td></tr>
+                <tr><td><strong>招待地点</strong></td><td>□ 单位食堂 &nbsp; □ 其他 <input type="text" id="scenario-D-location" placeholder="________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象单位</strong></td><td><input type="text" id="scenario-D-org" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>招待对象人数</strong></td><td><input type="number" id="scenario-D-guests" min="1" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人（其中：<input type="text" id="scenario-D-guests-detail" placeholder="__________等__人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:140px;">）</td></tr>
+                <tr><td><strong>陪同人员</strong></td><td><input type="text" id="scenario-D-accompany-people" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>陪同人数</strong></td><td><input type="number" id="scenario-D-accompany-count" min="0" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人 <span id="scenario-D-accompany-hint" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);margin-left:8px;"></span></td></tr>
+                <tr><td><strong>人均餐标</strong></td><td><input type="number" id="scenario-D-per-capita" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 元/人·次 （标准：<span id="scenario-D-std-capita">—</span> 元/人·次以内） <span id="scenario-D-capita-status" style="font-size:var(--font-size-xs);font-weight:bold;margin-left:4px;"></span></td></tr>
+                <tr><td><strong>餐费合计</strong></td><td><span id="scenario-D-meal-total" style="font-weight:bold;color:var(--color-accent);">¥0.00</span> 元（<span id="scenario-D-meal-formula">人均餐标 × 招待人数</span>）</td></tr>
+                <tr><td><strong>酒水情况</strong></td><td>□ 无酒水（<strong>内部招待不上烟酒</strong>）</td></tr>
+                <tr><td><strong>是否赠送纪念品</strong></td><td>□ 无（<span style="color: var(--color-error); font-weight: bold;">⚠️ 内部招待不得赠送纪念品</span>）</td></tr>
+                <tr><td><strong>酒水限制</strong></td><td><span id="scenario-D-alcohol-limit" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);">标准：<span id="scenario-D-alcohol-std">—</span></span></td></tr>
+                <tr><td><strong>是否工作餐</strong></td><td>□ 是（≤60元/人） □ 否</td></tr>
+                <tr><td><strong>招待人级别</strong></td><td><span id="scenario-D-level-display" style="font-weight:bold;color:var(--color-accent);">—</span></td></tr>
+                <tr><td><strong>附件清单</strong></td><td>□ 业务招待申请单 □ 发票 □ 支付凭证</td></tr>
+                <tr><td><strong>招待事由</strong></td><td><input type="text" id="scenario-D-reason" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+              </tbody>
+            </table>
+            <div id="scenario-D-summary" style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <strong>💰 费用汇总</strong>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;font-size:var(--font-size-sm);">
+                <div>🍽️ 餐费：<span id="scenario-D-summary-meal" style="font-weight:bold;">¥0.00</span></div>
+                <div>📊 合计：<span id="scenario-D-summary-total" style="font-weight:bold;color:var(--color-error);font-size:var(--font-size-lg);">¥0.00</span></div>
+                <div>📝 人均：<span id="scenario-D-summary-per" style="font-weight:bold;">¥0.00</span> /人</div>
+              </div>
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); line-height: 1.7;">
+              <strong>📌 具体例子：</strong><br>
+              清远移动财务部<strong>孙八</strong>接待<strong>广东移动财务部</strong>周九一行3人，交流年度预算编制工作，在清远移动食堂用餐，人均餐标100元/人，金额合计300元。<br><br>
+              <em>注：若来访单位为<strong>集团公司（北京）</strong>或<strong>外省兄弟单位</strong>（如广州公司、深圳公司），则可安排内部业务招待；若为<strong>省内同城单位</strong>，原则上不安排，可视情况安排工作餐。</em>
+            </div>
+            <div class="scenario-std-ref">
+              <strong>📊 餐标参考（按招待主体）：</strong><br>
+              省管中层经理：≤150元/人·次 · 不得进行商务宴请，不上烟酒、不得赠送纪念品<br>
+              市管中层经理：≤150元/人·次 · 不得进行商务宴请，不上烟酒、不得赠送纪念品<br>
+              其他人员：≤100元/人·次 · 不得进行商务宴请，不上烟酒、不得赠送纪念品<br><br>
+              <strong>📊 陪餐人数限制：</strong><br>
+              ≤10人：≤3人<br>
+              >10人：不超过招待对象的三分之一
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-success-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+              <strong>合规自查：</strong>
+              <br>☐ 陪同人数符合规定（≤10人不超3人，&gt;10人不超1/3）
+              <br>☐ 人均餐标未超标（省管/市管≤150元，其他≤100元）
+              <br>☐ <strong style="color: var(--color-error);">未上烟酒</strong>
+              <br>☐ <strong style="color: var(--color-error);">未赠送纪念品</strong>
+              <br>☐ <strong style="color: var(--color-error);">未进行商务宴请</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 场景E -->
+      <div class="rule-card" id="scenario-E" style="margin-bottom: var(--spacing-lg);">
+        <div class="rule-header" onclick="toggleScenario(this.closest('.rule-card'))">
+          <div class="rule-header-left">
+            <span class="rule-severity low">场景E</span>
+            <span class="rule-title">工作餐（单位食堂/外出调研用餐）</span>
+          </div>
+          <svg class="rule-toggle" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="rule-body">
+          <div class="rule-body-inner">
+            <div style="padding: var(--spacing-md); background: var(--color-warning-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>⚠️ 适用条件：</strong>广东公司与同城专业公司，以及广东公司内部各单位之间开展公务活动期间，<strong>原则上不安排内部业务招待，但可视情况安排工作餐</strong>。
+            </div>
+            <div style="padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>场景定义：</strong>员工在单位食堂用餐，或外出调研/出差无法在食堂用餐时就近安排的工作餐。
+            </div>
+            <div style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: var(--color-accent-light); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <label style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">
+                🧑‍💼 用餐人员级别（自动关联标准）：
+              </label>
+              <select id="scenario-E-level" onchange="onLevelChange('E')" style="margin-left: 8px; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--font-size-sm); font-family: var(--font-family);">
+                <option value="">— 请选择 —</option>
+                <option value="省管中层">省管中层</option>
+                <option value="市管中层">市管中层</option>
+                <option value="其他人员">其他人员</option>
+              </select>
+              <span id="scenario-E-level-hint" style="margin-left: 8px; font-size: var(--font-size-xs); color: var(--color-text-secondary);"></span>
+            </div>
+            <table class="summary-table">
+              <thead><tr><th>项目</th><th>填写内容</th></tr></thead>
+              <tbody>
+                <tr><td style="width:120px;"><strong>用餐类型</strong></td><td>□ 单位食堂 &nbsp; □ 外出调研用餐</td></tr>
+                <tr><td><strong>用餐日期</strong></td><td><input type="date" id="scenario-E-date" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);"></td></tr>
+                <tr><td><strong>用餐地点</strong></td><td><input type="text" id="scenario-E-location" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>用餐人数</strong></td><td><input type="number" id="scenario-E-guests" min="1" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人（其中：<input type="text" id="scenario-E-guests-detail" placeholder="__________等__人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:140px;">）</td></tr>
+                <tr><td><strong>人均餐标</strong></td><td><input type="number" id="scenario-E-per-capita" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;" oninput="calculateScenarioE()"> 元/人 （标准：<span id="scenario-E-std-capita">—</span> 元/人以内） <span id="scenario-E-capita-status" style="font-size:var(--font-size-xs);font-weight:bold;margin-left:4px;"></span></td></tr>
+                <tr><td><strong>用餐金额合计</strong></td><td><span id="scenario-E-meal-total" style="font-weight:bold;color:var(--color-accent);">¥0.00</span> 元（<span id="scenario-E-meal-formula">人均餐标 × 用餐人数</span>）</td></tr>
+                <tr><td><strong>酒水限制</strong></td><td><span id="scenario-E-alcohol-limit" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);">标准：<span id="scenario-E-alcohol-std">—</span></span></td></tr>
+                <tr><td><strong>出差人员交费</strong></td><td>□ 已交纳伙食补贴 &nbsp; □ 未交纳（需补交：<input type="number" id="scenario-E-fee" min="0" step="0.01" placeholder="____" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 元）</td></tr>
+                <tr><td><strong>附件清单</strong></td><td>□ 发票 □ 支付凭证</td></tr>
+                <tr><td><strong>用餐事由</strong></td><td><input type="text" id="scenario-E-reason" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+              </tbody>
+            </table>
+            <div id="scenario-E-summary" style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+              <strong>💰 费用汇总</strong>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:var(--font-size-sm);">
+                <div>🍽️ 餐费：<span id="scenario-E-summary-meal" style="font-weight:bold;">¥0.00</span></div>
+                <div>📝 人均：<span id="scenario-E-summary-per" style="font-weight:bold;">¥0.00</span> /人</div>
+              </div>
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); line-height: 1.7;">
+              <strong>📌 具体例子：</strong><br>
+              清远移动计财部<strong>吴十</strong>赴<strong>连州市</strong>调研乡镇宽带覆盖项目，因连州当地无食堂，在连州市区某餐馆工作餐，5人用餐，人均55元/人，金额合计275元。<br><br>
+              <em>或：清远移动与<strong>同城专业公司</strong>（如清远铁塔公司）工作人员交流项目合作，在清远移动食堂安排工作餐，人均60元/人。</em>
+            </div>
+            <div class="scenario-std-ref">
+              <strong>📊 工作餐标准参考：</strong><br>
+              单位食堂：参照食堂正常标准或差旅伙食补贴（优先自助形式，不上烟酒）<br>
+              外出调研：参照上述标准就近安排（出差人员已领差旅伙食补贴的应交纳费用）
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-success-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+              <strong>合规自查：</strong>
+              <br>☐ 参照食堂正常标准或差旅伙食补贴
+              <br>☐ 优先自助形式
+              <br>☐ 不上烟酒
+              <br>☐ 出差人员已交费或明确应交金额
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 场景F -->
+      <div class="rule-card" style="margin-bottom: var(--spacing-lg);">
+        <div class="rule-header" onclick="toggleScenario(this.closest('.rule-card'))">
+          <div class="rule-header-left">
+            <span class="rule-severity high">场景F</span>
+            <span class="rule-title">招待党政军机关工作人员（参照公务接待规定）</span>
+          </div>
+          <svg class="rule-toggle" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="rule-body">
+          <div class="rule-body-inner">
+            <div style="padding: var(--spacing-md); background: var(--color-error-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>⚠️ 特殊要求：</strong>招待党政军机关工作人员时，需<strong>参照《党政机关国内公务接待管理规定》</strong>执行，标准更严格。
+            </div>
+            <div style="padding: var(--spacing-md); background: var(--color-bg-secondary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: var(--spacing-md); line-height: 1.7;">
+              <strong>场景定义：</strong>招待党政军机关工作人员，需参照《党政机关国内公务接待管理规定》执行。
+            </div>
+            <table class="summary-table">
+              <thead><tr><th>项目</th><th>填写内容</th></tr></thead>
+              <tbody>
+                <tr><td style="width:120px;"><strong>招待类型</strong></td><td>□ 参照《党政机关国内公务接待管理规定》</td></tr>
+                <tr><td><strong>招待日期</strong></td><td>____年__月__日</td></tr>
+                <tr><td><strong>招待地点</strong></td><td>________________________________________</td></tr>
+                <tr><td><strong>招待对象单位</strong></td><td>________________________________________</td></tr>
+                <tr><td><strong>招待对象人数</strong></td><td><input type="number" id="scenario-F-guests" min="1" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人（其中：<input type="text" id="scenario-F-guests-detail" placeholder="__________等__人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:140px;">）</td></tr>
+                <tr><td><strong>陪同人员</strong></td><td><input type="text" id="scenario-F-accompany-people" placeholder="________________________________________" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:100%;"></td></tr>
+                <tr><td><strong>陪同人数</strong></td><td><input type="number" id="scenario-F-accompany-count" min="0" placeholder="____人" style="border:1px solid var(--color-border);border-radius:4px;padding:2px 6px;font-size:var(--font-size-sm);width:80px;"> 人 <span id="scenario-F-accompany-hint" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);margin-left:8px;"></span></td></tr>
+                <tr><td><strong>人均餐标</strong></td><td>____元/人·次</td></tr>
+                <tr><td><strong>招待金额合计</strong></td><td>¥________元</td></tr>
+                <tr><td><strong>酒水情况</strong></td><td>□ 无酒水（<strong>严禁酒水</strong>）</td></tr>
+                <tr><td><strong>是否赠送纪念品</strong></td><td>□ 无（<span style="color: var(--color-error); font-weight: bold;">⚠️ 严禁赠送</span>）</td></tr>
+                <tr><td><strong>酒水限制</strong></td><td><span id="scenario-F-alcohol-limit" style="font-size:var(--font-size-xs);color:var(--color-text-secondary);">标准：<span id="scenario-F-alcohol-std">—</span></span></td></tr>
+                <tr><td><strong>附件清单</strong></td><td>□ 公务接待函 □ 业务招待申请单 □ 发票 □ 支付凭证</td></tr>
+                <tr><td><strong>招待事由</strong></td><td>________________________________________</td></tr>
+              </tbody>
+            </table>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-info-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-primary); line-height: 1.7;">
+              <strong>📌 具体例子：</strong><br>
+              清远移动综合部<strong>郑十一</strong>接待<strong>清远市纪委监委</strong>王十二一行2人，配合调查某基站建设合规性问题，在清远移动食堂工作餐，人均餐标80元/人，金额合计160元。有正式公函。
+            </div>
+            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--color-success-bg); border-radius: var(--radius-sm); font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.7;">
+              <strong>合规自查：</strong>
+              <br>☐ 已参照《党政机关国内公务接待管理规定》执行
+              <br>☐ 有正式公函
+              <br>☐ <strong style="color: var(--color-error);">未赠送任何纪念品</strong>
+              <br>☐ 未提供高档菜肴
+              <br>☐ 陪同人数符合公务接待规定
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 通用填写说明 -->
+      <div class="info-card" style="margin-top: var(--spacing-xl);">
+        <div class="info-card-header">
+          <div class="info-card-icon green">📋</div>
+          <div>
+            <div class="info-card-title">通用填写说明</div>
+          </div>
+        </div>
+        <div style="margin-top: var(--spacing-md); font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: 2;">
+          <p>1. <strong>所有日期</strong>统一格式：YYYY年MM月DD日</p>
+          <p>2. <strong>金额</strong>统一精确到小数点后两位</p>
+          <p>3. <strong>人数</strong>必须填写具体数字，不得用"若干"等模糊表述</p>
+          <p>4. <strong>招待对象</strong>需列出姓名+职务/单位</p>
+          <p>5. <strong>陪同人员</strong>需列出姓名</p>
+          <p>6. <strong>合规自查</strong>每一项必须勾选，如有超标需额外说明原因</p>
+          <p>7. <strong>附件</strong>必须齐全，缺少任何一项不予报销</p>
+          <p>8. <strong>法定节假日</strong>期间一般不安排业务招待，特殊情况需备案说明</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 5: 目录结构 -->
+    <div id="tab-directory" class="tab-content">
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-icon blue">📁</div>
+          <div>
+            <div class="info-card-title">审核标准目录结构</div>
+            <div class="info-card-subtitle" id="dir-path"></div>
+          </div>
+        </div>
+        <div>
+          <ul class="dir-tree" id="dir-tree"></ul>
+        </div>
+        <!-- Open file panel -->
+        <div class="open-panel">
+          <div class="open-panel-title">📂 打开审核标准附件</div>
+          <div class="open-panel-hint">
+            <strong>注意：</strong>由于浏览器安全限制，直接打开本地文件可能无法工作。以下提供多种方案：
+            <br>① 点击「打开文件」按钮尝试直接打开（部分浏览器/场景支持）
+            <br>② 点击「生成批处理脚本」下载 .bat 文件，双击即可批量打开所有文件
+            <br>③ 点击「复制路径」后手动在文件资源管理器中打开
+          </div>
+          <div class="open-panel-actions" id="open-panel-actions"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+    <!-- Save toast -->
+    <div id="save-toast" class="save-toast"></div>
+
+  <script>
+    // ===== 审核标准目录路径 =====
+    const AUDIT_STANDARDS_DIR = 'D:\\00_项目\\02_ocr\\招待费智能体\\审核标准';
+
+    // ===== 目录结构数据（与 D:\00_项目\02_ocr\招待费智能体\审核标准\ 同步） =====
+    const DIRECTORY = {
+      path: '审核标准/',
+      children: [
+        { type: 'file', name: 'README.md', badge: 'MD', path: 'README.md' },
+        {
+          type: 'dir', name: '业务规范/',
+          children: [
+            { type: 'file', name: '业务招待费审查看板20260708.xls', badge: 'XLS', path: '业务规范/业务招待费审查看板20260708.xls' },
+            { type: 'file', name: '业务招待费审查风险点.docx', badge: 'DOCX', path: '业务规范/业务招待费审查风险点.docx' },
+          ]
+        },
+        {
+          type: 'dir', name: '政策法规/',
+          children: [
+            { type: 'file', name: '附件1：中国移动广东公司清远分公司业务招待费管理办法（V9.0）-2025年7月9日发布.docx', badge: 'DOCX', path: '政策法规/附件1：中国移动广东公司清远分公司业务招待费管理办法（V9.0）-2025年7月9日发布.docx' },
+          ]
+        },
+        {
+          type: 'dir', name: '审核规则/',
+          children: [
+            { type: 'file', name: '审核规则.md', badge: 'MD', path: '审核规则/审核规则.md' },
+            { type: 'file', name: '招待费风险点大全2026年7月9日更新.docx', badge: 'DOCX', path: '审核规则/招待费风险点大全2026年7月9日更新.docx' },
+          ]
+        },
+        {
+          type: 'dir', name: '参考案例/',
+          children: [
+            {
+              type: 'dir', name: '案例1/',
+              children: [
+                { type: 'file', name: '公司函件.pdf', badge: 'PDF', path: '参考案例/案例1/公司函件.pdf' },
+                { type: 'file', name: '公司认证.PNG', badge: 'PNG', path: '参考案例/案例1/公司认证.PNG' },
+                { type: 'file', name: '发票.pdf', badge: 'PDF', path: '参考案例/案例1/发票.pdf' },
+                { type: 'file', name: '发票.xml', badge: 'XML', path: '参考案例/案例1/发票.xml' },
+                { type: 'file', name: '小票.jpg', badge: 'JPG', path: '参考案例/案例1/小票.jpg' },
+                { type: 'file', name: '支付证明.pdf', badge: 'PDF', path: '参考案例/案例1/支付证明.pdf' },
+                { type: 'file', name: '清远深海领鲜餐饮管理有限公司-支付凭证.jpg', badge: 'JPG', path: '参考案例/案例1/清远深海领鲜餐饮管理有限公司-支付凭证.jpg' },
+              ]
+            },
+            {
+              type: 'dir', name: '案例3/',
+              children: [
+                { type: 'file', name: '【发票】26442000002098662676.pdf', badge: 'PDF', path: '参考案例/案例3/【发票】26442000002098662676.pdf' },
+                { type: 'file', name: '【发票】26442000002098662676.xml', badge: 'XML', path: '参考案例/案例3/【发票】26442000002098662676.xml' },
+                { type: 'file', name: '业务审批单.jpg', badge: 'JPG', path: '参考案例/案例3/业务审批单.jpg' },
+                { type: 'file', name: '业务接待报账单.pdf', badge: 'PDF', path: '参考案例/案例3/业务接待报账单.pdf' },
+                { type: 'file', name: '业务接待申请单.pdf', badge: 'PDF', path: '参考案例/案例3/业务接待申请单.pdf' },
+                { type: 'file', name: '函件.pdf', badge: 'PDF', path: '参考案例/案例3/函件.pdf' },
+                { type: 'file', name: '接待单位认证.PNG', badge: 'PNG', path: '参考案例/案例3/接待单位认证.PNG' },
+                { type: 'file', name: '支付凭证.jpg', badge: 'JPG', path: '参考案例/案例3/支付凭证.jpg' },
+                { type: 'file', name: '支付证明.pdf', badge: 'PDF', path: '参考案例/案例3/支付证明.pdf' },
+              ]
+            },
+            {
+              type: 'dir', name: '案例标准测试材料/',
+              children: [
+                { type: 'file', name: '【发票】26442000002098662676.pdf', badge: 'PDF', path: '参考案例/案例标准测试材料/【发票】26442000002098662676.pdf' },
+                { type: 'file', name: '【发票】26442000002098662676.xml', badge: 'XML', path: '参考案例/案例标准测试材料/【发票】26442000002098662676.xml' },
+                { type: 'file', name: '业务招待审批单.jpg', badge: 'JPG', path: '参考案例/案例标准测试材料/业务招待审批单.jpg' },
+                { type: 'file', name: '业务招待待申请单.pdf', badge: 'PDF', path: '参考案例/案例标准测试材料/业务招待待申请单.pdf' },
+                { type: 'file', name: '业务招待费报账单.pdf', badge: 'PDF', path: '参考案例/案例标准测试材料/业务招待费报账单.pdf' },
+                { type: 'file', name: '招待单位经营状态.PNG', badge: 'PNG', path: '参考案例/案例标准测试材料/招待单位经营状态.PNG' },
+                { type: 'file', name: '支付凭证.jpg', badge: 'JPG', path: '参考案例/案例标准测试材料/支付凭证.jpg' },
+                { type: 'file', name: '支付证明.pdf', badge: 'PDF', path: '参考案例/案例标准测试材料/支付证明.pdf' },
+                { type: 'file', name: '活动函件.pdf', badge: 'PDF', path: '参考案例/案例标准测试材料/活动函件.pdf' },
+              ]
+            },
+          ]
+        },
+      ]
+    };
+
+    // ===== 审核规则数据（与 审核标准/审核规则/审核规则.md 同步） =====
+    const RULES_DATA = [
+      {
+        id: 'rule1',
+        name: '金额一致性',
+        severity: 'high',
+        severityLabel: '高',
+        type: '跨文档比对',
+        source: '审核规则/审核规则.md §1',
+        sourceTitle: '审核标准/审核规则/审核规则.md — 规则1：金额一致性',
+        requirement: '批次中所有识别出的 MD 文件的金额字段必须一致，以<strong>发票大写金额</strong>为唯一标准值。',
+        logic: '1. 从发票 MD 文件提取 <code>价税合计（大写)</code> 字段的值，转为数字后作为标准金额<br>2. 提取以下文件中的金额字段，与标准金额逐一比对：<br>&nbsp;&nbsp;• 业务招待审批单 — <code>招待金额</code><br>&nbsp;&nbsp;• 支付凭证 — 账单金额行（如 <code>-832.00</code>，取绝对值）<br>&nbsp;&nbsp;• 支付证明 — <code>金额(元)</code> 列<br>&nbsp;&nbsp;• 业务招待费报账单 — <code>发票金额</code> / <code>税额</code> 合计<br>3. 任一文件金额与发票大写金额不一致（容差 0.01 元），则判定为违规',
+        mapping: '<table class="rule-table"><thead><tr><th>文档类型</th><th>金额字段</th><th>示例值</th></tr></thead><tbody><tr><td>发票</td><td><code>价税合计（大写)</code></td><td>捌佰叁拾贰圆整</td></tr><tr><td>发票</td><td><code>（小写）¥</code></td><td>¥832.00</td></tr><tr><td>审批单</td><td><code>招待金额</code></td><td>1050</td></tr><tr><td>支付凭证</td><td>账单金额行</td><td>-832.00</td></tr><tr><td>支付证明</td><td><code>金额(元)</code></td><td>832.00</td></tr></tbody></table>',
+        basis: '发票大写金额具有最高法律效力，其他单据金额必须与之匹配。'
+      },
+      {
+        id: 'rule2',
+        name: '日期一致性',
+        severity: 'high',
+        severityLabel: '高',
+        type: '跨文档比对',
+        source: '审核规则/审核规则.md §2',
+        sourceTitle: '审核标准/审核规则/审核规则.md — 规则2：日期一致性',
+        requirement: '批次中所有文件的日期必须以<strong>业务招待审批单的招待日期</strong>为准。',
+        logic: '1. 从业务招待审批单中提取 <code>招待日期</code> 作为标准日期<br>2. 提取以下文件中的日期字段，与标准日期比对：<br>&nbsp;&nbsp;• 发票 — <code>开票日期</code>（应在招待日期之前或同日）<br>&nbsp;&nbsp;• 支付凭证 — <code>支付时间</code>（应在招待日期之后或同日）<br>&nbsp;&nbsp;• 支付证明 — <code>交易时间</code>（应在招待日期之后或同日）<br>&nbsp;&nbsp;• 活动函件 — <code>交流时间</code>（应与招待日期一致或前后 ±7 天）<br>3. 任何日期逻辑异常判定为违规',
+        mapping: '<table class="rule-table"><thead><tr><th>文档类型</th><th>日期字段</th><th>示例值</th></tr></thead><tbody><tr><td>审批单</td><td><code>招待日期</code></td><td>2026-02-27</td></tr><tr><td>发票</td><td><code>开票日期</code></td><td>2026年02月27日</td></tr><tr><td>支付凭证</td><td><code>支付时间</code></td><td>2026年2月27日20:52:04</td></tr><tr><td>支付证明</td><td><code>交易时间</code></td><td>2026-02-2720:52:04</td></tr><tr><td>活动函件</td><td><code>交流时间</code></td><td>2026年2月27日</td></tr></tbody></table>',
+        basis: '业务招待审批单是费用发生的原始凭证，其招待日期为事件发生基准时间。'
+      },
+      {
+        id: 'rule3',
+        name: '招待标准合规性',
+        severity: 'high',
+        severityLabel: '高',
+        type: '单文档+标准对照',
+        source: '审核规则/审核规则.md §3 + 政策法规/管理办法V9.0 第15-22条',
+        sourceTitle: '审核标准/审核规则/审核规则.md §3 + 政策法规/业务招待费管理办法V9.0 第15-22条',
+        requirement: '从业务招待审批单中提取招待人数、陪同人数、人均费用、招待金额，对照标准目录校验是否符合规定。',
+        perCapita: '<table class="rule-table"><thead><tr><th>人员级别</th><th>外事商务招待</th><th>其他公务招待</th></tr></thead><tbody><tr><td>省管中层</td><td>≤400元/人</td><td>≤200元/人</td></tr><tr><td>市管中层</td><td>≤300元/人</td><td>≤200元/人</td></tr><tr><td>其他人员</td><td>≤200元/人</td><td>≤150元/人</td></tr></tbody></table><table class="rule-table" style="margin-top:8px;"><thead><tr><th>招待类型</th><th>标准</th></tr></thead><tbody><tr><td>内部业务招待（省管/市管中层）</td><td>≤150元/人</td></tr><tr><td>内部业务招待（其他人员）</td><td>≤100元/人</td></tr><tr><td>工作餐</td><td>≤60元/人</td></tr></tbody></table>',
+        accompanying: '<strong>外部招待</strong>：<br>• 招待对象 ≤5人：陪同人数 ≤ 招待对象人数<br>• 招待对象 >5人：陪同人数 ≤ 招待对象人数 + (招待对象人数 - 5) ÷ 2<br><br><strong>内部招待</strong>：<br>• 招待对象 ≤10人：陪同人数 ≤ 3人<br>• 招待对象 >10人：陪同人数 ≤ 招待对象人数 ÷ 3<br><br><strong>其他标准</strong>：酒水单价 ≤100元/瓶 · 纪念品 ≤200元/人',
+        mapping: '<table class="rule-table"><thead><tr><th>字段</th><th>来源文档</th><th>示例值</th></tr></thead><tbody><tr><td><code>招待人数</code></td><td>审批单</td><td>5</td></tr><tr><td><code>陪同人数</code></td><td>审批单</td><td>2</td></tr><tr><td><code>人均费用</code></td><td>审批单</td><td>150</td></tr><tr><td><code>招待金额</code></td><td>审批单</td><td>1050</td></tr><tr><td><code>招待类型</code></td><td>审批单</td><td>其他公务招待</td></tr><tr><td><code>是否工作餐</code></td><td>审批单</td><td>否</td></tr></tbody></table>',
+        basis: '管理办法第15-22条，费用标准与陪同人数限制。'
+      },
+      {
+        id: 'rule4',
+        name: '招待单位经营状态',
+        severity: 'low',
+        severityLabel: '提示',
+        type: '跨文档+文本匹配',
+        source: '审核规则/审核规则.md §4 + 业务规范/风险点.docx 第8条',
+        sourceTitle: '审核标准/审核规则/审核规则.md §4 + 业务规范/业务招待费审查风险点 第8条',
+        requirement: '从招待单位经营状态文件中提取招待单位名称后的关键文字，判断经营状态是否正常。',
+        logic: '1. 从业务招待审批单中提取 <code>招待对象</code> 字段作为招待单位名称<br>2. 在招待单位经营状态 MD 文件中搜索该单位名称（模糊匹配，取最关键词）<br>3. 找到后提取单位名称后面的 <strong>10个字符</strong> 作为经营状态描述<br>4. 判断是否包含 "正常" 字样：<br>&nbsp;&nbsp;• 包含 "正常" → 经营状态正常，无需人工干预<br>&nbsp;&nbsp;• 不包含 "正常" → 提取 <strong>5个字符</strong> 作为摘要，标记为需人工审核<br>5. 若未找到单位名称，标记为需人工审核',
+        mapping: '<table class="rule-table"><thead><tr><th>字段</th><th>来源文档</th><th>示例值</th></tr></thead><tbody><tr><td><code>招待对象</code></td><td>审批单</td><td>东信君达（清远）律师事务所</td></tr><tr><td>经营状态标题</td><td>经营状态</td><td>广东广信君达（清远）律师事务所正常</td></tr></tbody></table>',
+        example: '审批单中 <code>招待对象</code> 为 "东信君达（清远）律师事务所"，经营状态文件中标题为 "广东广信君达（清远）律师事务所<strong>正常</strong>"。需要模糊匹配单位名称，然后判断紧跟其后的文字是否含 "正常"。',
+        basis: '风险点第8条，需确认招待单位经营状态是否正常。'
+      },
+      {
+        id: 'rule5',
+        name: '支付凭证一致性',
+        severity: 'high',
+        severityLabel: '高',
+        type: '跨文档比对',
+        source: '审核规则/审核规则.md §5',
+        sourceTitle: '审核标准/审核规则/审核规则.md — 规则5：支付凭证一致性',
+        requirement: '支付凭证与支付证明之间的关键字段必须一致。',
+        mapping: '<table class="rule-table"><thead><tr><th>比对项</th><th>支付凭证字段</th><th>支付证明字段</th><th>示例值</th></tr></thead><tbody><tr><td>交易单号</td><td><code>交易单号</code></td><td><code>交易单号</code></td><td>4200003000202602278733670901</td></tr><tr><td>商户单号</td><td><code>商户单号</code></td><td><code>商户单号</code></td><td>2026022720000007655413900311007</td></tr><tr><td>金额</td><td>账单金额行</td><td><code>金额(元)</code></td><td>832.00</td></tr><tr><td>商户全称</td><td><code>商户全称</code></td><td><code>交易对方</code></td><td>清远市清城区新城顺隆河鲜坊</td></tr><tr><td>交易时间</td><td><code>支付时间</code></td><td><code>交易时间</code></td><td>2026-02-27 20:52:04</td></tr></tbody></table>',
+        basis: '支付凭证与支付证明是同一笔交易的不同证明，所有关键字段必须匹配。'
+      },
+      {
+        id: 'rule6',
+        name: '活动函件日期一致性',
+        severity: 'medium',
+        severityLabel: '中',
+        type: '跨文档比对',
+        source: '审核规则/审核规则.md §6 + 政策法规/管理办法V9.0 第11条',
+        sourceTitle: '审核标准/审核规则/审核规则.md §6 + 政策法规/业务招待费管理办法V9.0 第11条',
+        requirement: '所有 MD 文件中的日期必须与活动函件中记载的日期一致。',
+        logic: '1. 从活动函件 MD 文件中提取 <code>交流时间</code> 日期<br>2. 与批次中其他文件的日期字段比对：<br>&nbsp;&nbsp;• 业务招待审批单 — <code>招待日期</code><br>&nbsp;&nbsp;• 发票 — <code>开票日期</code><br>&nbsp;&nbsp;• 支付凭证 — <code>支付时间</code><br>3. 活动函件日期应在招待日期前后合理时间范围内（±7天）<br>4. 超出合理范围判定为异常',
+        mapping: '<table class="rule-table"><thead><tr><th>文档类型</th><th>日期字段</th><th>示例值</th></tr></thead><tbody><tr><td>活动函件</td><td><code>交流时间</code></td><td>2026年2月27日</td></tr><tr><td>审批单</td><td><code>招待日期</code></td><td>2026-02-27</td></tr><tr><td>发票</td><td><code>开票日期</code></td><td>2026年02月27日</td></tr><tr><td>支付凭证</td><td><code>支付时间</code></td><td>2026年2月27日20:52:04</td></tr></tbody></table>',
+        basis: '管理办法第11条，往来公函应与实际活动时间匹配。'
+      }
+    ];
+
+    // ===== 案例数据（与 审核标准/参考案例/ 同步） =====
+    const CASES_DATA = [
+      {
+        name: '案例1 — 完整报销材料批次',
+        files: [
+          { icon: '📄', name: '公司函件.pdf', ext: 'PDF', desc: '活动函件 / 往来公函' },
+          { icon: '🖼️', name: '公司认证.PNG', ext: 'PNG', desc: '招待单位经营状态证明' },
+          { icon: '📄', name: '发票.pdf', ext: 'PDF', desc: '核心票据 — 价税合计、开票日期' },
+          { icon: '📋', name: '发票.xml', ext: 'XML', desc: '核心票据 — 价税合计、开票日期' },
+          { icon: '🖼️', name: '小票.jpg', ext: 'JPG', desc: '消费明细凭证' },
+          { icon: '📄', name: '支付证明.pdf', ext: 'PDF', desc: '银行交易证明' },
+          { icon: '🖼️', name: '清远深海领鲜餐饮管理有限公司-支付凭证.jpg', ext: 'JPG', desc: '商户端支付凭证' },
+        ]
+      },
+      {
+        name: '案例3 — 完整报销材料批次',
+        files: [
+          { icon: '📄', name: '【发票】26442000002098662676.pdf', ext: 'PDF', desc: '核心票据 — 价税合计、开票日期' },
+          { icon: '📋', name: '【发票】26442000002098662676.xml', ext: 'XML', desc: '核心票据 — 价税合计、开票日期' },
+          { icon: '🖼️', name: '业务审批单.jpg', ext: 'JPG', desc: '事前审批凭证' },
+          { icon: '📄', name: '业务接待报账单.pdf', ext: 'PDF', desc: '事后报销凭证' },
+          { icon: '📄', name: '业务接待申请单.pdf', ext: 'PDF', desc: '事前申请凭证' },
+          { icon: '📄', name: '函件.pdf', ext: 'PDF', desc: '活动函件 / 往来公函' },
+          { icon: '🖼️', name: '接待单位认证.PNG', ext: 'PNG', desc: '经营状态证明' },
+          { icon: '🖼️', name: '支付凭证.jpg', ext: 'JPG', desc: '商户端支付凭证' },
+          { icon: '📄', name: '支付证明.pdf', ext: 'PDF', desc: '银行交易证明' },
+        ]
+      },
+      {
+        name: '案例标准测试材料 — 标准化测试集',
+        files: [
+          { icon: '📄', name: '【发票】26442000002098662676.pdf', ext: 'PDF', desc: '标准化测试发票' },
+          { icon: '📋', name: '【发票】26442000002098662676.xml', ext: 'XML', desc: '标准化测试发票' },
+          { icon: '🖼️', name: '业务招待审批单.jpg', ext: 'JPG', desc: '事前审批凭证' },
+          { icon: '📄', name: '业务招待待申请单.pdf', ext: 'PDF', desc: '事前申请凭证' },
+          { icon: '📄', name: '业务招待费报账单.pdf', ext: 'PDF', desc: '事后报销凭证' },
+          { icon: '🖼️', name: '招待单位经营状态.PNG', ext: 'PNG', desc: '经营状态证明' },
+          { icon: '🖼️', name: '支付凭证.jpg', ext: 'JPG', desc: '商户端支付凭证' },
+          { icon: '📄', name: '支付证明.pdf', ext: 'PDF', desc: '银行交易证明' },
+          { icon: '📄', name: '活动函件.pdf', ext: 'PDF', desc: '往来公函' },
+        ]
+      }
+    ];
+
+    // ===== 业务规范文件数据（与 审核标准/业务规范/ 同步） =====
+    const BUSINESS_STANDARDS = [
+      { icon: '📄', name: '业务招待费审查风险点.docx', badge: 'DOCX', desc: '综合部编制的审查风险点文档', summary: '该文档由综合部编制，汇总了业务招待费审查中的各类风险点，涵盖招待对象、费用标准、票据合规、审批流程等方面。' },
+      { icon: '📊', name: '业务招待费审查看板20260708.xls', badge: 'XLS', desc: '2026年7月8日版本', summary: '审查看板用于跟踪和管理业务招待费审核工作进度，包含审核状态、风险等级、处理结果等关键信息。' },
+      { icon: '📝', name: '审核规则.md', badge: 'MD', desc: '批次审核跨文档一致性校验标准', summary: '定义批次审核时的跨文档一致性校验标准，每条规则对应一个校验检查项，实现时应记录规则编号、严重程度与判定依据。共6条规则：金额一致性、日期一致性、招待标准合规性、招待单位经营状态、支付凭证一致性、活动函件日期一致性。' },
+      { icon: '📄', name: '招待费风险点大全2026年7月9日更新.docx', badge: 'DOCX', desc: '审核规则补充材料', summary: '审核规则相关的风险点补充文档，2026年7月9日更新。' },
+    ];
+
+    // ===== 人员级别标准数据（可编辑，与 审核标准/审核规则/审核规则.md 同步） =====
+    let STANDARDS_DATA = {
+      external: [
+        { level: '省管中层', externalBanquet: '≤400元/人·次', externalGift: '≤400元/人·次', otherBanquet: '≤200元/人·次', alcohol: '白酒≤400元/500ml，红酒≤400元/750ml' },
+        { level: '市管中层', externalBanquet: '≤300元/人·次', externalGift: '≤300元/人·次', otherBanquet: '≤200元/人·次', alcohol: '白酒≤300元/500ml，红酒≤300元/750ml' },
+        { level: '其他人员', externalBanquet: '≤200元/人·次', externalGift: '≤200元/人·次', otherBanquet: '≤150元/人·次', alcohol: '白酒≤200元/500ml，红酒≤200元/750ml' },
+      ],
+      internal: [
+        { subject: '省管中层经理', standard: '≤150元/人·次', note: '不得进行商务宴请，不上烟酒、不得赠送纪念品' },
+        { subject: '市管中层经理', standard: '≤150元/人·次', note: '不得进行商务宴请，不上烟酒、不得赠送纪念品' },
+        { subject: '其他人员', standard: '≤100元/人·次', note: '不得进行商务宴请，不上烟酒、不得赠送纪念品' },
+      ],
+      workmeal: [
+        { scene: '单位食堂', standard: '参照食堂正常标准或差旅伙食补贴', note: '优先自助形式，不上烟酒' },
+        { scene: '外出调研无法在食堂用餐', standard: '参照上述标准就近安排', note: '出差人员已领差旅伙食补贴的应交纳费用' },
+      ],
+      accommodation: [
+        { scene: '一般人员', standard: '单间或标准间', note: '参照差旅费管理办法同城市相应级别' },
+        { scene: '特别重要人员', standard: '普通套间', note: '注重安全、舒适，不追求奢华' },
+      ],
+      gift: [
+        { level: '省管中层', externalGift: '≤400元/人·次', otherGift: '不得赠送' },
+        { level: '市管中层', externalGift: '≤300元/人·次', otherGift: '不得赠送' },
+        { level: '其他人员', externalGift: '≤200元/人·次', otherGift: '不得赠送' },
+      ],
+      accompany: [
+        { type: '对外业务招待', count: '≤5人', limit: '可对等' },
+        { type: '对外业务招待', count: '>5人', limit: '不超过招待对象超过部分的二分之一' },
+        { type: '内部业务招待', count: '≤10人', limit: '≤3人' },
+        { type: '内部业务招待', count: '>10人', limit: '不超过招待对象的三分之一' },
+      ]
+    };
+
+    // ===== 工具函数 =====
+
+    function getFileBadgeClass(ext) {
+      const map = { 'PDF': 'pdf', 'JPG': 'jpg', 'PNG': 'png', 'XML': 'xml', 'XLS': 'xls', 'MD': 'md', 'DOCX': 'docx' };
+      return map[ext] || 'docx';
+    }
+
+    // 获取文件完整路径
+    function getFullPath(relPath) {
+      return AUDIT_STANDARDS_DIR + '\\' + relPath;
+    }
+
+    // 尝试打开本地文件
+    function openFile(relPath) {
+      const fullPath = getFullPath(relPath);
+      // 方法1: 尝试 file:// URI（部分浏览器支持）
+      const fileUrl = 'file:///' + fullPath.replace(/\\/g, '/');
+      try {
+        window.open(fileUrl, '_blank');
+      } catch (e) {
+        console.warn('window.open failed:', e);
+      }
+      // 方法2: 如果 file:// 不工作，尝试 download 方式
+      // 注意：浏览器安全限制可能阻止直接打开本地文件
+      showToast('⚠️ 尝试打开: ' + relPath, 'warning');
+    }
+
+    // 生成批处理脚本，批量打开所有文件
+    function generateBatchScript() {
+      let batContent = '@echo off\nchcp 65001 >nul\necho 正在打开审核标准目录...\necho.\n\n';
+      batContent += 'start "" "' + AUDIT_STANDARDS_DIR + '"\n\n';
+      batContent += 'echo 等待3秒后开始打开文件...\ntimeout /t 3 /nobreak >nul\n\n';
+
+      function collectFiles(children) {
+        children.forEach(child => {
+          if (child.type === 'file') {
+            const fullPath = getFullPath(child.path);
+            batContent += 'start "" "' + fullPath + '"\n';
+          } else if (child.type === 'dir') {
+            batContent += 'rem --- ' + child.name + ' ---\n';
+            collectFiles(child.children);
+          }
+        });
+      }
+      collectFiles(DIRECTORY.children);
+
+      batContent += '\necho.\necho 所有文件已尝试打开！\npause\n';
+
+      const blob = new Blob([batContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '打开审核标准文件.bat';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ 已下载批处理脚本，双击运行即可批量打开所有文件');
+    }
+
+    // 复制路径到剪贴板
+    function copyPath(relPath) {
+      const fullPath = getFullPath(relPath);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullPath).then(() => {
+          showToast('✅ 已复制路径到剪贴板');
+        }).catch(() => {
+          fallbackCopy(fullPath);
+        });
+      } else {
+        fallbackCopy(fullPath);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('✅ 已复制路径到剪贴板');
+      } catch (e) {
+        showToast('❌ 复制失败，请手动复制: ' + text.substring(0, 60) + '...');
+      }
+      document.body.removeChild(ta);
+    }
+
+    // 渲染文件列表（支持打开链接）
+    function renderFileListWithOpen(containerId, files) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = files.map(f => `
+        <div class="file-item">
+          <span class="file-icon">${f.icon || '📄'}</span>
+          <span class="file-name">${f.name}</span>
+          <span class="file-badge ${getFileBadgeClass(f.ext)}">${f.ext}</span>
+          <a class="open-file-link" href="#" onclick="event.preventDefault(); openFile('${f.path || ''}')" title="打开文件">📂 打开</a>
+        </div>
+      `).join('');
+    }
+
+    // 渲染规则汇总
+    function renderRulesSummary() {
+      const tbody = document.getElementById('rules-summary-body');
+      const subtitle = document.getElementById('rules-subtitle');
+      subtitle.textContent = `共${RULES_DATA.length}条审核规则，来源：审核标准/审核规则/审核规则.md`;
+      tbody.innerHTML = RULES_DATA.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td><strong>${r.name}</strong></td>
+          <td><span class="rule-severity ${r.severity}" style="font-size:11px;">${r.severityLabel}</span></td>
+          <td>${r.type}</td>
+          <td><span class="source-ref" title="${r.sourceTitle}">📎 ${r.source}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // 渲染规则详情
+    function renderRules() {
+      const container = document.getElementById('rules-container');
+      container.innerHTML = RULES_DATA.map(r => `
+        <div class="rule-card" data-rule-id="${r.id}">
+          <div class="rule-header" onclick="toggleRule(this.closest('.rule-card'))">
+            <div class="rule-header-left">
+              <span class="rule-severity ${r.severity}">${r.severityLabel}</span>
+              <span class="rule-title">规则${RULES_DATA.indexOf(r) + 1}：${r.name}</span>
+              <span class="source-ref" title="${r.sourceTitle}">📎 ${r.source}</span>
+            </div>
+            <svg class="rule-toggle" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="rule-body">
+            <div class="rule-body-inner">
+              <div class="rule-section-title">要求</div>
+              <div class="rule-content" data-field="requirement">${r.requirement}</div>
+              ${r.logic ? `<div class="rule-section-title" style="margin-top:var(--spacing-md);">校验逻辑</div><div class="rule-content" data-field="logic">${r.logic}</div>` : ''}
+              ${r.perCapita ? `<div class="rule-section-title" style="margin-top:var(--spacing-md);">人均费用标准</div><div class="rule-content" data-field="perCapita">${r.perCapita}</div>` : ''}
+              ${r.accompanying ? `<div class="rule-section-title" style="margin-top:var(--spacing-md);">陪同人数标准</div><div class="rule-content" data-field="accompanying">${r.accompanying}</div>` : ''}
+              ${r.mapping ? `<div class="rule-section-title" style="margin-top:var(--spacing-md);">MD 字段映射</div><div class="rule-content" data-field="mapping">${r.mapping}</div>` : ''}
+              ${r.example ? `<div class="rule-section-title" style="margin-top:var(--spacing-md);">实际案例说明</div><div class="rule-content" data-field="example">${r.example}</div>` : ''}
+              <div class="rule-section-title" style="margin-top:var(--spacing-md);">判定依据</div>
+              <div class="rule-content" data-field="basis">${r.basis}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 渲染案例
+    function renderCasesSummary() {
+      const container = document.getElementById('cases-summary-list');
+      container.innerHTML = CASES_DATA.map(c => `
+        <div class="file-item">
+          <span class="file-icon">📁</span>
+          <span class="file-name">${c.name}</span>
+          <span class="file-badge folder">${c.files.length}个文件</span>
+          <a class="open-file-link" href="#" onclick="event.preventDefault(); openFile('${c.path || ''}')" title="打开案例目录">📂 打开</a>
+        </div>
+      `).join('');
+    }
+
+    function renderCases() {
+      const container = document.getElementById('cases-container');
+      container.innerHTML = CASES_DATA.map(c => `
+        <h3 style="font-size:var(--font-size-lg);font-weight:var(--font-weight-semibold);margin:var(--spacing-2xl) 0 var(--spacing-lg);">${c.name}</h3>
+        <div class="case-grid">
+          ${c.files.map(f => `
+            <div class="case-card">
+              <div class="case-card-header">
+                <div class="case-card-title">${f.icon} ${f.name.split('.')[0]}</div>
+                <div class="case-card-desc">${f.desc}</div>
+              </div>
+              <div class="case-card-body">
+                <ul class="case-file-list">
+                  <li class="case-file-item">
+                    <span class="case-file-icon">${f.icon}</span>
+                    <span class="case-file-name">${f.name}</span>
+                    <span class="case-file-ext">${f.ext}</span>
+                    <a class="open-file-link" href="#" onclick="event.preventDefault(); openFile('参考案例/${c.name.split(' — ')[0]}/${f.name}')" title="打开文件">📂</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    // 渲染业务规范
+    function renderBusinessStandards() {
+      renderFileListWithOpen('risk-point-list', [{ icon: '📄', name: BUSINESS_STANDARDS[0].name, ext: BUSINESS_STANDARDS[0].badge, path: '业务规范/' + BUSINESS_STANDARDS[0].name }]);
+      renderFileListWithOpen('dashboard-list', [{ icon: '📊', name: BUSINESS_STANDARDS[1].name, ext: BUSINESS_STANDARDS[1].badge, path: '业务规范/' + BUSINESS_STANDARDS[1].name }]);
+      renderFileListWithOpen('rules-md-list', [{ icon: '📝', name: BUSINESS_STANDARDS[2].name, ext: BUSINESS_STANDARDS[2].badge, path: '审核规则/' + BUSINESS_STANDARDS[2].name }]);
+
+      // Add risk-point docx to the card list
+      const cards = document.querySelectorAll('#tab-standards .info-card');
+      if (cards.length >= 3) {
+        const thirdCard = cards[2]; // 校对规则 card
+        const extraList = document.createElement('div');
+        extraList.className = 'file-list';
+        extraList.style.marginTop = 'var(--spacing-md)';
+        extraList.innerHTML = `
+          <div class="file-item">
+            <span class="file-icon">📄</span>
+            <span class="file-name">${BUSINESS_STANDARDS[3].name}</span>
+            <span class="file-badge ${getFileBadgeClass(BUSINESS_STANDARDS[3].badge)}">${BUSINESS_STANDARDS[3].badge}</span>
+            <a class="open-file-link" href="#" onclick="event.preventDefault(); openFile('审核规则/${BUSINESS_STANDARDS[3].name}')" title="打开文件">📂 打开</a>
+          </div>
+        `;
+        const descDiv = thirdCard.querySelector('div[style]');
+        if (descDiv) {
+          descDiv.innerHTML += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--color-border);"></div>';
+          descDiv.querySelector('div:last-child').insertAdjacentHTML('afterend',
+            `<div style="margin-top:var(--spacing-md);padding:var(--spacing-md);background:var(--color-bg-secondary);border-radius:var(--radius-sm);font-size:var(--font-size-xs);color:var(--color-text-secondary);line-height:1.7;"><strong>补充文档：</strong>${BUSINESS_STANDARDS[3].summary}</div>`
+          );
+        }
+      }
+    }
+
+    // 渲染目录树
+    function renderDirectoryTree(node, parentUl) {
+      if (node.type === 'file') {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="file-badge ${getFileBadgeClass(node.badge)}">${node.badge}</span> <span class="file-name">${node.name}</span> <span class="dir-path">${node.path}</span> <a class="open-file-link" href="#" onclick="event.preventDefault(); openFile('${node.path}')" title="打开文件">📂</a>`;
+        parentUl.appendChild(li);
+      } else if (node.type === 'dir') {
+        const li = document.createElement('li');
+        const childUl = document.createElement('ul');
+        li.innerHTML = `<span class="dir-name">📁 ${node.name}</span>`;
+        li.appendChild(childUl);
+        parentUl.appendChild(li);
+        node.children.forEach(child => renderDirectoryTree(child, childUl));
+      }
+    }
+
+    function renderDirectory() {
+      const tree = document.getElementById('dir-tree');
+      const pathEl = document.getElementById('dir-path');
+      pathEl.textContent = AUDIT_STANDARDS_DIR;
+      tree.innerHTML = '';
+      DIRECTORY.children.forEach(child => renderDirectoryTree(child, tree));
+
+      // 渲染打开面板
+      const actions = document.getElementById('open-panel-actions');
+      actions.innerHTML = `
+        <button class="open-panel-btn primary" onclick="openDirectory()">
+          📂 打开目录
+        </button>
+        <button class="open-panel-btn" onclick="generateBatchScript()">
+          📜 生成批处理脚本
+        </button>
+        <button class="open-panel-btn" onclick="copyDirectoryPath()">
+          📋 复制目录路径
+        </button>
+      `;
+    }
+
+    function openDirectory() {
+      const fullPath = getFullPath('');
+      const fileUrl = 'file:///' + fullPath.replace(/\\/g, '/');
+      window.open(fileUrl, '_blank');
+      showToast('⚠️ 尝试打开目录: ' + AUDIT_STANDARDS_DIR);
+    }
+
+    function copyDirectoryPath() {
+      copyPath('');
+    }
+
+    // ===== 人员标准渲染 =====
+    function renderStandards() {
+      // 对外业务招待标准
+      document.getElementById('external-standards-body').innerHTML = STANDARDS_DATA.external.map((s, i) => `
+        <tr data-section="external" data-index="${i}">
+          <td><span class="std-cell level">${s.level}</span></td>
+          <td><span class="std-cell banquet">${s.externalBanquet}</span></td>
+          <td><span class="std-cell gift">${s.externalGift}</span></td>
+          <td><span class="std-cell banquet">${s.otherBanquet}</span></td>
+          <td><span class="std-cell alcohol">${s.alcohol}</span></td>
+        </tr>
+      `).join('');
+
+      // 内部业务招待标准
+      document.getElementById('internal-standards-body').innerHTML = STANDARDS_DATA.internal.map((s, i) => `
+        <tr data-section="internal" data-index="${i}">
+          <td><span class="std-cell subject">${s.subject}</span></td>
+          <td><span class="std-cell standard">${s.standard}</span></td>
+          <td><span class="std-cell note">${s.note}</span></td>
+        </tr>
+      `).join('');
+
+      // 工作餐标准
+      document.getElementById('workmeal-standards-body').innerHTML = STANDARDS_DATA.workmeal.map((s, i) => `
+        <tr data-section="workmeal" data-index="${i}">
+          <td><span class="std-cell scene">${s.scene}</span></td>
+          <td><span class="std-cell standard">${s.standard}</span></td>
+          <td><span class="std-cell note">${s.note}</span></td>
+        </tr>
+      `).join('');
+
+      // 住宿标准
+      document.getElementById('accommodation-standards-body').innerHTML = STANDARDS_DATA.accommodation.map((s, i) => `
+        <tr data-section="accommodation" data-index="${i}">
+          <td><span class="std-cell scene">${s.scene}</span></td>
+          <td><span class="std-cell standard">${s.standard}</span></td>
+          <td><span class="std-cell note">${s.note}</span></td>
+        </tr>
+      `).join('');
+
+      // 纪念品标准
+      document.getElementById('gift-standards-body').innerHTML = STANDARDS_DATA.gift.map((s, i) => `
+        <tr data-section="gift" data-index="${i}">
+          <td><span class="std-cell level">${s.level}</span></td>
+          <td><span class="std-cell gift">${s.externalGift}</span></td>
+          <td><span class="std-cell gift">${s.otherGift}</span></td>
+        </tr>
+      `).join('');
+
+      // 陪餐人数标准
+      document.getElementById('accompany-standards-body').innerHTML = STANDARDS_DATA.accompany.map((s, i) => `
+        <tr data-section="accompany" data-index="${i}">
+          <td><span class="std-cell type">${s.type}</span></td>
+          <td><span class="std-cell count">${s.count}</span></td>
+          <td><span class="std-cell limit">${s.limit}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // 获取标准值（用于场景模板关联）
+    function getExternalStandard(personLevel) {
+      const s = STANDARDS_DATA.external.find(r => r.level === personLevel);
+      return s ? { banquet: s.externalBanquet, gift: s.externalGift, alcohol: s.alcohol } : null;
+    }
+    function getOtherPublicStandard(personLevel) {
+      const s = STANDARDS_DATA.external.find(r => r.level === personLevel);
+      return s ? s.otherBanquet : '—';
+    }
+    function getInternalStandard(personLevel) {
+      const map = { '省管中层经理': '≤150元/人·次', '市管中层经理': '≤150元/人·次', '其他人员': '≤100元/人·次' };
+      return map[personLevel] || '—';
+    }
+
+    // ===== 初始化渲染 =====
+    function init() {
+      renderStandards();
+      renderRulesSummary();
+      renderRules();
+      renderCasesSummary();
+      renderCases();
+      renderBusinessStandards();
+      renderDirectory();
+      loadRules();
+      loadStandards();
+      renderScenarioTemplateReferences();
+      initAccompanyingCalculation();
+    }
+
+    // ===== Tab switching =====
+    function switchTab(btn, tabId) {
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // ===== Rule expand/collapse =====
+    function toggleRule(card) {
+      card.classList.toggle('expanded');
+    }
+
+    // ===== Scenario expand/collapse =====
+    function toggleScenario(card) {
+      card.classList.toggle('expanded');
+    }
+
+    // ===== Toast notification =====
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('save-toast');
+      toast.textContent = msg;
+      toast.style.background = type === 'warning' ? 'var(--color-warning)' : 'var(--color-success)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ===== Edit Mode =====
+    let editMode = false;
+    const STORAGE_KEY = 'audit-rules-custom';
+
+    function toggleEditMode() {
+      editMode = !editMode;
+      const btn = document.getElementById('edit-toggle');
+      if (editMode) {
+        btn.classList.add('active');
+        btn.innerHTML = '💾 保存';
+        enableEditing();
+      } else {
+        saveRules();
+        btn.classList.remove('active');
+        btn.innerHTML = '✏️ 编辑';
+        disableEditing();
+      }
+    }
+
+    function enableEditing() {
+      document.querySelectorAll('.rule-content').forEach(el => {
+        el.contentEditable = 'true';
+        el.classList.add('rule-editable');
+        el.addEventListener('input', onRuleChanged);
+      });
+      document.querySelectorAll('.rule-card').forEach(card => {
+        card.classList.add('editing');
+      });
+    }
+
+    function disableEditing() {
+      document.querySelectorAll('.rule-content').forEach(el => {
+        el.contentEditable = 'false';
+        el.classList.remove('rule-editable');
+        el.removeEventListener('input', onRuleChanged);
+      });
+      document.querySelectorAll('.rule-card').forEach(card => {
+        card.classList.remove('editing');
+      });
+    }
+
+    function onRuleChanged() {
+      const toast = document.getElementById('save-toast');
+      toast.textContent = '⚠️ 未保存的更改';
+      toast.style.background = 'var(--color-warning)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function saveRules() {
+      const rules = {};
+      document.querySelectorAll('.rule-card').forEach(card => {
+        const id = card.dataset.ruleId;
+        if (!id) return;
+        rules[id] = {};
+        card.querySelectorAll('.rule-content').forEach(el => {
+          const field = el.dataset.field;
+          if (field) rules[id][field] = el.innerHTML;
+        });
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
+      const toast = document.getElementById('save-toast');
+      toast.textContent = '✅ 规则已保存到浏览器本地存储';
+      toast.style.background = 'var(--color-success)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function loadRules() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      try {
+        const rules = JSON.parse(saved);
+        Object.keys(rules).forEach(ruleId => {
+          const card = document.querySelector(`[data-rule-id="${ruleId}"]`);
+          if (!card) return;
+          const fields = rules[ruleId];
+          Object.keys(fields).forEach(field => {
+            const el = card.querySelector(`[data-field="${field}"]`);
+            if (el) el.innerHTML = fields[field];
+          });
+        });
+      } catch (e) {
+        console.warn('Failed to load saved rules:', e);
+      }
+    }
+
+    // ===== 场景编辑模式（人员级别标准） =====
+    let scenarioEditMode = false;
+    const STANDARDS_STORAGE_KEY = 'audit-standards-custom';
+
+    function toggleScenarioEditMode() {
+      scenarioEditMode = !scenarioEditMode;
+      const btn = document.getElementById('scenario-edit-toggle');
+      const subtitle = document.getElementById('standards-subtitle');
+      if (scenarioEditMode) {
+        btn.classList.add('active');
+        btn.innerHTML = '💾 保存标准';
+        enableScenarioEditing();
+        subtitle.textContent = '编辑模式中 — 直接修改表格数值，点击「💾 保存标准」保存';
+      } else {
+        saveStandards();
+        btn.classList.remove('active');
+        btn.innerHTML = '✏️ 编辑';
+        disableScenarioEditing();
+        subtitle.textContent = '点击顶部「✏️ 编辑」可修改标准，保存至浏览器本地存储';
+      }
+    }
+
+    function enableScenarioEditing() {
+      document.querySelectorAll('#standards-card .std-cell').forEach(el => {
+        el.contentEditable = 'true';
+        el.classList.add('std-editable');
+        el.addEventListener('input', onStandardChanged);
+      });
+      document.getElementById('standards-card').style.borderColor = 'var(--color-warning)';
+      document.getElementById('standards-card').style.boxShadow = '0 0 0 1px var(--color-warning-bg)';
+    }
+
+    function disableScenarioEditing() {
+      document.querySelectorAll('#standards-card .std-cell').forEach(el => {
+        el.contentEditable = 'false';
+        el.classList.remove('std-editable');
+        el.removeEventListener('input', onStandardChanged);
+      });
+      document.getElementById('standards-card').style.borderColor = 'var(--color-success)';
+      document.getElementById('standards-card').style.boxShadow = '';
+    }
+
+    function onStandardChanged() {
+      const toast = document.getElementById('save-toast');
+      toast.textContent = '⚠️ 标准有未保存的更改';
+      toast.style.background = 'var(--color-warning)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function saveStandards() {
+      // 从表格读取最新值
+      document.querySelectorAll('#external-standards-body tr').forEach(tr => {
+        const cells = tr.querySelectorAll('.std-cell');
+        if (cells.length >= 5) {
+          const i = parseInt(tr.dataset.index);
+          STANDARDS_DATA.external[i].level = cells[0].textContent;
+          STANDARDS_DATA.external[i].externalBanquet = cells[1].textContent;
+          STANDARDS_DATA.external[i].externalGift = cells[2].textContent;
+          STANDARDS_DATA.external[i].otherBanquet = cells[3].textContent;
+          STANDARDS_DATA.external[i].alcohol = cells[4].textContent;
+        }
+      });
+      document.querySelectorAll('#internal-standards-body tr').forEach(tr => {
+        const cells = tr.querySelectorAll('.std-cell');
+        if (cells.length >= 3) {
+          const i = parseInt(tr.dataset.index);
+          STANDARDS_DATA.internal[i].subject = cells[0].textContent;
+          STANDARDS_DATA.internal[i].standard = cells[1].textContent;
+          STANDARDS_DATA.internal[i].note = cells[2].textContent;
+        }
+      });
+      document.querySelectorAll('#workmeal-standards-body tr').forEach(tr => {
+        const cells = tr.querySelectorAll('.std-cell');
+        if (cells.length >= 3) {
+          const i = parseInt(tr.dataset.index);
+          STANDARDS_DATA.workmeal[i].scene = cells[0].textContent;
+          STANDARDS_DATA.workmeal[i].standard = cells[1].textContent;
+          STANDARDS_DATA.workmeal[i].note = cells[2].textContent;
+        }
+      });
+      document.querySelectorAll('#accommodation-standards-body tr').forEach(tr => {
+        const cells = tr.querySelectorAll('.std-cell');
+        if (cells.length >= 3) {
+          const i = parseInt(tr.dataset.index);
+          STANDARDS_DATA.accommodation[i].scene = cells[0].textContent;
+          STANDARDS_DATA.accommodation[i].standard = cells[1].textContent;
+          STANDARDS_DATA.accommodation[i].note = cells[2].textContent;
+        }
+      });
+      document.querySelectorAll('#gift-standards-body tr').forEach(tr => {
+        const cells = tr.querySelectorAll('.std-cell');
+        if (cells.length >= 3) {
+          const i = parseInt(tr.dataset.index);
+          STANDARDS_DATA.gift[i].level = cells[0].textContent;
+          STANDARDS_DATA.gift[i].externalGift = cells[1].textContent;
+          STANDARDS_DATA.gift[i].otherGift = cells[2].textContent;
+        }
+      });
+      document.querySelectorAll('#accompany-standards-body tr').forEach(tr => {
+        const cells = tr.querySelectorAll('.std-cell');
+        if (cells.length >= 3) {
+          const i = parseInt(tr.dataset.index);
+          STANDARDS_DATA.accompany[i].type = cells[0].textContent;
+          STANDARDS_DATA.accompany[i].count = cells[1].textContent;
+          STANDARDS_DATA.accompany[i].limit = cells[2].textContent;
+        }
+      });
+
+      localStorage.setItem(STANDARDS_STORAGE_KEY, JSON.stringify(STANDARDS_DATA));
+      const toast = document.getElementById('save-toast');
+      toast.textContent = '✅ 人员级别标准已保存到浏览器本地存储';
+      toast.style.background = 'var(--color-success)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+
+      // 重新渲染场景模板（关联标准数据）
+      renderScenarioTemplateReferences();
+    }
+
+    function loadStandards() {
+      const saved = localStorage.getItem(STANDARDS_STORAGE_KEY);
+      if (!saved) return;
+      try {
+        const data = JSON.parse(saved);
+        if (data.external) STANDARDS_DATA.external = data.external;
+        if (data.internal) STANDARDS_DATA.internal = data.internal;
+        if (data.workmeal) STANDARDS_DATA.workmeal = data.workmeal;
+        if (data.accommodation) STANDARDS_DATA.accommodation = data.accommodation;
+        if (data.gift) STANDARDS_DATA.gift = data.gift;
+        if (data.accompany) STANDARDS_DATA.accompany = data.accompany;
+        renderStandards();
+      } catch (e) {
+        console.warn('Failed to load saved standards:', e);
+      }
+    }
+
+    // 场景模板关联标准数据
+    function renderScenarioTemplateReferences() {
+      // 更新场景A（商务招待）的餐标参考
+      const scenarioA = document.getElementById('scenario-A');
+      if (scenarioA) {
+        const refDiv = scenarioA.querySelector('.scenario-std-ref');
+        if (refDiv) {
+          refDiv.innerHTML = `
+            <strong>📊 餐标参考（按人员级别）：</strong><br>
+            省管中层：外事/商务 ≤${STANDARDS_DATA.external[0].externalBanquet} · 纪念品 ≤${STANDARDS_DATA.external[0].externalGift} · 酒水 ${STANDARDS_DATA.external[0].alcohol}<br>
+            市管中层：外事/商务 ≤${STANDARDS_DATA.external[1].externalBanquet} · 纪念品 ≤${STANDARDS_DATA.external[1].externalGift} · 酒水 ${STANDARDS_DATA.external[1].alcohol}<br>
+            其他人员：外事/商务 ≤${STANDARDS_DATA.external[2].externalBanquet} · 纪念品 ≤${STANDARDS_DATA.external[2].externalGift} · 酒水 ${STANDARDS_DATA.external[2].alcohol}
+          `;
+        }
+      }
+      // 更新场景D（内部业务招待）的餐标参考
+      const scenarioD = document.getElementById('scenario-D');
+      if (scenarioD) {
+        const refDiv = scenarioD.querySelector('.scenario-std-ref');
+        if (refDiv) {
+          refDiv.innerHTML = `
+            <strong>📊 餐标参考（按招待主体）：</strong><br>
+            省管中层经理：≤${STANDARDS_DATA.internal[0].standard} · ${STANDARDS_DATA.internal[0].note}<br>
+            市管中层经理：≤${STANDARDS_DATA.internal[1].standard} · ${STANDARDS_DATA.internal[1].note}<br>
+            其他人员：≤${STANDARDS_DATA.internal[2].standard} · ${STANDARDS_DATA.internal[2].note}<br><br>
+            <strong>📊 陪餐人数限制：</strong><br>
+            ≤10人：≤${STANDARDS_DATA.accompany[2].limit}<br>
+            >10人：≤${STANDARDS_DATA.accompany[3].limit}
+          `;
+        }
+      }
+      // 更新场景E（工作餐）的餐标参考
+      const scenarioE = document.getElementById('scenario-E');
+      if (scenarioE) {
+        const refDiv = scenarioE.querySelector('.scenario-std-ref');
+        if (refDiv) {
+          refDiv.innerHTML = `
+            <strong>📊 工作餐标准参考：</strong><br>
+            单位食堂：${STANDARDS_DATA.workmeal[0].standard}（${STANDARDS_DATA.workmeal[0].note}）<br>
+            外出调研：${STANDARDS_DATA.workmeal[1].standard}（${STANDARDS_DATA.workmeal[1].note}）
+          `;
+        }
+      }
+    }
+
+    // ===== 场景人员级别自动关联标准 =====
+
+    /**
+     * 根据场景和人员级别自动填充酒水、纪念品标准
+     * @param {string} scenario - 场景标识（A-F）
+     */
+    function onLevelChange(scenario) {
+      const levelSelect = document.getElementById('scenario-' + scenario + '-level');
+      const levelHint = document.getElementById('scenario-' + scenario + '-level-hint');
+      if (!levelSelect || !levelHint) return;
+
+      const level = levelSelect.value;
+      if (!level) {
+        levelHint.textContent = '';
+        return;
+      }
+
+      // 根据场景类型获取对应的标准数据
+      let standard = null;
+      let scenarioType = '';
+
+      switch (scenario) {
+        case 'A': // 商务招待
+        case 'B': // 外事招待
+          standard = STANDARDS_DATA.external.find(s => s.level === level);
+          scenarioType = '外事/商务';
+          break;
+        case 'C': // 其他公务招待
+          standard = STANDARDS_DATA.external.find(s => s.level === level);
+          scenarioType = '其他公务';
+          break;
+        case 'D': // 内部业务招待
+          standard = STANDARDS_DATA.internal.find(s => s.subject === level);
+          scenarioType = '内部业务';
+          break;
+        case 'E': // 工作餐
+          standard = STANDARDS_DATA.workmeal.find(s => s.scene === '单位食堂');
+          scenarioType = '工作餐';
+          break;
+        case 'F': // 党政军机关
+          // 参照公务接待规定，使用省管中层标准
+          standard = STANDARDS_DATA.external.find(s => s.level === '省管中层');
+          scenarioType = '党政军机关';
+          break;
+      }
+
+      if (!standard) return;
+
+      // 根据场景类型填充不同的标准
+      if (scenario === 'A' || scenario === 'B') {
+        // 场景A、B：外事/商务招待
+        const stdCapita = document.getElementById('scenario-' + scenario + '-std-capita');
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+        const capitaStatus = document.getElementById('scenario-' + scenario + '-capita-status');
+        const giftStatus = document.getElementById('scenario-' + scenario + '-gift-status');
+
+        // 填充餐标标准
+        if (stdCapita) stdCapita.textContent = standard.externalBanquet;
+        if (stdBaijiu) stdBaijiu.textContent = standard.alcohol.split('，')[0]; // 白酒标准
+        if (stdWine) stdWine.textContent = standard.alcohol.split('，')[1]; // 红酒标准
+        if (stdGift) stdGift.textContent = standard.externalGift;
+
+        // 填充状态提示
+        if (capitaStatus) {
+          capitaStatus.textContent = '（标准：' + standard.externalBanquet + '以内）';
+          capitaStatus.style.color = 'var(--color-success)';
+        }
+        if (giftStatus) {
+          giftStatus.textContent = '（标准：' + standard.externalGift + '以内）';
+          giftStatus.style.color = 'var(--color-success)';
+        }
+
+        // 提示信息
+        levelHint.innerHTML = '<span style="color:var(--color-success);font-weight:bold;">✓ 已关联标准</span>';
+
+        // 更新酒水限制显示
+        const alcoholLimitA = document.getElementById('scenario-A-alcohol-limit');
+        const alcoholStdA = document.getElementById('scenario-A-alcohol-std');
+        if (alcoholLimitA && alcoholStdA) {
+          alcoholStdA.textContent = standard.alcohol;
+          alcoholLimitA.innerHTML = '标准：<span style="color:var(--color-accent);font-weight:bold;">' + standard.alcohol + '</span>';
+        }
+
+        const alcoholLimitB = document.getElementById('scenario-B-alcohol-limit');
+        const alcoholStdB = document.getElementById('scenario-B-alcohol-std');
+        if (alcoholLimitB && alcoholStdB) {
+          alcoholStdB.textContent = standard.alcohol;
+          alcoholLimitB.innerHTML = '标准：<span style="color:var(--color-accent);font-weight:bold;">' + standard.alcohol + '</span>';
+        }
+
+      } else if (scenario === 'C') {
+        // 场景C：其他公务招待
+        const stdCapita = document.getElementById('scenario-' + scenario + '-std-capita');
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+        const capitaStatus = document.getElementById('scenario-' + scenario + '-capita-status');
+        const giftStatus = document.getElementById('scenario-' + scenario + '-gift-status');
+
+        // 填充餐标标准
+        if (stdCapita) stdCapita.textContent = standard.otherBanquet;
+        if (stdBaijiu) stdBaijiu.textContent = '≤100元/瓶'; // 其他公务招待酒水标准
+        if (stdWine) stdWine.textContent = '≤100元/瓶';
+        if (stdGift) stdGift.textContent = '不得赠送';
+
+        // 填充状态提示
+        if (capitaStatus) {
+          capitaStatus.textContent = '（标准：' + standard.otherBanquet + '以内）';
+          capitaStatus.style.color = 'var(--color-success)';
+        }
+        if (giftStatus) {
+          giftStatus.textContent = '（标准：不得赠送）';
+          giftStatus.style.color = 'var(--color-error)';
+        }
+
+        // 提示信息
+        levelHint.innerHTML = '<span style="color:var(--color-warning);font-weight:bold;">⚠️ 注意：其他公务招待不得赠送纪念品</span>';
+
+        // 更新酒水限制显示
+        const alcoholLimitC = document.getElementById('scenario-C-alcohol-limit');
+        const alcoholStdC = document.getElementById('scenario-C-alcohol-std');
+        if (alcoholLimitC && alcoholStdC) {
+          alcoholStdC.textContent = '≤100元/瓶';
+          alcoholLimitC.innerHTML = '标准：<span style="color:var(--color-warning);font-weight:bold;">≤100元/瓶</span>';
+        }
+
+      } else if (scenario === 'D') {
+        // 场景D：内部业务招待
+        const stdCapita = document.getElementById('scenario-' + scenario + '-std-capita');
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+        const capitaStatus = document.getElementById('scenario-' + scenario + '-capita-status');
+        const giftStatus = document.getElementById('scenario-' + scenario + '-gift-status');
+
+        // 填充餐标标准
+        if (stdCapita) stdCapita.textContent = standard.standard;
+        if (stdBaijiu) stdBaijiu.textContent = '不得提供';
+        if (stdWine) stdWine.textContent = '不得提供';
+        if (stdGift) stdGift.textContent = '不得赠送';
+
+        // 填充状态提示
+        if (capitaStatus) {
+          capitaStatus.textContent = '（标准：' + standard.standard + '以内）';
+          capitaStatus.style.color = 'var(--color-success)';
+        }
+        if (giftStatus) {
+          giftStatus.textContent = '（标准：不得赠送）';
+          giftStatus.style.color = 'var(--color-error)';
+        }
+
+        // 提示信息
+        levelHint.innerHTML = '<span style="color:var(--color-warning);font-weight:bold;">⚠️ 注意：内部招待不得赠送纪念品，不上烟酒</span>';
+
+        // 更新酒水限制显示
+        const alcoholLimitD = document.getElementById('scenario-D-alcohol-limit');
+        const alcoholStdD = document.getElementById('scenario-D-alcohol-std');
+        if (alcoholLimitD && alcoholStdD) {
+          alcoholStdD.textContent = '不得提供';
+          alcoholLimitD.innerHTML = '标准：<span style="color:var(--color-error);font-weight:bold;">不得提供</span>';
+        }
+
+      } else if (scenario === 'E') {
+        // 场景E：工作餐
+        const stdCapita = document.getElementById('scenario-' + scenario + '-std-capita');
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+        const capitaStatus = document.getElementById('scenario-' + scenario + '-capita-status');
+        const giftStatus = document.getElementById('scenario-' + scenario + '-gift-status');
+
+        // 填充餐标标准
+        if (stdCapita) stdCapita.textContent = '≤60元/人';
+        if (stdBaijiu) stdBaijiu.textContent = '不得提供';
+        if (stdWine) stdWine.textContent = '不得提供';
+        if (stdGift) stdGift.textContent = '不得赠送';
+
+        // 填充状态提示
+        if (capitaStatus) {
+          capitaStatus.textContent = '（标准：≤60元/人以内）';
+          capitaStatus.style.color = 'var(--color-success)';
+        }
+        if (giftStatus) {
+          giftStatus.textContent = '（标准：不得赠送）';
+          giftStatus.style.color = 'var(--color-error)';
+        }
+
+        // 提示信息
+        levelHint.innerHTML = '<span style="color:var(--color-warning);font-weight:bold;">⚠️ 注意：工作餐不上烟酒，不得赠送纪念品</span>';
+
+        // 更新酒水限制显示
+        const alcoholLimitE = document.getElementById('scenario-E-alcohol-limit');
+        const alcoholStdE = document.getElementById('scenario-E-alcohol-std');
+        if (alcoholLimitE && alcoholStdE) {
+          alcoholStdE.textContent = '不得提供';
+          alcoholLimitE.innerHTML = '标准：<span style="color:var(--color-error);font-weight:bold;">不得提供</span>';
+        }
+
+      } else if (scenario === 'F') {
+        // 场景F：党政军机关
+        const stdBaijiu = document.getElementById('scenario-' + scenario + '-std-baijiu');
+        const stdWine = document.getElementById('scenario-' + scenario + '-std-wine');
+        const stdGift = document.getElementById('scenario-' + scenario + '-std-gift');
+
+        // 填充酒水标准
+        if (stdBaijiu) stdBaijiu.textContent = '严禁提供';
+        if (stdWine) stdWine.textContent = '严禁提供';
+        if (stdGift) stdGift.textContent = '严禁赠送';
+
+        // 提示信息
+        levelHint.innerHTML = '<span style="color:var(--color-error);font-weight:bold;">❌ 严禁提供酒水、严禁赠送纪念品</span>';
+
+        // 更新酒水限制显示
+        const alcoholLimitF = document.getElementById('scenario-F-alcohol-limit');
+        const alcoholStdF = document.getElementById('scenario-F-alcohol-std');
+        if (alcoholLimitF && alcoholStdF) {
+          alcoholStdF.textContent = '严禁提供';
+          alcoholLimitF.innerHTML = '标准：<span style="color:var(--color-error);font-weight:bold;">严禁提供</span>';
+        }
+      }
+    }
+
+    // ===== 陪餐人数自动计算（依据第十二条、第十三条） =====
+
+    /**
+     * 计算陪餐人数上限
+     * @param {string} type - 'external' 对外业务招待（第十二条） | 'internal' 内部业务招待（第十三条）
+     * @param {number} guests - 招待对象人数
+     * @returns {{max: number, formula: string}}
+     */
+    function calculateAccompanying(type, guests) {
+      guests = Math.max(0, Math.floor(guests));
+      if (guests <= 0) return { max: 0, formula: '招待人数为0，无需陪餐' };
+
+      if (type === 'external') {
+        // 第十二条：对外业务招待
+        // ≤5人：可对等（陪餐 ≤ 招待对象人数）
+        // >5人：陪餐 ≤ 5 + (招待对象 - 5) / 2（向下取整）
+        if (guests <= 5) {
+          return { max: guests, formula: '≤' + guests + '人（招待对象≤5人，陪餐可对等）' };
+        } else {
+          const max = 5 + Math.floor((guests - 5) / 2);
+          return { max: max, formula: '≤' + max + '人（招待对象>5人，陪餐≤5+(招待对象-5)/2=' + guests + '-5=' + (guests - 5) + '÷2=' + Math.floor((guests - 5) / 2) + '，合计5+' + Math.floor((guests - 5) / 2) + '=' + max + '）' };
+        }
+      } else {
+        // 第十三条：内部业务招待
+        // ≤10人：≤3人
+        // >10人：≤招待对象的三分之一（向下取整）
+        if (guests <= 10) {
+          return { max: 3, formula: '≤3人（招待对象≤10人，陪餐≤3）' };
+        } else {
+          const max = Math.floor(guests / 3);
+          return { max: max, formula: '≤' + max + '人（招待对象>10人，陪餐≤招待对象/3=' + guests + '÷3=' + Math.floor(guests / 3) + '）' };
+        }
+      }
+    }
+
+    /**
+     * 场景陪餐人数联动计算
+     * 当用户输入招待对象人数时，自动计算并填充陪餐人数上限
+     */
+    function onGuestsChange(scenario, type) {
+      const guestsInput = document.getElementById('scenario-' + scenario + '-guests');
+      const accompanyInput = document.getElementById('scenario-' + scenario + '-accompany-count');
+      const hintSpan = document.getElementById('scenario-' + scenario + '-accompany-hint');
+      if (!guestsInput || !accompanyInput || !hintSpan) return;
+
+      const guests = parseInt(guestsInput.value) || 0;
+      const result = calculateAccompanying(type, guests);
+
+      // 更新提示文字
+      hintSpan.innerHTML = '<span style="color:var(--color-accent);font-weight:bold;">陪餐上限：' + result.max + '人</span> &nbsp; <span style="font-size:10px;color:var(--color-text-secondary);">(' + result.formula + ')</span>';
+
+      // 如果当前陪餐人数超过上限，标红提示
+      const currentAccompany = parseInt(accompanyInput.value) || 0;
+      if (currentAccompany > result.max && currentAccompany > 0) {
+        hintSpan.innerHTML += ' <span style="color:var(--color-error);font-weight:bold;">⚠️ 超标！</span>';
+      }
+    }
+
+    // 初始化场景陪餐人数联动
+    function initAccompanyingCalculation() {
+      // 场景A（商务招待）- 对外业务招待
+      const aGuests = document.getElementById('scenario-A-guests');
+      if (aGuests) {
+        aGuests.addEventListener('input', function() { onGuestsChange('A', 'external'); });
+      }
+
+      // 场景B（外事招待）- 对外业务招待
+      const bGuests = document.getElementById('scenario-B-guests');
+      if (bGuests) {
+        bGuests.addEventListener('input', function() { onGuestsChange('B', 'external'); });
+      }
+
+      // 场景C（其他公务招待）- 参照对外业务招待标准
+      const cGuests = document.getElementById('scenario-C-guests');
+      if (cGuests) {
+        cGuests.addEventListener('input', function() { onGuestsChange('C', 'external'); });
+      }
+
+      // 场景D（内部业务招待）- 内部业务招待
+      const dGuests = document.getElementById('scenario-D-guests');
+      if (dGuests) {
+        dGuests.addEventListener('input', function() { onGuestsChange('D', 'internal'); });
+      }
+
+      // 场景F（党政军机关）- 参照公务接待规定，使用对外标准
+      const fGuests = document.getElementById('scenario-F-guests');
+      if (fGuests) {
+        fGuests.addEventListener('input', function() { onGuestsChange('F', 'external'); });
+      }
+    }
+
+    // ===== 场景酒水和纪念品自动计算 =====
+
+    /**
+     * 计算场景A（商务招待）的酒水、纪念品金额
+     */
+    function calculateScenarioA() {
+      const baijiuPrice = parseFloat(document.getElementById('scenario-A-baijiu-price').value) || 0;
+      const winePrice = parseFloat(document.getElementById('scenario-A-wine-price').value) || 0;
+      const giftPer = parseFloat(document.getElementById('scenario-A-gift-per').value) || 0;
+      const guests = parseInt(document.getElementById('scenario-A-guests').value) || 0;
+
+      // 计算酒水金额
+      const alcoholTotal = (baijiuPrice * 0.5 + winePrice * 0.75) * guests;
+
+      // 计算纪念品金额
+      const giftTotal = giftPer * guests;
+
+      // 更新显示
+      document.getElementById('scenario-A-meal-total').textContent = '¥' + (parseFloat(document.getElementById('scenario-A-per-capita').value) || 0) * guests + '.00';
+      document.getElementById('scenario-A-gift-total').textContent = '¥' + giftTotal.toFixed(2);
+      document.getElementById('scenario-A-summary-meal').textContent = '¥' + (parseFloat(document.getElementById('scenario-A-per-capita').value) || 0) * guests + '.00';
+      document.getElementById('scenario-A-summary-alcohol').textContent = '¥' + alcoholTotal.toFixed(2);
+      document.getElementById('scenario-A-summary-gift').textContent = '¥' + giftTotal.toFixed(2);
+      document.getElementById('scenario-A-summary-total').textContent = '¥' + ((parseFloat(document.getElementById('scenario-A-per-capita').value) || 0) * guests + alcoholTotal + giftTotal).toFixed(2);
+      document.getElementById('scenario-A-summary-per').textContent = '¥' + ((parseFloat(document.getElementById('scenario-A-per-capita').value) || 0) + alcoholTotal + giftTotal) / guests || 0 + '/人';
+    }
+
+    /**
+     * 计算场景B（外事招待）的酒水、纪念品金额
+     */
+    function calculateScenarioB() {
+      const baijiuPrice = parseFloat(document.getElementById('scenario-B-baijiu-price').value) || 0;
+      const winePrice = parseFloat(document.getElementById('scenario-B-wine-price').value) || 0;
+      const giftPer = parseFloat(document.getElementById('scenario-B-gift-per').value) || 0;
+      const guests = parseInt(document.getElementById('scenario-B-guests').value) || 0;
+
+      // 计算酒水金额
+      const alcoholTotal = (baijiuPrice * 0.5 + winePrice * 0.75) * guests;
+
+      // 计算纪念品金额
+      const giftTotal = giftPer * guests;
+
+      // 更新显示
+      document.getElementById('scenario-B-meal-total').textContent = '¥' + (parseFloat(document.getElementById('scenario-B-per-capita').value) || 0) * guests + '.00';
+      document.getElementById('scenario-B-gift-total').textContent = '¥' + giftTotal.toFixed(2);
+      document.getElementById('scenario-B-summary-meal').textContent = '¥' + (parseFloat(document.getElementById('scenario-B-per-capita').value) || 0) * guests + '.00';
+      document.getElementById('scenario-B-summary-alcohol').textContent = '¥' + alcoholTotal.toFixed(2);
+      document.getElementById('scenario-B-summary-gift').textContent = '¥' + giftTotal.toFixed(2);
+      document.getElementById('scenario-B-summary-total').textContent = '¥' + ((parseFloat(document.getElementById('scenario-B-per-capita').value) || 0) * guests + alcoholTotal + giftTotal).toFixed(2);
+      document.getElementById('scenario-B-summary-per').textContent = '¥' + ((parseFloat(document.getElementById('scenario-B-per-capita').value) || 0) + alcoholTotal + giftTotal) / guests || 0 + '/人';
+    }
+
+    /**
+     * 计算场景C（其他公务招待）的酒水、纪念品金额
+     */
+    function calculateScenarioC() {
+      const baijiuPrice = parseFloat(document.getElementById('scenario-C-baijiu-price').value) || 0;
+      const winePrice = parseFloat(document.getElementById('scenario-C-wine-price').value) || 0;
+      const guests = parseInt(document.getElementById('scenario-C-guests').value) || 0;
+
+      // 计算酒水金额
+      const alcoholTotal = (baijiuPrice * 0.5 + winePrice * 0.75) * guests;
+
+      // 其他公务招待不得赠送纪念品
+      const giftTotal = 0;
+
+      // 更新显示
+      document.getElementById('scenario-C-meal-total').textContent = '¥' + (parseFloat(document.getElementById('scenario-C-per-capita').value) || 0) * guests + '.00';
+      document.getElementById('scenario-C-summary-meal').textContent = '¥' + (parseFloat(document.getElementById('scenario-C-per-capita').value) || 0) * guests + '.00';
+      document.getElementById('scenario-C-summary-alcohol').textContent = '¥' + alcoholTotal.toFixed(2);
+      document.getElementById('scenario-C-summary-gift').textContent = '¥0.00';
+      document.getElementById('scenario-C-summary-total').textContent = '¥' + ((parseFloat(document.getElementById('scenario-C-per-capita').value) || 0) * guests + alcoholTotal).toFixed(2);
+      document.getElementById('scenario-C-summary-per').textContent = '¥' + ((parseFloat(document.getElementById('scenario-C-per-capita').value) || 0) + alcoholTotal) / guests || 0 + '/人';
+    }
+
+    /**
+     * 计算场景E（工作餐）的餐费金额
+     */
+    function calculateScenarioE() {
+      const perCapita = parseFloat(document.getElementById('scenario-E-per-capita').value) || 0;
+      const guests = parseInt(document.getElementById('scenario-E-guests').value) || 0;
+
+      // 计算餐费
+      const mealTotal = perCapita * guests;
+
+      // 工作餐不得提供酒水和纪念品
+      const alcoholTotal = 0;
+      const giftTotal = 0;
+
+      // 更新显示
+      document.getElementById('scenario-E-meal-total').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-E-summary-meal').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-E-summary-alcohol').textContent = '¥0.00';
+      document.getElementById('scenario-E-summary-gift').textContent = '¥0.00';
+      document.getElementById('scenario-E-summary-total').textContent = '¥' + mealTotal.toFixed(2);
+      document.getElementById('scenario-E-summary-per').textContent = '¥' + perCapita + '/人';
+    }
+
+    function exportRules() {
+      const rules = {};
+      document.querySelectorAll('.rule-card').forEach(card => {
+        const id = card.dataset.ruleId;
+        if (!id) return;
+        rules[id] = {};
+        card.querySelectorAll('.rule-content').forEach(el => {
+          const field = el.dataset.field;
+          if (field) rules[id][field] = el.innerText;
+        });
+      });
+      const markdown = generateMarkdown(rules);
+      const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '校对规则.md';
+      a.click();
+      URL.revokeObjectURL(url);
+      const toast = document.getElementById('save-toast');
+      toast.textContent = '✅ 已导出校对规则.md';
+      toast.style.background = 'var(--color-success)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function generateMarkdown(rules) {
+      let md = '# 业务招待费校对规则\n\n';
+      md += '> 本规则定义批次审核时的跨文档一致性校验标准。\n';
+      md += `> 标准来源：审核标准/审核规则/审核规则.md\n`;
+      md += `> 审核标准目录：${AUDIT_STANDARDS_DIR}\n`;
+      md += '> 由 card7-audit.html 编辑导出\n\n';
+      md += '---\n\n';
+
+      Object.keys(rules).forEach((ruleId, idx) => {
+        const rule = RULES_DATA.find(r => r.id === ruleId);
+        if (!rule) return;
+        const r = rules[ruleId];
+        md += `## 规则${idx + 1}：${rule.name}\n\n`;
+        md += `**规则编号**: \`${rule.name}\`\n`;
+        md += `**严重程度**: ${rule.severityLabel}\n`;
+        md += `**标准来源**: ${rule.source}\n\n`;
+        if (r.requirement) md += `### 要求\n${r.requirement}\n\n`;
+        if (r.logic) md += `### 校验逻辑\n${r.logic}\n\n`;
+        if (r.mapping) md += `### MD 字段映射\n${r.mapping}\n\n`;
+        if (r.basis) md += `### 判定依据\n${r.basis}\n\n`;
+        if (r.perCapita) md += `### 人均费用标准\n${r.perCapita}\n\n`;
+        if (r.accompanying) md += `### 陪同人数标准\n${r.accompanying}\n\n`;
+        if (r.example) md += `### 实际案例说明\n${r.example}\n\n`;
+        md += '---\n\n';
+      });
+
+      return md;
+    }
+
+    // ===== 启动 =====
+    init();
+  </script>
+</body>
+</html>

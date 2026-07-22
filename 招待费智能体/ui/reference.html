@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>业务招待费标准查询</title>
+<style>
+:root {
+  --bg: #f8f9fa;
+  --card: #ffffff;
+  --primary: #1a56db;
+  --primary-light: #e8eefb;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --warning: #f59e0b;
+  --success: #10b981;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+/* Header */
+.header {
+  text-align: center;
+  padding: 32px 0 24px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 32px;
+}
+.header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+.header p { color: var(--text-secondary); font-size: 14px; }
+
+/* Query Section */
+.query-section {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+  margin-bottom: 28px;
+}
+.query-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+.query-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.form-group select,
+.form-group input {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--card);
+  color: var(--text);
+  min-width: 160px;
+}
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+}
+.btn {
+  padding: 9px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+.btn-primary:hover { background: #1749b8; }
+.btn-reset {
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.btn-reset:hover { background: var(--border); }
+
+/* Result */
+.result-section {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+  margin-bottom: 28px;
+  display: none;
+}
+.result-section.visible { display: block; }
+.result-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.result-card {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 18px;
+  border-left: 4px solid var(--primary);
+}
+.result-card.warning { border-left-color: var(--warning); }
+.result-card.danger { border-left-color: var(--danger); }
+.result-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.result-card .value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+.result-card .value.danger { color: var(--danger); }
+.result-card .value.warning { color: var(--warning); }
+.result-card .note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+.result-card .detail {
+  font-size: 13px;
+  color: var(--text);
+  margin: 4px 0;
+}
+.result-card .detail strong { color: var(--text); }
+
+/* Section cards */
+.section-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+  margin-bottom: 28px;
+}
+.section-card h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Tables */
+.standards-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.standards-table th {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 13px;
+}
+.standards-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.standards-table tr:last-child td { border-bottom: none; }
+.standards-table tr:hover td { background: #f9fafb; }
+
+/* Prohibitions */
+.prohibition-list { list-style: none; }
+.prohibition-list li {
+  padding: 10px 14px;
+  border-left: 3px solid var(--danger);
+  background: var(--danger-bg);
+  margin-bottom: 8px;
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.prohibition-list .clause {
+  font-size: 12px;
+  color: var(--danger);
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* Approval flow */
+.flow-steps { display: flex; flex-direction: column; gap: 12px; }
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px;
+  background: var(--bg);
+  border-radius: 10px;
+}
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.step-content h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.step-content p { font-size: 13px; color: var(--text-secondary); }
+.step-content .basis { font-size: 12px; color: var(--primary); margin-top: 4px; }
+
+/* Type cards */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.type-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+.type-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.type-card .info {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 6px 0;
+}
+.type-card .info strong { color: var(--text); }
+.type-card .alert {
+  font-size: 12px;
+  color: var(--warning);
+  background: #fffbeb;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+/* Template cards */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.template-card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--card);
+}
+.template-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+.template-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(26,86,219,0.15);
+}
+.template-header {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.template-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.template-icon.blue { background: #dbeafe; }
+.template-icon.green { background: #d1fae5; }
+.template-icon.purple { background: #ede9fe; }
+.template-icon.orange { background: #ffedd5; }
+.template-icon.teal { background: #ccfbf1; }
+.template-icon.rose { background: #ffe4e6; }
+.template-info { flex: 1; }
+.template-info h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.template-info .type-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+.type-tag.external { background: #dbeafe; color: #1e40af; }
+.type-tag.internal { background: #d1fae5; color: #065f46; }
+.template-arrow {
+  font-size: 18px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.template-card.active .template-arrow { transform: rotate(90deg); }
+.template-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.template-card.active .template-body {
+  max-height: 2000px;
+}
+.template-body-inner {
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--border);
+}
+.template-body-inner h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 16px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.template-body-inner h4:first-child { margin-top: 16px; }
+.example-form {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 13px;
+}
+.example-form .form-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+  align-items: baseline;
+}
+.example-form .form-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 72px;
+}
+.example-form .form-value {
+  color: var(--text);
+  border-bottom: 1px dashed var(--border);
+  flex: 1;
+  padding: 2px 0;
+}
+.example-form .form-value.highlight {
+  color: var(--primary);
+  font-weight: 600;
+}
+.example-form .form-value.danger {
+  color: var(--danger);
+}
+.example-form .form-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #fffbeb;
+  border-radius: 6px;
+  border-left: 3px solid var(--warning);
+}
+.example-form .form-requirement {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: #f0fdf4;
+  border-radius: 6px;
+  border-left: 3px solid var(--success);
+}
+.template-quick-fill {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s;
+}
+.template-quick-fill:hover { background: #1749b8; }
+
+/* Holiday box */
+.holiday-box {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 10px;
+  padding: 18px;
+}
+.holiday-box h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #92400e; }
+.holiday-box ul { font-size: 13px; color: #78350f; margin-left: 18px; }
+.holiday-box li { margin: 4px 0; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .query-form { flex-direction: column; }
+  .form-group select, .form-group input { min-width: 100%; width: 100%; }
+  .result-grid { grid-template-columns: 1fr; }
+  .type-grid { grid-template-columns: 1fr; }
+  .standards-table { font-size: 12px; }
+  .standards-table th, .standards-table td { padding: 8px 10px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>业务招待费标准查询</h1>
+    <p>依据《清远分公司业务招待费管理办法（V9.0）》— 填写申请单前请先查询对应标准</p>
+  </div>
+
+  <!-- Quick Query -->
+  <div class="query-section">
+    <h2>快速查询</h2>
+    <div class="query-form">
+      <div class="form-group">
+        <label>陪同人员最高级别</label>
+        <select id="personnelLevel">
+          <option value="">请选择</option>
+          <option value="省管中层">省管中层</option>
+          <option value="市管中层">市管中层</option>
+          <option value="其他人员">其他人员</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>招待类型</label>
+        <select id="receptionType">
+          <option value="">请选择</option>
+          <option value="商务招待">商务招待</option>
+          <option value="外事招待">外事招待</option>
+          <option value="其他公务招待">其他公务招待</option>
+          <option value="内部业务招待">内部业务招待</option>
+          <option value="工作餐">工作餐</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>招待对象人数</label>
+        <input type="number" id="guestCount" min="1" placeholder="选填">
+      </div>
+      <button class="btn btn-primary" onclick="doQuery()">查询标准</button>
+      <button class="btn btn-reset" onclick="resetQuery()">重置</button>
+    </div>
+  </div>
+
+  <!-- Query Result -->
+  <div class="result-section" id="resultSection">
+    <h2>查询结果</h2>
+    <div class="result-grid" id="resultGrid"></div>
+  </div>
+
+  <!-- External Standards Table -->
+  <div class="section-card">
+    <h2>对外业务招待标准</h2>
+    <table class="standards-table">
+      <thead>
+        <tr>
+          <th>人员层级</th>
+          <th>招待类型</th>
+          <th>宴请标准</th>
+          <th>纪念品</th>
+          <th>酒水标准</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td rowspan="2">省管中层</td><td>外事/商务</td><td>400元/人·次</td><td>400元/人·次</td><td>白酒≤400元/500ml<br>红酒≤400元/750ml</td></tr>
+        <tr><td>其他公务</td><td>200元/人·次</td><td>不得赠送</td><td>白酒≤400元/500ml<br>红酒≤400元/750ml</td></tr>
+        <tr><td rowspan="2">市管中层</td><td>外事/商务</td><td>300元/人·次</td><td>300元/人·次</td><td>白酒≤300元/500ml<br>红酒≤300元/750ml</td></tr>
+        <tr><td>其他公务</td><td>200元/人·次</td><td>不得赠送</td><td>白酒≤300元/500ml<br>红酒≤300元/750ml</td></tr>
+        <tr><td rowspan="2">其他人员</td><td>外事/商务</td><td>200元/人·次</td><td>200元/人·次</td><td>白酒≤200元/500ml<br>红酒≤200元/750ml</td></tr>
+        <tr><td>其他公务</td><td>150元/人·次</td><td>不得赠送</td><td>白酒≤200元/500ml<br>红酒≤200元/750ml</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Internal Standards Table -->
+  <div class="section-card">
+    <h2>内部业务招待标准</h2>
+    <table class="standards-table">
+      <thead>
+        <tr>
+          <th>人员层级</th>
+          <th>用餐标准</th>
+          <th>纪念品</th>
+          <th>酒水</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>省管中层</td><td>150元/人·次</td><td>不得赠送</td><td>不上烟酒</td></tr>
+        <tr><td>市管中层</td><td>150元/人·次</td><td>不得赠送</td><td>不上烟酒</td></tr>
+        <tr><td>其他人员</td><td>100元/人·次</td><td>不得赠送</td><td>不上烟酒</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Companion Rules -->
+  <div class="section-card">
+    <h2>陪同人数标准</h2>
+    <table class="standards-table">
+      <thead>
+        <tr><th>类型</th><th>规则</th><th>计算公式</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>外部招待</td>
+          <td>招待对象≤5人，陪餐可对等；&gt;5人，超出部分陪餐≤对象的1/2</td>
+          <td>guest≤5: companion≤guest<br>guest&gt;5: companion≤5+(guest-5)//2</td>
+        </tr>
+        <tr>
+          <td>内部招待</td>
+          <td>招待对象≤10人，陪同≤3人；&gt;10人，陪同≤对象的1/3</td>
+          <td>guest≤10: companion≤3<br>guest&gt;10: companion≤guest//3</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Reception Types -->
+  <div class="section-card">
+    <h2>招待类型说明</h2>
+    <div class="type-grid">
+      <div class="type-card">
+        <h3>商务招待</h3>
+        <p class="info"><strong>说明：</strong>商业谈判或合作中招待客户、合资合作方、经贸联络考察团组</p>
+        <p class="info"><strong>适用标准：</strong>外事/商务标准（最高档）</p>
+        <p class="alert">注意：招待对象不包括党政军机关工作人员和国有企业集团总部工作人员</p>
+      </div>
+      <div class="type-card">
+        <h3>外事招待</h3>
+        <p class="info"><strong>说明：</strong>招待外宾或其他外籍关系人员</p>
+        <p class="info"><strong>适用标准：</strong>外事/商务标准（最高档）</p>
+        <p class="alert">注意：应优先在社会公共场所安排，遵守外事工作规定和保密要求</p>
+      </div>
+      <div class="type-card">
+        <h3>其他公务招待</h3>
+        <p class="info"><strong>说明：</strong>招待其他人员的公务活动</p>
+        <p class="info"><strong>适用标准：</strong>其他公务标准</p>
+        <p class="alert">注意：招待党政军机关工作人员应参照《党政机关国内公务接待管理规定》</p>
+      </div>
+      <div class="type-card">
+        <h3>内部业务招待</h3>
+        <p class="info"><strong>说明：</strong>集团公司内部上下级/平级单位之间的公务招待</p>
+        <p class="info"><strong>适用标准：</strong>内部业务招待标准</p>
+        <p class="alert">注意：原则上不超过1次，不得商务宴请，不上烟酒</p>
+      </div>
+      <div class="type-card">
+        <h3>工作餐</h3>
+        <p class="info"><strong>说明：</strong>内部公务活动期间的工作用餐</p>
+        <p class="info"><strong>适用标准：</strong>食堂正常标准或差旅伙食补贴标准</p>
+        <p class="alert">注意：优先食堂安排，优先自助，不上烟酒</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene Templates -->
+  <div class="section-card">
+    <h2>场景业务接待模板</h2>
+    <p style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;">点击模板卡片展开填写示例，对照填写您的招待申请单</p>
+    <div class="template-grid">
+
+      <!-- Template 1: 商务招待-客户洽谈 -->
+      <div class="template-card" onclick="toggleTemplate(this)">
+        <div class="template-header">
+          <div class="template-icon blue">🤝</div>
+          <div class="template-info">
+            <h3>客户商务洽谈宴请</h3>
+            <span class="type-tag external">对外·商务招待</span>
+          </div>
+          <span class="template-arrow">›</span>
+        </div>
+        <div class="template-body">
+          <div class="template-body-inner">
+            <h4>📋 填写示例</h4>
+            <div class="example-form">
+              <div class="form-row"><span class="form-label">招待类型：</span><span class="form-value highlight">商务招待</span></div>
+              <div class="form-row"><span class="form-label">招待事由：</span><span class="form-value">洽谈XX项目合作意向</span></div>
+              <div class="form-row"><span class="form-label">招待对象：</span><span class="form-value">XX科技有限公司 张总等3人</span></div>
+              <div class="form-row"><span class="form-label">招待人数：</span><span class="form-value highlight">3人</span></div>
+              <div class="form-row"><span class="form-label">陪同人数：</span><span class="form-value highlight">≤3人（对等）</span></div>
+              <div class="form-row"><span class="form-label">陪同人员：</span><span class="form-value">李经理（市管中层）、王主管、赵专员</span></div>
+              <div class="form-row"><span class="form-label">人均标准：</span><span class="form-value highlight">≤300元/人·次</span></div>
+              <div class="form-row"><span class="form-label">预计总费用：</span><span class="form-value">≤900元</span></div>
+              <div class="form-row"><span class="form-label">用餐地点：</span><span class="form-value">XX餐厅（非高档场所）</span></div>
+              <div class="form-row"><span class="form-label">酒水：</span><span class="form-value">白酒≤300元/500ml 或 红酒≤300元/750ml</span></div>
+              <div class="form-row"><span class="form-label">纪念品：</span><span class="form-value highlight">≤300元/人·次</span></div>
+              <div class="form-note">⚠️ 对象不含党政军机关工作人员；如对象含党政军机关，应选"其他公务招待"</div>
+              <div class="form-requirement">✅ 需准备：事前审批单、费用明细清单、支付凭证、发票</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 2: 外事招待 -->
+      <div class="template-card" onclick="toggleTemplate(this)">
+        <div class="template-header">
+          <div class="template-icon purple">🌐</div>
+          <div class="template-info">
+            <h3>外宾接待宴请</h3>
+            <span class="type-tag external">对外·外事招待</span>
+          </div>
+          <span class="template-arrow">›</span>
+        </div>
+        <div class="template-body">
+          <div class="template-body-inner">
+            <h4>📋 填写示例</h4>
+            <div class="example-form">
+              <div class="form-row"><span class="form-label">招待类型：</span><span class="form-value highlight">外事招待</span></div>
+              <div class="form-row"><span class="form-label">招待事由：</span><span class="form-value">XX国合作方来访交流</span></div>
+              <div class="form-row"><span class="form-label">招待对象：</span><span class="form-value">XX国公司代表团 李XX等5人</span></div>
+              <div class="form-row"><span class="form-label">招待人数：</span><span class="form-value highlight">5人</span></div>
+              <div class="form-row"><span class="form-label">陪同人数：</span><span class="form-value highlight">≤5人（对等）</span></div>
+              <div class="form-row"><span class="form-label">陪同人员：</span><span class="form-value">赵总监（省管中层）、钱经理、孙主管</span></div>
+              <div class="form-row"><span class="form-label">人均标准：</span><span class="form-value highlight">≤400元/人·次</span></div>
+              <div class="form-row"><span class="form-label">预计总费用：</span><span class="form-value">≤2000元</span></div>
+              <div class="form-row"><span class="form-label">用餐地点：</span><span class="form-value">社会公共场所（遵守外事规定）</span></div>
+              <div class="form-row"><span class="form-label">酒水：</span><span class="form-value">白酒≤400元/500ml 或 红酒≤400元/750ml</span></div>
+              <div class="form-row"><span class="form-label">纪念品：</span><span class="form-value highlight">≤400元/人·次（企业形象/地域文化）</span></div>
+              <div class="form-note">⚠️ 应优先在社会公共场所安排；遵守外事工作规定和保密要求</div>
+              <div class="form-requirement">✅ 需准备：事前审批单、外事接待方案、费用明细清单、支付凭证</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 3: 其他公务招待 -->
+      <div class="template-card" onclick="toggleTemplate(this)">
+        <div class="template-header">
+          <div class="template-icon green">🏛️</div>
+          <div class="template-info">
+            <h3>党政机关公务招待</h3>
+            <span class="type-tag external">对外·其他公务招待</span>
+          </div>
+          <span class="template-arrow">›</span>
+        </div>
+        <div class="template-body">
+          <div class="template-body-inner">
+            <h4>📋 填写示例</h4>
+            <div class="example-form">
+              <div class="form-row"><span class="form-label">招待类型：</span><span class="form-value highlight">其他公务招待</span></div>
+              <div class="form-row"><span class="form-label">招待事由：</span><span class="form-value">XX局领导来我司调研指导工作</span></div>
+              <div class="form-row"><span class="form-label">招待对象：</span><span class="form-value">XX局 王局长等4人</span></div>
+              <div class="form-row"><span class="form-label">招待人数：</span><span class="form-value highlight">4人</span></div>
+              <div class="form-row"><span class="form-label">陪同人数：</span><span class="form-value highlight">≤4人（对等）</span></div>
+              <div class="form-row"><span class="form-label">陪同人员：</span><span class="form-value">周科长（市管中层）、吴主管</span></div>
+              <div class="form-row"><span class="form-label">人均标准：</span><span class="form-value highlight">≤200元/人·次</span></div>
+              <div class="form-row"><span class="form-label">预计总费用：</span><span class="form-value">≤800元</span></div>
+              <div class="form-row"><span class="form-label">用餐地点：</span><span class="form-value">单位食堂或定点饭店</span></div>
+              <div class="form-row"><span class="form-label">酒水：</span><span class="form-value">白酒≤400元/500ml 或 红酒≤400元/750ml</span></div>
+              <div class="form-row"><span class="form-label">纪念品：</span><span class="form-value danger">不得赠送</span></div>
+              <div class="form-note">⚠️ 招待党政军机关工作人员应参照《党政机关国内公务接待管理规定》执行</div>
+              <div class="form-requirement">✅ 需准备：事前审批单、活动公函、费用明细清单、支付凭证</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 4: 内部业务招待 -->
+      <div class="template-card" onclick="toggleTemplate(this)">
+        <div class="template-header">
+          <div class="template-icon teal">🏢</div>
+          <div class="template-info">
+            <h3>内部单位公务招待</h3>
+            <span class="type-tag internal">内部业务招待</span>
+          </div>
+          <span class="template-arrow">›</span>
+        </div>
+        <div class="template-body">
+          <div class="template-body-inner">
+            <h4>📋 填写示例</h4>
+            <div class="example-form">
+              <div class="form-row"><span class="form-label">招待类型：</span><span class="form-value highlight">内部业务招待</span></div>
+              <div class="form-row"><span class="form-label">招待事由：</span><span class="form-value">省公司检查组来清开展专项调研</span></div>
+              <div class="form-row"><span class="form-label">招待对象：</span><span class="form-value">省公司检查组 8人</span></div>
+              <div class="form-row"><span class="form-label">招待人数：</span><span class="form-value highlight">8人</span></div>
+              <div class="form-row"><span class="form-label">陪同人数：</span><span class="form-value highlight">≤3人（≤10人上限3人）</span></div>
+              <div class="form-row"><span class="form-label">陪同人员：</span><span class="form-value">郑主任（省管中层）、刘科长</span></div>
+              <div class="form-row"><span class="form-label">用餐标准：</span><span class="form-value highlight">≤150元/人·次</span></div>
+              <div class="form-row"><span class="form-label">预计总费用：</span><span class="form-value">≤1200元</span></div>
+              <div class="form-row"><span class="form-label">用餐地点：</span><span class="form-value">单位食堂（优先自助）</span></div>
+              <div class="form-row"><span class="form-label">酒水：</span><span class="form-value danger">不上烟酒</span></div>
+              <div class="form-row"><span class="form-label">纪念品：</span><span class="form-value danger">不得赠送</span></div>
+              <div class="form-note">⚠️ 原则上不超过1次；不得进行商务宴请；不上烟酒；不得赠送纪念品</div>
+              <div class="form-requirement">✅ 需准备：事前审批单、费用明细清单、支付凭证</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 5: 工作餐 -->
+      <div class="template-card" onclick="toggleTemplate(this)">
+        <div class="template-header">
+          <div class="template-icon orange">🍱</div>
+          <div class="template-info">
+            <h3>内部工作餐</h3>
+            <span class="type-tag internal">工作餐</span>
+          </div>
+          <span class="template-arrow">›</span>
+        </div>
+        <div class="template-body">
+          <div class="template-body-inner">
+            <h4>📋 填写示例</h4>
+            <div class="example-form">
+              <div class="form-row"><span class="form-label">招待类型：</span><span class="form-value highlight">工作餐</span></div>
+              <div class="form-row"><span class="form-label">招待事由：</span><span class="form-value">县区分公司同事来交流工作经验午餐</span></div>
+              <div class="form-row"><span class="form-label">招待对象：</span><span class="form-value">XX县分公司 3人</span></div>
+              <div class="form-row"><span class="form-label">招待人数：</span><span class="form-value highlight">3人</span></div>
+              <div class="form-row"><span class="form-label">陪同人数：</span><span class="form-value">2人</span></div>
+              <div class="form-row"><span class="form-label">用餐标准：</span><span class="form-value highlight">参照食堂正常标准/差旅伙食补贴</span></div>
+              <div class="form-row"><span class="form-label">用餐地点：</span><span class="form-value">单位食堂（优先自助）</span></div>
+              <div class="form-row"><span class="form-label">酒水：</span><span class="form-value danger">不上烟酒</span></div>
+              <div class="form-note">⚠️ 工作餐次数可按实际工作需求安排；优先食堂安排，优先自助形式</div>
+              <div class="form-requirement">✅ 需准备：事前审批单、费用明细清单</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template 6: 异地接待 -->
+      <div class="template-card" onclick="toggleTemplate(this)">
+        <div class="template-header">
+          <div class="template-icon rose">✈️</div>
+          <div class="template-info">
+            <h3>异地接待（含住宿）</h3>
+            <span class="type-tag external">对外·商务招待</span>
+          </div>
+          <span class="template-arrow">›</span>
+        </div>
+        <div class="template-body">
+          <div class="template-body-inner">
+            <h4>📋 填写示例</h4>
+            <div class="example-form">
+              <div class="form-row"><span class="form-label">招待类型：</span><span class="form-value highlight">商务招待</span></div>
+              <div class="form-row"><span class="form-label">招待事由：</span><span class="form-value">邀请XX供应商来清远进行年度合同谈判</span></div>
+              <div class="form-row"><span class="form-label">招待对象：</span><span class="form-value">XX公司 张总等4人（异地）</span></div>
+              <div class="form-row"><span class="form-label">招待人数：</span><span class="form-value highlight">4人</span></div>
+              <div class="form-row"><span class="form-label">陪同人数：</span><span class="form-value highlight">≤4人（对等）</span></div>
+              <div class="form-row"><span class="form-label">用餐标准：</span><span class="form-value highlight">≤300元/人·次（市管中层）</span></div>
+              <div class="form-row"><span class="form-label">住宿安排：</span><span class="form-value">单间或标准间（参照差旅标准同城市级别）</span></div>
+              <div class="form-row"><span class="form-label">用车安排：</span><span class="form-value">公司自有车辆/租赁资质合格汽车租赁公司</span></div>
+              <div class="form-row"><span class="form-label">纪念品：</span><span class="form-value highlight">≤300元/人·次</span></div>
+              <div class="form-note">⚠️ 住宿参照《差旅费管理办法》同城市相应级别；严禁公车私用</div>
+              <div class="form-requirement">✅ 需准备：事前审批单、住宿安排说明、用车审批、费用明细清单、支付凭证</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Prohibitions -->
+  <div class="section-card">
+    <h2>禁止性规定</h2>
+    <ul class="prohibition-list">
+      <li>不得安排私人会所及高档娱乐、休闲、健身、保健等高消费场所<span class="clause">第十四条</span></li>
+      <li>不得提供用野生保护动物制作的菜肴<span class="clause">第十四条</span></li>
+      <li>不得提供鱼翅、燕窝等高档菜肴<span class="clause">第十四条</span></li>
+      <li>严禁用公款购买香烟和高档酒水、珍稀药材、天价茶叶、名贵木材、珠宝玉石等<span class="clause">第十四条</span></li>
+      <li>不得批量购买业务招待用酒<span class="clause">第十五条</span></li>
+      <li>严禁用公款开展相互走访、送礼、宴请等拜年活动<span class="clause">第十七条</span></li>
+      <li>不得支付应由个人负担的招待费用；不得向下属单位摊派或转嫁费用<span class="clause">第十九条</span></li>
+      <li>严禁赠送现金、购物卡、会员卡、有价证券、贵重物品、名贵土特产等<span class="clause">第二十条</span></li>
+      <li>不得采取预存费用后续签单消费方式<span class="clause">第二十五条</span></li>
+      <li>超过5000元不得以现金结算<span class="clause">第二十五条</span></li>
+    </ul>
+  </div>
+
+  <!-- Approval Flow -->
+  <div class="section-card">
+    <h2>审批流程</h2>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>事前审批</h3>
+          <p>所有业务招待活动均应履行事前审批程序，经相关领导审批同意后方可开展</p>
+          <p class="basis">依据：第二十二条</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>填写招待清单</h3>
+          <p>如实反映招待人员、招待事由、招待费用等明细情况</p>
+          <p class="basis">依据：第二十二条</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>开展招待活动</h3>
+          <p>如确因紧急事由无法事前审批，应请示有审批权限的相关领导同意后开展</p>
+          <p class="basis">依据：第二十二条</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>事后及时补审批</h3>
+          <p>紧急情况下事后应及时补办审批手续</p>
+          <p class="basis">依据：第二十二条</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h3>提交报销材料</h3>
+          <p>发票、审批单、支付凭证、费用明细清单等支撑材料</p>
+          <p class="basis">依据：第二十六条</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Holiday Reporting -->
+  <div class="section-card">
+    <h2>节假日报备要求</h2>
+    <div class="holiday-box">
+      <h3>重大节日：元旦、春节、清明节、劳动节、端午节、中秋节、国庆节</h3>
+      <ul>
+        <li>重大节日<strong>前3个工作日</strong>、<strong>后3个工作日</strong>内，以及<strong>节日期间</strong>安排招待，需提前报备</li>
+        <li>向<strong>办公室</strong>备案并向<strong>同级纪委</strong>报告</li>
+        <li>报备资料作为节假日费用报销的支撑材料</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>依据：《中国移动广东公司清远分公司业务招待费管理办法（V9.0）》— 2025年7月9日发布</p>
+    <p>本办法中的金额标准全部为含税价</p>
+  </div>
+
+</div>
+
+<script>
+function doQuery() {
+  const level = document.getElementById('personnelLevel').value;
+  const type = document.getElementById('receptionType').value;
+  const guestCount = parseInt(document.getElementById('guestCount').value) || 0;
+
+  if (!level || !type) {
+    alert('请选择"陪同人员最高级别"和"招待类型"');
+    return;
+  }
+
+  const grid = document.getElementById('resultGrid');
+  let cards = '';
+
+  // Type info
+  const typeInfo = {
+    '商务招待': { desc: '商业谈判或合作中招待客户、合资合作方', note: '对象不包括党政军机关工作人员' },
+    '外事招待': { desc: '招待外宾或其他外籍关系人员', note: '优先社会公共场所，遵守外事规定' },
+    '其他公务招待': { desc: '招待其他人员的公务活动', note: '党政军机关参照《党政机关国内公务接待管理规定》' },
+    '内部业务招待': { desc: '内部上下级/平级单位之间公务招待', note: '原则上不超过1次，不上烟酒' },
+    '工作餐': { desc: '内部公务活动工作用餐', note: '优先食堂自助，不上烟酒' },
+  };
+
+  const info = typeInfo[type] || {};
+  cards += `<div class="result-card"><h3>招待类型</h3><div class="detail"><strong>类型：</strong>${type}</div><div class="detail"><strong>说明：</strong>${info.desc}</div><div class="note">${info.note}</div></div>`;
+
+  if (type === '内部业务招待' || type === '工作餐') {
+    const internalStd = {
+      '省管中层': { meal: '150元/人·次' },
+      '市管中层': { meal: '150元/人·次' },
+      '其他人员': { meal: '100元/人·次' },
+    };
+    const std = internalStd[level];
+    cards += `<div class="result-card"><h3>用餐标准</h3><div class="value">${std.meal}</div><div class="note">不上烟酒，不得赠送纪念品</div></div>`;
+    cards += `<div class="result-card warning"><h3>注意事项</h3><div class="detail">工作餐原则上在单位食堂，优先自助形式</div><div class="detail">如确需内部业务招待，不得商务宴请</div></div>`;
+  } else {
+    const externalStd = {
+      '省管中层': {
+        '商务招待': { meal: '400元/人·次', souvenir: '400元/人·次', alcohol: '白酒≤400元/500ml, 红酒≤400元/750ml' },
+        '外事招待': { meal: '400元/人·次', souvenir: '400元/人·次', alcohol: '白酒≤400元/500ml, 红酒≤400元/750ml' },
+        '其他公务招待': { meal: '200元/人·次', souvenir: '不得赠送', alcohol: '白酒≤400元/500ml, 红酒≤400元/750ml' },
+      },
+      '市管中层': {
+        '商务招待': { meal: '300元/人·次', souvenir: '300元/人·次', alcohol: '白酒≤300元/500ml, 红酒≤300元/750ml' },
+        '外事招待': { meal: '300元/人·次', souvenir: '300元/人·次', alcohol: '白酒≤300元/500ml, 红酒≤300元/750ml' },
+        '其他公务招待': { meal: '200元/人·次', souvenir: '不得赠送', alcohol: '白酒≤300元/500ml, 红酒≤300元/750ml' },
+      },
+      '其他人员': {
+        '商务招待': { meal: '200元/人·次', souvenir: '200元/人·次', alcohol: '白酒≤200元/500ml, 红酒≤200元/750ml' },
+        '外事招待': { meal: '200元/人·次', souvenir: '200元/人·次', alcohol: '白酒≤200元/500ml, 红酒≤200元/750ml' },
+        '其他公务招待': { meal: '150元/人·次', souvenir: '不得赠送', alcohol: '白酒≤200元/500ml, 红酒≤200元/750ml' },
+      },
+    };
+    const std = externalStd[level]?.[type];
+    if (std) {
+      cards += `<div class="result-card"><h3>宴请标准</h3><div class="value">${std.meal}</div></div>`;
+      cards += `<div class="result-card ${std.souvenir === '不得赠送' ? 'warning' : ''}"><h3>纪念品</h3><div class="value">${std.souvenir}</div></div>`;
+      cards += `<div class="result-card"><h3>酒水标准</h3><div class="detail">${std.alcohol}</div></div>`;
+    }
+  }
+
+  // Companion calculation
+  if (guestCount > 0) {
+    const isExternal = type !== '内部业务招待' && type !== '工作餐';
+    let compLimit, compRule;
+    if (isExternal) {
+      if (guestCount <= 5) { compLimit = guestCount; compRule = '对等'; }
+      else { compLimit = 5 + Math.floor((guestCount - 5) / 2); compRule = '超出部分1/2'; }
+    } else {
+      if (guestCount <= 10) { compLimit = 3; compRule = '上限3人'; }
+      else { compLimit = Math.floor(guestCount / 3); compRule = '对象的1/3'; }
+    }
+    cards += `<div class="result-card"><h3>陪同人数上限</h3><div class="value">${compLimit}人</div><div class="note">招待对象${guestCount}人，${compRule}</div><div class="note">依据：${isExternal ? '第十二条' : '第十三条'}</div></div>`;
+  }
+
+  grid.innerHTML = cards;
+  document.getElementById('resultSection').classList.add('visible');
+  document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetQuery() {
+  document.getElementById('personnelLevel').value = '';
+  document.getElementById('receptionType').value = '';
+  document.getElementById('guestCount').value = '';
+  document.getElementById('resultSection').classList.remove('visible');
+}
+
+function toggleTemplate(el) {
+  const wasActive = el.classList.contains('active');
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+  if (!wasActive) el.classList.add('active');
+}
+</script>
+</body>
+</html>
