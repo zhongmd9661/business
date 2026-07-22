@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招待费凭证上传 - 智能审计系统</title>
+  <!-- 引入 index.html 同款样式 -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      width: 100vw;
+      position: relative;
+      overflow-x: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ---- 背景光晕 (完全同步 index.html) ---- */
+    .bg-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+    }
+    .bg-glow--1 {
+      width: 80vw; height: 80vh; top: -15%; left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(ellipse, rgba(30, 64, 175, 0.06) 0%, transparent 60%);
+    }
+    .bg-glow--2 {
+      width: 60vw; height: 60vh; bottom: -20%; left: -5%;
+      background: radial-gradient(ellipse, rgba(59, 130, 246, 0.04) 0%, transparent 60%);
+    }
+    .bg-glow--3 {
+      width: 50vw; height: 50vh; bottom: -15%; right: -5%;
+      background: radial-gradient(ellipse, rgba(37, 99, 235, 0.04) 0%, transparent 60%);
+    }
+
+    /* ---- 主内容容器 (完全同步 index.html) ---- */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      padding: clamp(24px, 4vw, 64px);
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ---- 页面标题样式 (完全同步 index.html) ---- */
+    .page-header {
+      text-align: center;
+      margin-bottom: clamp(32px, 4vh, 56px);
+    }
+    .page-title {
+      font-size: clamp(34px, 5.5vw, 60px);
+      font-weight: 700;
+      color: #1e3a5f;
+      letter-spacing: clamp(3px, 0.7vw, 10px);
+      text-shadow: 0 2px 20px rgba(30, 64, 175, 0.1);
+    }
+    .page-subtitle {
+      font-size: clamp(14px, 1.6vw, 20px);
+      font-weight: 400;
+      color: #5a7ba8;
+      margin-top: 10 0px;
+      letter-spacing: clamp(1px, 0.4vw, 4px);
+    }
+
+    /* ---- 上传区域卡片样式 (优化自 index.html) ---- */
+    .upload-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: clamp(16px, 2vw, 20px);
+      padding: clamp(32px, 4vh, 48px);
+      width: 100%;
+      max-width: 1100px;
+      box-shadow: 0 12px 40px rgba(30, 64, 175, 0.05);
+    }
+
+    .upload-slot {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px dashed #cbd5e1;
+    }
+    .upload-slot:hover {
+      border-color: #3b82f6;
+      background-color: #eff6ff;
+      transform: translateY(-2px);
+    }
+
+    /* Tailwind 辅助类重写 */
+    [x-cloak] { display: none !important; }
+  </singles>
+  <!-- 引入 Tailwind 用于快速布局 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Alpine.js 处理交互 -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+  <!-- 背景光晕层 -->
+  <div class="bg-glow bg-glow--1"></div>
+  <div class="bg-glow bg-glow--2"></div>
+  <div class="bg-glow bg-glow--3"></div>
+
+  <div class="container" x-data="uploadManager()">
+    <!-- 页面头部 -->
+    <div class="page-header">
+      <h1 class="page-title">凭证上传</h1>
+      <p class="page-subtitle">招待费智能审核系统</p>
+    </div>
+
+    <!-- 上传功能区卡片 -->
+    <div class="upload-card">
+      <div class="mb-6 flex justify-between items-center border-b pb-4">
+        <div class="text-sm font-medium text-slate-500">
+          已上传: <span class="text-blue-600 font-bold" x-text="uploadedCount()"></span> / 9
+        </div>
+        <div class="space-x-3">
+          <button @click="clearAll()" class="px-4 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg transition">清空</button>
+          <button @click="submitAll()" :disabled="uploadedCount() === 0"
+                  class="px-6 py-1.5 text-sm font-medium text-white bg-[#1e40af] hover:bg-[#1e3a8a] rounded-lg disabled:opacity-50 shadow-md transition">
+            开始智能审核
+          </button>
+        </div>
+      </div>
+
+      <!-- 9个上传槽位网格 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <template x-for="(slot, index) in slots" :key="index">
+          <div class="upload-slot relative bg-white rounded-xl p-6 flex flex-col items-center justify-center min-h-[160px] cursor-pointer"
+               :class="{ 'border-blue-500 bg-blue-50': slot.file, 'border-slate-200': !slot.file }"
+               @dragover.prevent="slot.isDragging = true"
+               @dragleave.prevent="slot.isDragging = false"
+               @drop.prevent="handleDrop(index, $event)"
+               @click="triggerFileInput(index)">
+
+            <input type="file" :id="'file-input-' + index" class="hidden" @change="handleFileSelect(index, $event)">
+
+            <!-- 空状态 -->
+            <template x-if="!slot.file">
+              <div class="text-center" x-cloak>
+                <div class="mx-auto w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mb-2">
+                  <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+                <span class="text-xs font-medium text-slate-400" x-text="'槽位 ' + (index + 1)"></span>
+              </div>
+            </template>
+
+            <!-- 已上传状态 -->
+            <template x-if="slot.file">
+              <div class="w-full text-center" x-cloak>
+                <div class="mb-2 flex justify-center">
+                  <template x-if="slot.isPreview">
+                    <img :src="slot.previewUrl" class="h-14 w-14 object-cover rounded shadow-sm border border-slate_200">
+                  </template>
+                  <template x-if="!slot.isPreview">
+                    <div class="h-14 w-14 bg-blue-100 rounded-full flex items-center justify-center">
+                      <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
+                    </div>
+                  </template>
+                </div>
+                <p class="text-[11px] font-semibold text-slate-700 truncate px-2" x-text="slot.file.name"></p>
+                <button @click.stop="removeFile(index)" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition">
+                  <svg class="w-5 h	h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+              </div>
+            </template>
+
+            <!-- 拖拽提示 -->
+            <div x-show="slot.isDragging" class="absolute inset-0 bg-blue-500/10 rounded-xl flex items-center justify-center pointer-events-none">
+               <span class="text-blue-600 text-xs font-bold">放入文件</span>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- 底部提示 -->
+      <div class="mt-8 pt-6 border-t border-slate-100 flex justify-between items-center text-[12px] text-slate-400">
+        <div>支持 JPG, PNG, PDF (Max 10MB)</div>
+        <div>Powered by Intelligent Audit Engine</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function uploadManager() {
+      return {
+        slots: Array.from({ length: 9 }, () => ({ file: null, previewUrl: null, isPreview: false, isDragging: false })),
+        uploadedCount() { return this.slots.filter(s => s.file !== null).length; },
+        triggerFileInput(index) { document.getElementById(`file-input-${index}`).click(); },
+        handleFileSelect(index, event) { const file = event.target.files[0]; if (file) this.processFile(index, file); },
+        handleDrop(index, event) {
+          const file = event.dataTransfer.files[0];
+          this.slots[index].isDragging = false;
+          if (file) this.processFile(index, file);
+        },
+        processFile(index, file) {
+          const slot = this.slots[index];
+          slot.file = file;
+          if (file.type.startsWith('image/')) {
+            slot.isPreview = true;
+            const reader = new FileReader();
+            reader.onload = (e) => { slot.previewUrl = e.target.result; };
+            reader.readAsDataURL(file);
+          } else {
+            slot.isPreview = false;
+            slot.previewUrl = null;
+          }
+        },
+        removeFile(index) { this.slots[index].file = null; this.slots[index].previewUrl = null; this.slots[index].isPreview = false; },
+        clearAll() { if (confirm('清空所有上传内容吗？')) this.slots.forEach(s => { s.file = null; s.previewUrl = null; s.isPreview = false; }); },
+        submitAll() { alert('正在提交 ' + this.uploadedCount() + ' 个文件进行智能审核...'); },
+      }
+    }
+  </script>
+</body>
+</html>
