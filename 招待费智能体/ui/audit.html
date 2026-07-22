@@ -1009,7 +1009,8 @@
     }
 
     // ---- 示例文件预览 ----
-    const exampleBasePath = '../../审核标准/参考案例/案例标准测试材料';
+    const exampleBasePath = '../审核标准/参考案例/案例标准测试材料';
+    let exampleLoadTimer = null;
 
     function openExample(fileName, btn) {
       const overlay = document.getElementById('exampleModal');
@@ -1034,19 +1035,39 @@
       const ext = fileName.split('.').pop().toLowerCase();
       const url = `${exampleBasePath}/${fileName}`;
 
+      // 清除上一次的超时定时器
+      if (exampleLoadTimer) { clearTimeout(exampleLoadTimer); exampleLoadTimer = null; }
+
+      function showLoadingError() {
+        body.innerHTML = `<div class="modal-error">⚠️ 无法加载该示例文件<br><small>${fileName}</small><br><small>请确认文件存在于: ${url}</small></div>`;
+      }
+
+      // 10 秒超时兜底，防止 loading 卡死
+      exampleLoadTimer = setTimeout(showLoadingError, 10000);
+
       if (ext === 'pdf') {
-        body.innerHTML = `<iframe src="${url}" title="PDF 预览"></iframe>`;
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.title = 'PDF 预览';
+        iframe.onload = function () { clearTimeout(exampleLoadTimer); };
+        iframe.onerror = function () {
+          clearTimeout(exampleLoadTimer);
+          showLoadingError();
+        };
+        body.innerHTML = '';
+        body.appendChild(iframe);
       } else if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
         const img = document.createElement('img');
         img.title = fileName;
         img.alt = `示例: ${itemName}`;
-        // 先显示加载，图片加载完成后替换
         img.onload = function () {
+          clearTimeout(exampleLoadTimer);
           body.innerHTML = '';
           body.appendChild(img);
         };
         img.onerror = function () {
-          body.innerHTML = `<div class="modal-error">⚠️ 无法加载该示例文件</div>`;
+          clearTimeout(exampleLoadTimer);
+          showLoadingError();
         };
         img.src = url;
       } else if (ext === 'xml' || ext === 'json' || ext === 'txt') {
@@ -1056,17 +1077,21 @@
             return res.text();
           })
           .then(text => {
+            clearTimeout(exampleLoadTimer);
             body.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
           })
           .catch(() => {
-            body.innerHTML = `<div class="modal-error">⚠️ 无法加载该示例文件</div>`;
+            clearTimeout(exampleLoadTimer);
+            showLoadingError();
           });
       } else {
+        clearTimeout(exampleLoadTimer);
         body.innerHTML = `<div class="modal-error">⚠️ 暂不支持预览此类型文件<br><small>${fileName}</small></div>`;
       }
     }
 
     function closeExample() {
+      if (exampleLoadTimer) { clearTimeout(exampleLoadTimer); exampleLoadTimer = null; }
       const overlay = document.getElementById('exampleModal');
       overlay.classList.remove('visible');
       document.body.style.overflow = '';
