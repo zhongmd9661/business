@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文件上传 - 招待费管理</title>
+  <style>
+    /* 复用 index.html 的基础样式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystem0Font, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      width: 100vw;
+      position: relative;
+      overflow-x: hidden;
+      display: flex;
+      justify
+    }
+
+    /* ---- 背景光晕 (完全复用) ---- */
+    .bg-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-items: none;
+    }
+    .bg-glow--1 { width: 80vw; height: 80vh; top: -15%; left: 50%; transform: translateX(-50%); background: radial-gradient(ellipse, rgba(30, 64, 175, 0.06) 0%, transparent 60%); }
+    .bg-glow--2 { width: 60vw; height: 60vh; bottom: -20%; left: -5%; background: radial-gradient(ellipse, rgba(59, 130, 246, 0.04) 0%, transparent 60%); }
+    .bg-glow--3 { width: 50vw; height: 50vh; bottom: -15%; right: -5%; background: radial-gradient(ellipse, rgba(37, 99, 235, 0.04) 0%, transparent 60%); }
+
+    /* ---- 主内容容器 ---- */
+    .container {
+      width: 100%;
+      max-width: 800px;
+      padding: 40px 24px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: auto;
+      margin-bottom: auto;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-title {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 700;
+      color: #1e3a5f;
+      margin-bottom: 12px;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: #5a7ba8;
+    }
+
+    /* ---- 上传卡片 ---- */
+    .upload-card {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(30, 64, 175, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ---- 上传区域 (Drop Zone) ---- */
+    .drop-zone {
+      width: 100%;
+      min-height: 250px;
+      border: 2px dashed #bfdbfe;
+      border-radius: 16px;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 30px;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .upload-icon {
+      width: 80px;
+      height: 80px;
+      background: #eff6ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: #1e40af;
+    }
+
+    .upload-icon svg {
+      width: 40px;
+      height: 40px;
+    }
+
+    .drop-zone-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e3a5f;
+      margin-bottom: 8px;
+    }
+
+    .drop-zone-subtext {
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    /* ---- 文件列表 ---- */
+    .file-list {
+      width: 100%;
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .file-icon {
+      margin-right: 12px;
+      font-size: 24px;
+    }
+
+    .file-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .file-name {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e3a5f;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .remove-btn {
+      background: none;
+      border: none;
+      color: #dc2626;
+      cursor: pointer;
+      padding: 4px;
+      font-size: 18px;
+      transition: transform 0.2s ease;
+    }
+
+    .remove-btn:hover {
+      transform: scale(1.2);
+    }
+
+    /* ---- 操作按钮 ---- */
+    .actions {
+      width: 100%;
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.25s ease;
+      border: none;
+    }
+
+    .btn--primary {
+      background: #1e40af;
+      color: white;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+    }
+
+    .btn--primary:hover {
+      background: #1e3a8a;
+      transform: translateY(-1px);
+    }
+
+    .btn--secondary {
+      background: #ffffff;
+      color: #64748 margin-bottom: 0;
+      border: 1px solid #e2e8f0;
+    }
+
+    .btn--secondary:hover {
+      background: #f8fafc;
+    }
+
+    /* ---- 返回按钮 (固定在左上角) ---- */
+    .back-link {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      text-decoration: none;
+      color: #1e40af;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    /* 隐藏原始 input */
+    #fileInput {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow bg-glow--1"></div>
+  <div class="bg-glow bg-glow--2"></div>
+  <div class="bg-glow bg-glow--3"></div>
+
+  <a href="index.html" class="back-link">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 5 5 12 12 19"></polyline></svg>
+    返回首页
+  </a>
+
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">上传待审核材料</h1>
+      <p class="page-subtitle">请上传业务招待费相关的凭证、审批单及相关佐证材料</p>
+    </div>
+
+    <div class="upload-card">
+      <!-- 隐藏的真实文件输入框 -->
+      <input type="file" id="fileInput" multiple>
+
+      <!-- 自定义上传区域 -->
+      <div class="drop-zone" id="dropZone">
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+        </div>
+        <div class="drop-zone-text">点击或拖拽文件至此</div>
+        <div class="drop-zone-subtext">支持 PDF, JPG, PNG, XML 等格式</div>
+      </div>
+
+      <!-- 已选文件列表 -->
+      <div class="file-list" id="fileList">
+        <!-- 动态插入文件项 -->
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="actions">
+        <button class="btn btn--secondary" onclick="window.location.href='index.html'">取消</button>
+        <button class="btn btn--primary" id="uploadBtn" disabled>开始上传</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileListContainer = document.getElementById('fileList');
+    const uploadBtn = document.getElementById('uploadBtn');
+    let selectedFiles = [];
+
+    // 点击区域触发文件选择
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // 拖拽效果处理
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      }, false);
+    });
+
+    // 处理文件拖拽放入
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      handleFiles(dt.files);
+    });
+
+    // 处理文件选择改变
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+      const newFiles = Array.from(files);
+      // 避免重复添加相同名称的文件（简单逻辑）
+      newFiles.forEach(file => {
+        if (!selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+          selectedFiles.push(file);
+        }
+      });
+      updateUI();
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      updateUI();
+    }
+
+    function formatSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function updateUI() {
+      // 更新列表
+      fileListContainer.innerHTML = '';
+      selectedFiles.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+
+        // 根据后缀简单判断图标
+        let icon = '📄';
+        if (file.name.endsWith('.pdf')) icon = '📕';
+        else if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) icon = '🖼️';
+        else if (file.name.endsWith('.xml')) icon = '📜';
+
+        item.innerHTML = `
+          <span class="file-icon">${icon}</span>
+          <div class="file-info">
+            <span class="file-name">${file.name}</span>
+            <span class="file-size">${formatSize(file.size)}</span>
+          </div>
+          <button class="remove-btn" onclick="removeFile(${index})">&times;</button>
+        `;
+        fileListContainer.appendChild(item);
+      });
+
+      // 更新上传按钮状态
+      uploadBtn.disabled = selectedFiles.length === 0;
+    }
+
+    // 上传逻辑模拟
+    uploadBtn.addEventListener('click', () => {
+      if (selectedFiles.length === 0) return;
+
+      uploadBtn.innerText = '正在上传...';
+      uploadBtn.disabled = true;
+
+      // 模拟异步上传过程
+      setTimeout(() => {
+        alert(`成功上传 ${selectedFiles.length} 个文件！\n(这只是个前端演示页面，实际后端逻辑需配合 API 调用)`);
+        selectedFiles = [];
+        updateUI();
+        uploadBtn.innerText = '开始上传';
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
