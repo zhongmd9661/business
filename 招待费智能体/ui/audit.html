@@ -144,9 +144,13 @@
     /* ---- 文件上传网格 ---- */
     .upload-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 20px;
       margin-bottom: clamp(28px, 4vh, 40px);
+      max-width: 960px;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
     }
 
     /* ---- 单个上传项 ---- */
