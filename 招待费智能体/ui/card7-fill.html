@@ -1152,6 +1152,7 @@
       <button class="action-btn" onclick="resetForm()">🔄 重置表单</button>
       <button class="action-btn" onclick="exportFormData()">📤 导出JSON</button>
       <button class="action-btn success" onclick="saveFormData()">💾 保存草稿</button>
+      <button class="action-btn primary" onclick="submitRecord()">📋 提交记录</button>
     </div>
   </div>
 
@@ -1643,6 +1644,58 @@
       a.click();
       URL.revokeObjectURL(url);
       showToast('✅ 场景' + scenario + ' 数据已导出为JSON文件');
+    }
+
+    // ===== 提交记录 =====
+    const SCENARIO_NAMES = {
+      A: '商务招待', B: '外事招待', C: '其他公务招待',
+      D: '内部业务招待', E: '工作餐', F: '党政军机关'
+    };
+
+    async function submitRecord() {
+      const activeCard = document.querySelector('.scenario-card.active');
+      if (!activeCard) {
+        showToast('⚠️ 请先选择场景');
+        return;
+      }
+      const scenario = activeCard.id.replace('scenario-', '');
+      const data = getFormData(scenario);
+
+      // 校验必填字段
+      if (!data.date) {
+        showToast('⚠️ 请填写招待日期');
+        return;
+      }
+      if (!data.org) {
+        showToast('⚠️ 请填写招待对象单位');
+        return;
+      }
+      if (!data.guests || parseInt(data.guests) <= 0) {
+        showToast('⚠️ 请填写招待对象人数');
+        return;
+      }
+
+      // 添加场景名称和提交人
+      data.scenario_name = SCENARIO_NAMES[scenario] || '未知场景';
+      data.submitter = localStorage.getItem('fill-submitter-name') || '匿名';
+
+      try {
+        const response = await fetch('/api/reception-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showToast('✅ ' + (result.message || '记录已提交'));
+          // 提交后清空表单
+          setTimeout(() => resetForm(), 1500);
+        } else {
+          showToast('❌ 提交失败：' + (result.detail || '未知错误'));
+        }
+      } catch (err) {
+        showToast('❌ 网络错误：' + err.message);
+      }
     }
 
     function resetForm() {

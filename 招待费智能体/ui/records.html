@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招待费提交记录</title>
+  <style>
+    :root {
+      --color-text-primary: #1a1a2e;
+      --color-text-secondary: #6b7280;
+      --color-border: #e5e7eb;
+      --color-bg-primary: #ffffff;
+      --color-bg-secondary: #f9fafb;
+      --color-bg-hover: #f3f4f6;
+      --color-accent: #3b82f6;
+      --color-accent-light: #eff6ff;
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-warning-bg: #fffbeb;
+      --color-error: #ef4444;
+      --color-error-bg: #fef2f2;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+      --spacing-xl: 24px;
+      --spacing-2xl: 32px;
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      --font-size-xs: 12px;
+      --font-size-sm: 13px;
+      --font-size-base: 14px;
+      --font-size-lg: 15px;
+      --font-size-xl: 18px;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --transition: 200ms ease;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-family); font-size: var(--font-size-base); color: var(--color-text-primary); background: var(--color-bg-secondary); line-height: 1.5; }
+
+    .page-wrapper { max-width: 1280px; margin: 0 auto; padding: var(--spacing-2xl) var(--spacing-xl); }
+    .back-link { display: inline-flex; align-items: center; gap: 4px; color: var(--color-accent); font-size: var(--font-size-sm); text-decoration: none; margin-bottom: var(--spacing-lg); transition: color var(--transition); }
+    .back-link:hover { color: #2563eb; }
+    .back-link svg { width: 16px; height: 16px; }
+
+    .page-header { margin-bottom: var(--spacing-xl); }
+    .page-title { font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); margin-bottom: var(--spacing-xs); }
+    .page-subtitle { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+
+    /* Filter bar */
+    .filter-bar { display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-xl); flex-wrap: wrap; align-items: center; }
+    .filter-label { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-secondary); }
+    .filter-select { padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm); font-family: var(--font-family); background: var(--color-bg-primary); }
+    .filter-select:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+    .filter-btn { padding: 6px 16px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-sm); font-family: var(--font-family); transition: all var(--transition); }
+    .filter-btn:hover { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .filter-btn.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+
+    /* Summary cards */
+    .summary-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl); }
+    .summary-card { background: var(--color-bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); padding: var(--spacing-lg); }
+    .summary-card-label { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-bottom: 4px; }
+    .summary-card-value { font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); }
+    .summary-card-value.total { color: var(--color-error); }
+    .summary-card-value.pending { color: var(--color-warning); }
+    .summary-card-value.approved { color: var(--color-success); }
+
+    /* Records table */
+    .records-card { background: var(--color-bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); overflow: hidden; }
+    .records-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+    .records-table th, .records-table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--color-border); }
+    .records-table th { background: var(--color-bg-secondary); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); font-size: var(--font-size-xs); position: sticky; top: 0; }
+    .records-table td { color: var(--color-text-secondary); }
+    .records-table tr:hover td { background: var(--color-bg-hover); }
+    .records-table .amount { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+
+    /* Status badge */
+    .status-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 4px; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+    .status-badge.pending { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-badge.approved { background: var(--color-success-bg); color: var(--color-success); }
+    .status-badge.rejected { background: var(--color-error-bg); color: var(--color-error); }
+
+    /* Scenario badge */
+    .scenario-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); background: var(--color-accent-light); color: var(--color-accent); }
+
+    /* Delete button */
+    .delete-btn { padding: 4px 10px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); transition: all var(--transition); color: var(--color-text-secondary); }
+    .delete-btn:hover { background: var(--color-error); color: #fff; border-color: var(--color-error); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: var(--spacing-2xl); color: var(--color-text-secondary); }
+    .empty-state-icon { font-size: 48px; margin-bottom: var(--spacing-md); }
+    .empty-state-text { font-size: var(--font-size-base); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 24px; background: var(--color-success); color: #fff; border-radius: var(--radius-md); font-size: var(--font-size-sm); box-shadow: var(--shadow-card-hover); opacity: 0; transform: translateY(10px); transition: all 300ms ease; pointer-events: none; z-index: 999; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* Loading */
+    .loading { text-align: center; padding: var(--spacing-2xl); }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--color-border); border-top-color: var(--color-accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto var(--spacing-md); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-wrapper { padding: var(--spacing-xl) var(--spacing-md); }
+      .summary-cards { grid-template-columns: repeat(2, 1fr); }
+      .records-table { font-size: var(--font-size-xs); }
+      .records-table th, .records-table td { padding: 8px 10px; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <a href="index.html" class="back-link">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      返回首页
+    </a>
+
+    <div class="page-header">
+      <h1 class="page-title">📋 提交记录</h1>
+      <p class="page-subtitle">查看所有招待费提交记录</p>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <span class="filter-label">筛选：</span>
+      <select id="filter-scenario" class="filter-select" onchange="loadRecords()">
+        <option value="">全部场景</option>
+        <option value="A">商务招待</option>
+        <option value="B">外事招待</option>
+        <option value="C">其他公务招待</option>
+        <option value="D">内部业务招待</option>
+        <option value="E">工作餐</option>
+        <option value="F">党政军机关</option>
+      </select>
+      <select id="filter-status" class="filter-select" onchange="loadRecords()">
+        <option value="">全部状态</option>
+        <option value="待审核">待审核</option>
+        <option value="已通过">已通过</option>
+        <option value="已驳回">已驳回</option>
+      </select>
+      <button class="filter-btn" onclick="loadRecords()">🔄 刷新</button>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="summary-cards" id="summary-cards">
+      <div class="summary-card">
+        <div class="summary-card-label">总记录数</div>
+        <div class="summary-card-value" id="summary-total">—</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">总金额</div>
+        <div class="summary-card-value total" id="summary-amount">—</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">待审核</div>
+        <div class="summary-card-value pending" id="summary-pending">—</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">已通过</div>
+        <div class="summary-card-value approved" id="summary-approved">—</div>
+      </div>
+    </div>
+
+    <!-- Records table -->
+    <div class="records-card">
+      <table class="records-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>场景</th>
+            <th>日期</th>
+            <th>地点</th>
+            <th>招待对象</th>
+            <th>人数</th>
+            <th>人均</th>
+            <th>总金额</th>
+            <th>状态</th>
+            <th>提交时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="records-body">
+          <tr><td colspan="11" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const API_BASE = window.location.origin;
+
+    async function loadRecords() {
+      const tbody = document.getElementById('records-body');
+      tbody.innerHTML = '<tr><td colspan="11" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>';
+
+      const scenario = document.getElementById('filter-scenario').value;
+      const status = document.getElementById('filter-status').value;
+
+      let url = `${API_BASE}/api/reception-records?limit=500`;
+      if (scenario) url += `&scenario=${scenario}`;
+      if (status) url += `&status=${status}`;
+
+      try {
+        const response = await fetch(url);
+        const records = await response.json();
+        renderRecords(records);
+        updateSummary(records);
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">加载失败：' + err.message + '</div></td></tr>';
+      }
+    }
+
+    function renderRecords(records) {
+      const tbody = document.getElementById('records-body');
+
+      if (records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">暂无提交记录</div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = records.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td><span class="scenario-badge">${r.scenario_name}</span></td>
+          <td>${formatDate(r.date)}</td>
+          <td>${escapeHtml(r.location || '—')}</td>
+          <td>${escapeHtml(r.org || '—')}</td>
+          <td>${r.guests} 人</td>
+          <td>¥${(r.per_capita || 0).toFixed(2)}</td>
+          <td class="amount">¥${(r.total_amount || 0).toFixed(2)}</td>
+          <td><span class="status-badge ${statusClass(r.status)}">${r.status}</span></td>
+          <td>${formatDateTime(r.created_at)}</td>
+          <td><button class="delete-btn" onclick="deleteRecord(${r.id})">删除</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function updateSummary(records) {
+      const total = records.length;
+      const totalAmount = records.reduce((sum, r) => sum + (r.total_amount || 0), 0);
+      const pending = records.filter(r => r.status === '待审核').length;
+      const approved = records.filter(r => r.status === '已通过').length;
+
+      document.getElementById('summary-total').textContent = total;
+      document.getElementById('summary-amount').textContent = '¥' + totalAmount.toFixed(2);
+      document.getElementById('summary-pending').textContent = pending;
+      document.getElementById('summary-approved').textContent = approved;
+    }
+
+    async function deleteRecord(id) {
+      if (!confirm('确认删除这条记录？')) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/reception-records/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+          showToast('✅ 记录已删除');
+          loadRecords();
+        } else {
+          showToast('❌ 删除失败');
+        }
+      } catch (err) {
+        showToast('❌ 网络错误：' + err.message);
+      }
+    }
+
+    function statusClass(status) {
+      if (status === '待审核') return 'pending';
+      if (status === '已通过') return 'approved';
+      if (status === '已驳回') return 'rejected';
+      return '';
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      // Handle both ISO and YYYY-MM-DD formats
+      if (dateStr.includes('T')) {
+        return dateStr.split('T')[0];
+      }
+      return dateStr;
+    }
+
+    function formatDateTime(isoStr) {
+      if (!isoStr) return '—';
+      try {
+        const d = new Date(isoStr);
+        return d.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+      } catch {
+        return isoStr;
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.background = msg.includes('✅') ? 'var(--color-success)' : (msg.includes('❌') ? 'var(--color-error)' : 'var(--color-warning)');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Load records on page load
+    document.addEventListener('DOMContentLoaded', loadRecords);
+  </script>
+</body>
+</html>
