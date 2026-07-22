@@ -18,6 +18,9 @@
       width: 100vw;
       position: relative;
       overflow-x: hidden;
+      display: flex;
+      justify-content: center;
+      padding: clamp(24px, 4vh, 48px) 0;
     }
 
     /* ---- 背景光晕 ---- */
@@ -57,7 +60,7 @@
     .container {
       width: 100%;
       max-width: 1200px;
-      padding: clamp(32px, 5vh, 64px) clamp(24px, 4vw, 64px);
+      padding: 0 clamp(24px, 4vw, 64px);
       position: relative;
       z-index: 1;
       display: flex;
