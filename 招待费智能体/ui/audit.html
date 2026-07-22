@@ -468,6 +468,184 @@
       color: #64748b;
     }
 
+    /* ---- 示例按钮 ---- */
+    .example-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #3b82f6;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .example-btn:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1e40af;
+    }
+
+    .example-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    /* ---- 模态框 ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      animation: fadeInModal 0.2s ease;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    @keyframes fadeInModal {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 90vw;
+      max-width: 960px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+      animation: slideUpModal 0.3s ease;
+      overflow: hidden;
+    }
+
+    @keyframes slideUpModal {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    .modal-header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e3a5f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-header-title svg {
+      width: 20px;
+      height: 20px;
+      stroke: #3b82f6;
+      stroke-width: 2;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: #f1f5f9;
+      color: #64748b;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .modal-body {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      min-height: 0;
+    }
+
+    .modal-body img {
+      max-width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    .modal-body iframe {
+      width: 100%;
+      height: 70vh;
+      border: none;
+    }
+
+    .modal-body pre {
+      padding: 24px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #334155;
+      white-space: pre-wrap;
+      word-break: break-word;
+      width: 100%;
+      max-height: 70vh;
+      overflow: auto;
+      font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+    }
+
+    .modal-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .modal-loading .spinner {
+      width: 32px;
+      height: 32px;
+      border-width: 3px;
+    }
+
+    .modal-error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: #dc2626;
+      font-size: 14px;
+      padding: 40px;
+      text-align: center;
+    }
+
     /* ---- 响应式 ---- */
     @media (max-width: 768px) {
       .upload-grid {
@@ -486,6 +664,11 @@
       .btn-row {
         flex-direction: column;
         align-items: center;
+      }
+
+      .modal-content {
+        width: 98vw;
+        max-height: 90vh;
       }
     }
   </style>
@@ -537,6 +720,10 @@
           </div>
           <div class="upload-item-name">业务招待审批单</div>
           <div class="upload-item-hint">支持 JPG / PDF</div>
+          <button class="example-btn" onclick="event.stopPropagation(); openExample('业务招待审批单.jpg', this)" title="查看示例文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            查看示例
+          </button>
           <div class="file-name"></div>
           <input type="file" accept=".jpg,.jpeg,.png,.pdf" />
         </div>
@@ -554,6 +741,10 @@
           </div>
           <div class="upload-item-name">业务招待待申请单</div>
           <div class="upload-item-hint">支持 PDF</div>
+          <button class="example-btn" onclick="event.stopPropagation(); openExample('业务招待待申请单.pdf', this)" title="查看示例文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            查看示例
+          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -571,6 +762,10 @@
           </div>
           <div class="upload-item-name">业务招待费报账单</div>
           <div class="upload-item-hint">支持 PDF</div>
+          <button class="example-btn" onclick="event.stopPropagation(); openExample('业务招待费报账单.pdf', this)" title="查看示例文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            查看示例
+          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -588,6 +783,10 @@
           </div>
           <div class="upload-item-name">发票（XML格式）</div>
           <div class="upload-item-hint">支持 XML</div>
+          <button class="example-btn" onclick="event.stopPropagation(); openExample('【发票】_XML格式.xml', this)" title="查看示例文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            查看示例
+          </button>
           <div class="file-name"></div>
           <input type="file" accept=".xml" />
         </div>
@@ -605,6 +804,10 @@
           </div>
           <div class="upload-item-name">电子发票（PDF格式）</div>
           <div class="upload-item-hint">支持 PDF</div>
+          <button class="example-btn" onclick="event.stopPropagation(); openExample('【电子发票】_PDF格式.pdf', this)" title="查看示例文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            查看示例
+          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -621,6 +824,10 @@
           </div>
           <div class="upload-item-name">招待单位经营状态</div>
           <div class="upload-item-hint">支持 PNG / JPG</div>
+          <button class="example-btn" onclick="event.stopPropagation(); openExample('招待单位经营状态.PNG', this)" title="查看示例文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            查看示例
+          </button>
           <div class="file-name"></div>
           <input type="file" accept=".png,.jpg,.jpeg" />
         </div>
@@ -636,6 +843,10 @@
           </div>
           <div class="upload-item-name">支付凭证</div>
           <div class="upload-item-hint">支持 JPG / PNG</div>
+          <button class="example-btn" onclick="event.stopPropagation(); openExample('支付凭证.jpg', this)" title="查看示例文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            查看示例
+          </button>
           <div class="file-name"></div>
           <input type="file" accept=".jpg,.jpeg,.png" />
         </div>
@@ -653,6 +864,10 @@
           </div>
           <div class="upload-item-name">支付流水证明</div>
           <div class="upload-item-hint">支持 PDF</div>
+          <button class="example-btn" onclick="event.stopPropagation(); openExample('支付流水证明.pdf', this)" title="查看示例文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            查看示例
+          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -668,6 +883,10 @@
           </div>
           <div class="upload-item-name">活动函件</div>
           <div class="upload-item-hint">支持 PDF</div>
+          <button class="example-btn" onclick="event.stopPropagation(); openExample('活动函件.pdf', this)" title="查看示例文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            查看示例
+          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -689,6 +908,30 @@
           </svg>
           开始审核
         </button>
+      </div>
+    </div>
+
+    <!-- 示例文件预览模态框 -->
+    <div class="modal-overlay" id="exampleModal" onclick="closeExampleOnOverlay(event)">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-header-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span id="modalTitle">示例文件</span>
+          </div>
+          <button class="modal-close" onclick="closeExample()" title="关闭">×</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          <div class="modal-loading">
+            <div class="spinner"></div>
+            <span>正在加载示例文件...</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -763,6 +1006,91 @@
       resultSection.classList.add('visible');
       resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       // TODO: 对接后端审核 API
+    }
+
+    // ---- 示例文件预览 ----
+    const exampleBasePath = '../../审核标准/参考案例/案例标准测试材料';
+
+    function openExample(fileName, btn) {
+      const overlay = document.getElementById('exampleModal');
+      const body = document.getElementById('modalBody');
+      const title = document.getElementById('modalTitle');
+
+      // 获取父级 upload-item 的名称作为标题
+      const uploadItem = btn.closest('.upload-item');
+      const itemName = uploadItem.querySelector('.upload-item-name').textContent;
+      title.textContent = `示例 — ${itemName}`;
+
+      // 显示加载状态
+      body.innerHTML = `
+        <div class="modal-loading">
+          <div class="spinner"></div>
+          <span>正在加载示例文件...</span>
+        </div>`;
+
+      overlay.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+
+      const ext = fileName.split('.').pop().toLowerCase();
+      const url = `${exampleBasePath}/${fileName}`;
+
+      if (ext === 'pdf') {
+        body.innerHTML = `<iframe src="${url}" title="PDF 预览"></iframe>`;
+      } else if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
+        const img = document.createElement('img');
+        img.title = fileName;
+        img.alt = `示例: ${itemName}`;
+        // 先显示加载，图片加载完成后替换
+        img.onload = function () {
+          body.innerHTML = '';
+          body.appendChild(img);
+        };
+        img.onerror = function () {
+          body.innerHTML = `<div class="modal-error">⚠️ 无法加载该示例文件</div>`;
+        };
+        img.src = url;
+      } else if (ext === 'xml' || ext === 'json' || ext === 'txt') {
+        fetch(url)
+          .then(res => {
+            if (!res.ok) throw new Error('Network error');
+            return res.text();
+          })
+          .then(text => {
+            body.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
+          })
+          .catch(() => {
+            body.innerHTML = `<div class="modal-error">⚠️ 无法加载该示例文件</div>`;
+          });
+      } else {
+        body.innerHTML = `<div class="modal-error">⚠️ 暂不支持预览此类型文件<br><small>${fileName}</small></div>`;
+      }
+    }
+
+    function closeExample() {
+      const overlay = document.getElementById('exampleModal');
+      overlay.classList.remove('visible');
+      document.body.style.overflow = '';
+      // 清空 iframe 防止后台继续加载
+      document.getElementById('modalBody').innerHTML = '';
+    }
+
+    function closeExampleOnOverlay(e) {
+      if (e.target === e.currentTarget) {
+        closeExample();
+      }
+    }
+
+    // ESC 键关闭模态框
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeExample();
+      }
+    });
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
     }
   </script>
 </body>
