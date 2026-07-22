@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>测试案例管理</title>
+  <style>
+    body { font-family: sans-serif; background: #f5f7fa; padding: 40px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+    .card { background: white; border: 1px solid #ddd; border-radius: 15px; padding: 20px; position: relative; }
+    .card.done { border-color: #10b981; }
+    .card.error { border-color: #ef4444; background: #fff5f5; }
+    .file-name { font-weight: bold; margin-bottom: 10px; display: block; }
+    .preview-area { widtr: 1px solid #eee;margin-top: 10px; display: none; background: #f9f9f9; }
+    .preview-area.visibl
+    iframe, img { width:it: contain; border: none; }
+    .btn { padding: 5px lor: white; border: none;border-radius: 5px; cursor: pointer; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>测试案例管理</h1>
+  <p>查看本地标准材料或上传新的校验文件</p>
+
+  <div class="grid" id="
+
+  <!-- 隐藏的上传控件  <input type="file" id=one;">
+
+  <script>
+    // ⚠️ 注意：这里的路径必须完全正确！请根据你的实际情况检查
+    const baseDir = "file:///D:/00_项目/02_o案例/案例标准测试材料/";    let slots = [
+      { name: "【发票】_XML格式", type: "xml", url: baseDir + "【发票】_XML格式.xml" },                                           { name: "【电子发 baseDir +"【电子发票】_PDF格式.pdf" }, // 这里的类型我帮你写好了             { name: "业务招待 eDir +"业务招待审批单.jpg" },
+      { name: "业务招待待申请单", type: "pdf", url: baseDir + "业务招待待申请单.pdf" }
+      { name: "业务招待费报账单", type: "pdf", url: baseDir + "业务招待费报账单.pdf" },
+      { name: "招待单位经营状态", type: "png", url: baseDir + "招待单位经营状态.PNG" }
+      { name: "支付凭证", type: "jpg", url: baseDir + "支付凭证.jpg" },
+      { name: "支付流水 ir + "支付流水证明.pdf" },
+      { name: "活动函件", type: "pdf", url: baseDir + "活动函件.pdf" }
+    ];
+
+    const grid = document.getElementById('grid');
+    const fileInput = document.getElementById('fileInput');
+    let targetIdx = null
+
+    function render() {
+      grid.innerHTML = s
+        <div class="card ${s.url ? 'done' : ''}" id="c-${i}">
+          <span class="file-name">${s.name}</span>
+          <div class="preview-area ${s.url ? 'perm_visible' : ''}"
+style="display: ${s.url
+            ${s.type === 'pdf' || s.type === 'xml' ? `<iframe src="${s.url}"></iframe>` : `<img src="${s.url}">`}
+          </div>
+          <button class="btn" onclick="doUp(${i})">上传/替换</button>
+        </div>
+      `).join('');
+    }
+
+    window_doUp = function(i) { targetIdx = i; fileInput.click(); };
+    window.doUp = window
+
+    fileInput.onchange = function(e) {
+      const file = e.tar
+      if (!file || targetIdx === null) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      const s = slots[targetIdx];
+
+      // 简单的校验逻辑
+      if (ext === s.type || (s.type === 'jpg' && ext === 'jpeg')) {
+        s.url = URL.createObjectURL(file);
+        s.status = 'done
+      } else {
+        alert('格式错误！');
+        return;
+      }
+      render();
+    };
+
+    render();
+  </script>
+</body>
+</html>
