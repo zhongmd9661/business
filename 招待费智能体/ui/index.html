@@ -104,15 +104,16 @@
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 20px;
-      padding: 40px 32px;
-      text-align: center;
+      padding: 28px 32px;
+      text-align: left;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
+      gap: 24px;
       cursor: default;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
@@ -148,10 +149,10 @@
 
     /* ---- 图标 ---- */
     .icon-wrapper {
-      width: 88px;
-      height: 88px;
-      margin-bottom: 24px;
-      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+      border-radius: 14px;
       background: linear-gradient(135deg, #eff6ff, #dbeafe);
       display: flex;
       align-items: center;
@@ -171,18 +172,26 @@
     }
 
     .icon-wrapper svg {
-      width: 42px;
-      height: 42px;
+      width: 28px;
+      height: 28px;
       stroke: #1e40af;
       stroke-width: 1.6;
     }
 
+    /* ---- 卡片内容区（文字 + 按钮） ---- */
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      flex: 1;
+    }
+
     /* ---- 卡片文字 ---- */
     .card-title {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
       color: #1e3a5f;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       letter-spacing: 2px;
       position: relative;
       z-index: 1;
@@ -191,7 +200,7 @@
     .card-desc {
       font-size: 14px;
       color: #64748b;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
       line-height: 1.7;
       letter-spacing: 0.5px;
       position: relative;
@@ -619,9 +628,11 @@
             <line x1="9" y1="14" x2="15" y2="14"/>
           </svg>
         </div>
-        <h2 class="card-title">录入招待费</h2>
-        <p class="card-desc">快速校验每一次商务接待</p>
-        <a href="/ui/card7-fill.html" class="btn">立即录入</a>
+        <div class="card-content">
+          <h2 class="card-title">录入招待费</h2>
+          <p class="card-desc">快速校验每一次商务接待</p>
+          <a href="/ui/card7-fill.html" class="btn">立即录入</a>
+        </div>
       </div>
 
       <!-- 卡片2：监查 -->
@@ -633,9 +644,11 @@
             <polyline points="9 15 11 17 15 13"/>
           </svg>
         </div>
-        <h2 class="card-title">监查招待费</h2>
-        <p class="card-desc">严谨审核每一笔招待支出</p>
-        <a href="/audit" class="btn">立即审核</a>
+        <div class="card-content">
+          <h2 class="card-title">监查招待费</h2>
+          <p class="card-desc">严谨审核每一笔招待支出</p>
+          <a href="/audit" class="btn">立即审核</a>
+        </div>
       </div>
 
       <!-- 卡片3：规则与案例（可点击） -->
@@ -648,9 +661,11 @@
             <line x1="8" y1="11" x2="14" y2="11"/>
           </svg>
         </div>
-        <h2 class="card-title">规则与案例</h2>
-        <p class="card-desc">查阅制度规范、典型案例与注意事项</p>
-        <a href="javascript:void(0)" class="btn">查阅详情</a>
+        <div class="card-content">
+          <h2 class="card-title">规则与案例</h2>
+          <p class="card-desc">查阅制度规范、典型案例与注意事项</p>
+          <a href="javascript:void(0)" class="btn">查阅详情</a>
+        </div>
       </div>
 
       <!-- 卡片4：提交记录 -->
@@ -662,9 +677,11 @@
             <path d="M9 14l2 2 4-4"/>
           </svg>
         </div>
-        <h2 class="card-title">提交记录</h2>
-        <p class="card-desc">查看历史提交记录与审核状态</p>
-        <a href="/records" class="btn">查看记录</a>
+        <div class="card-content">
+          <h2 class="card-title">提交记录</h2>
+          <p class="card-desc">查看历史提交记录与审核状态</p>
+          <a href="/records" class="btn">查看记录</a>
+        </div>
       </div>
     </div>
   </div>
