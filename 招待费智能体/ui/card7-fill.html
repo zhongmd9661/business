@@ -214,6 +214,118 @@
     .save-toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 24px; background: var(--color-success); color: #fff; border-radius: var(--radius-md); font-size: var(--font-size-sm); box-shadow: var(--shadow-card-hover); opacity: 0; transform: translateY(10px); transition: all 300ms ease; pointer-events: none; z-index: 999; }
     .save-toast.show { opacity: 1; transform: translateY(0); }
 
+    /* ===== 标准设置模态框 ===== */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      display: none; align-items: flex-start; justify-content: center;
+      overflow-y: auto; padding: 40px 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-container {
+      background: var(--color-bg-primary); border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2); width: 100%; max-width: 780px;
+      animation: modalSlideIn 250ms ease;
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--spacing-xl) var(--spacing-2xl);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .modal-title {
+      font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold);
+      color: #1e4a8a; display: flex; align-items: center; gap: 8px;
+    }
+    .modal-close {
+      width: 36px; height: 36px; border: none; background: var(--color-bg-secondary);
+      border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; transition: all var(--transition); font-size: 18px; color: var(--color-text-secondary);
+    }
+    .modal-close:hover { background: var(--color-error-bg); color: var(--color-error); }
+    .modal-body { padding: var(--spacing-xl) var(--spacing-2xl); max-height: 70vh; overflow-y: auto; }
+    .modal-footer {
+      padding: var(--spacing-lg) var(--spacing-2xl);
+      border-top: 1px solid var(--color-border);
+      display: flex; gap: var(--spacing-md); justify-content: flex-end;
+      background: var(--color-bg-secondary); border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+
+    /* 模态框内标准编辑表格 */
+    .std-table {
+      width: 100%; border-collapse: collapse; font-size: var(--font-size-sm);
+      margin-bottom: var(--spacing-lg);
+    }
+    .std-table th {
+      background: var(--color-accent-light); color: #1e4a8a;
+      padding: var(--spacing-sm) var(--spacing-md); text-align: left;
+      font-weight: var(--font-weight-semibold); border: 1px solid #c8ddf5;
+      font-size: var(--font-size-xs);
+    }
+    .std-table td {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--color-border); vertical-align: middle;
+    }
+    .std-table .std-label {
+      font-weight: var(--font-weight-medium); color: var(--color-text-primary);
+      background: var(--color-bg-secondary); width: 100px;
+    }
+    .std-input {
+      width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+      padding: 6px 10px; font-size: var(--font-size-sm); font-family: var(--font-family);
+      transition: all var(--transition);
+    }
+    .std-input:focus {
+      outline: none; border-color: var(--color-accent);
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+    }
+    .std-input.error { border-color: var(--color-error); background: var(--color-error-bg); }
+    .std-input-note { resize: vertical; min-height: 36px; }
+
+    /* 可折叠分组 */
+    .std-group { margin-bottom: var(--spacing-lg); }
+    .std-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: linear-gradient(135deg, #e8f0fe 0%, #d4e4fc 100%);
+      border-radius: var(--radius-md); cursor: pointer;
+      font-weight: var(--font-weight-semibold); color: #1e4a8a;
+      font-size: var(--font-size-base); user-select: none;
+      transition: all var(--transition); border: 1px solid #c8ddf5;
+    }
+    .std-group-title:hover { background: linear-gradient(135deg, #d4e4fc 0%, #bdd4fc 100%); }
+    .std-group-title .arrow {
+      transition: transform var(--transition); font-size: 12px;
+    }
+    .std-group-title.collapsed .arrow { transform: rotate(-90deg); }
+    .std-group-content {
+      padding: var(--spacing-md); overflow: hidden;
+    }
+    .std-group-content.hidden { display: none; }
+
+    /* 验证错误提示 */
+    .std-error-msg {
+      color: var(--color-error); font-size: var(--font-size-xs);
+      margin-top: 4px; display: none;
+    }
+    .std-error-msg.show { display: block; }
+
+    /* 模态框按钮 */
+    .modal-btn {
+      padding: 10px 24px; border-radius: var(--radius-md); border: 1px solid var(--color-border);
+      background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-sm);
+      font-family: var(--font-family); font-weight: var(--font-weight-medium);
+      transition: all var(--transition); color: var(--color-text-primary);
+    }
+    .modal-btn:hover { background: var(--color-bg-hover); border-color: var(--color-accent); }
+    .modal-btn.primary { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .modal-btn.primary:hover { background: #2563eb; }
+    .modal-btn.warning { color: var(--color-warning); border-color: var(--color-warning); }
+    .modal-btn.warning:hover { background: var(--color-warning-bg); }
+
     /* Responsive */
     @media (max-width: 768px) {
       .page-wrapper { padding: var(--spacing-xl) var(--spacing-md); }
@@ -230,6 +342,12 @@
       .summary-grid { grid-template-columns: repeat(2, 1fr); }
       .action-bar { flex-direction: column; }
       .action-btn { justify-content: center; }
+      .modal-container { max-width: 100%; }
+      .modal-body { padding: var(--spacing-md); }
+      .modal-footer { flex-direction: column; }
+      .modal-btn { width: 100%; justify-content: center; }
+      .std-table { font-size: 12px; }
+      .std-table .std-label { width: 70px; font-size: 11px; }
     }
   </style>
 </head>
@@ -1149,10 +1267,220 @@
 
     <!-- Action bar -->
     <div class="action-bar">
+      <button class="action-btn" onclick="openStandardsModal()">⚙️ 标准设置</button>
       <button class="action-btn" onclick="resetForm()">🔄 重置表单</button>
       <button class="action-btn" onclick="exportFormData()">📤 导出JSON</button>
       <button class="action-btn success" onclick="saveFormData()">💾 保存草稿</button>
       <button class="action-btn primary" onclick="submitRecord()">📋 提交记录</button>
+    </div>
+  </div>
+
+  <!-- ===== 标准设置模态框 ===== -->
+  <div id="standards-modal" class="modal-overlay" onclick="if(event.target===this)closeStandardsModal()">
+    <div class="modal-container">
+      <div class="modal-header">
+        <span class="modal-title">⚙️ 标准设置</span>
+        <button class="modal-close" onclick="closeStandardsModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-bottom:var(--spacing-lg);">
+          修改以下标准值后点击"保存"即可生效，数据将保存在浏览器本地存储中。
+        </p>
+
+        <!-- 分组1: 外事/商务/其他公务招待标准 -->
+        <div class="std-group">
+          <div class="std-group-title" onclick="toggleStdGroup(this)">
+            <span class="arrow">▼</span> 🌐 外事 / 商务 / 其他公务招待标准
+          </div>
+          <div class="std-group-content">
+            <table class="std-table">
+              <thead>
+                <tr>
+                  <th>级别</th>
+                  <th>外事/商务餐标</th>
+                  <th>外事/商务纪念品</th>
+                  <th>其他公务餐标</th>
+                  <th>白酒单价标准</th>
+                  <th>红酒单价标准</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="std-label">省管中层</td>
+                  <td><input type="text" class="std-input" id="std-ext-0-banquet" placeholder="如 ≤400元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-ext-0-gift" placeholder="如 ≤400元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-ext-0-other" placeholder="如 ≤200元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-ext-0-baijiu" placeholder="如 ≤400元/500ml"></td>
+                  <td><input type="text" class="std-input" id="std-ext-0-wine" placeholder="如 ≤400元/750ml"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">市管中层</td>
+                  <td><input type="text" class="std-input" id="std-ext-1-banquet" placeholder="如 ≤300元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-ext-1-gift" placeholder="如 ≤300元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-ext-1-other" placeholder="如 ≤200元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-ext-1-baijiu" placeholder="如 ≤300元/500ml"></td>
+                  <td><input type="text" class="std-input" id="std-ext-1-wine" placeholder="如 ≤300元/750ml"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">其他人员</td>
+                  <td><input type="text" class="std-input" id="std-ext-2-banquet" placeholder="如 ≤200元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-ext-2-gift" placeholder="如 ≤200元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-ext-2-other" placeholder="如 ≤150元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-ext-2-baijiu" placeholder="如 ≤200元/500ml"></td>
+                  <td><input type="text" class="std-input" id="std-ext-2-wine" placeholder="如 ≤200元/750ml"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 分组2: 内部业务招待标准 -->
+        <div class="std-group">
+          <div class="std-group-title" onclick="toggleStdGroup(this)">
+            <span class="arrow">▼</span> 🏢 内部业务招待标准
+          </div>
+          <div class="std-group-content">
+            <table class="std-table">
+              <thead>
+                <tr>
+                  <th>招待主体</th>
+                  <th>餐标</th>
+                  <th>备注</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="std-label">省管中层经理</td>
+                  <td><input type="text" class="std-input" id="std-int-0-standard" placeholder="如 ≤150元/人·次"></td>
+                  <td><input type="text" class="std-input std-input-note" id="std-int-0-note" placeholder="备注信息"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">市管中层经理</td>
+                  <td><input type="text" class="std-input" id="std-int-1-standard" placeholder="如 ≤150元/人·次"></td>
+                  <td><input type="text" class="std-input std-input-note" id="std-int-1-note" placeholder="备注信息"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">其他人员</td>
+                  <td><input type="text" class="std-input" id="std-int-2-standard" placeholder="如 ≤100元/人·次"></td>
+                  <td><input type="text" class="std-input std-input-note" id="std-int-2-note" placeholder="备注信息"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 分组3: 工作餐标准 -->
+        <div class="std-group">
+          <div class="std-group-title" onclick="toggleStdGroup(this)">
+            <span class="arrow">▼</span> 🍱 工作餐标准
+          </div>
+          <div class="std-group-content">
+            <table class="std-table">
+              <thead>
+                <tr>
+                  <th>用餐场景</th>
+                  <th>标准</th>
+                  <th>备注</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="std-label">单位食堂</td>
+                  <td><input type="text" class="std-input" id="std-wm-0-standard" placeholder="标准描述"></td>
+                  <td><input type="text" class="std-input std-input-note" id="std-wm-0-note" placeholder="备注信息"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">外出调研</td>
+                  <td><input type="text" class="std-input" id="std-wm-1-standard" placeholder="标准描述"></td>
+                  <td><input type="text" class="std-input std-input-note" id="std-wm-1-note" placeholder="备注信息"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 分组4: 纪念品标准 -->
+        <div class="std-group">
+          <div class="std-group-title collapsed" onclick="toggleStdGroup(this)">
+            <span class="arrow">▼</span> 🎁 纪念品标准
+          </div>
+          <div class="std-group-content hidden">
+            <table class="std-table">
+              <thead>
+                <tr>
+                  <th>级别</th>
+                  <th>外事/商务纪念品</th>
+                  <th>其他公务纪念品</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="std-label">省管中层</td>
+                  <td><input type="text" class="std-input" id="std-gift-0-ext" placeholder="如 ≤400元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-gift-0-other" placeholder="如 不得赠送"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">市管中层</td>
+                  <td><input type="text" class="std-input" id="std-gift-1-ext" placeholder="如 ≤300元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-gift-1-other" placeholder="如 不得赠送"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">其他人员</td>
+                  <td><input type="text" class="std-input" id="std-gift-2-ext" placeholder="如 ≤200元/人·次"></td>
+                  <td><input type="text" class="std-input" id="std-gift-2-other" placeholder="如 不得赠送"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 分组5: 陪餐人数限制 -->
+        <div class="std-group">
+          <div class="std-group-title collapsed" onclick="toggleStdGroup(this)">
+            <span class="arrow">▼</span> 👥 陪餐人数限制
+          </div>
+          <div class="std-group-content hidden">
+            <table class="std-table">
+              <thead>
+                <tr>
+                  <th>招待类型</th>
+                  <th>招待对象人数</th>
+                  <th>陪餐人数限制</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="std-label">对外业务招待</td>
+                  <td><input type="text" class="std-input" id="std-acc-0-count" placeholder="如 ≤5人"></td>
+                  <td><input type="text" class="std-input" id="std-acc-0-limit" placeholder="如 可对等"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">对外业务招待</td>
+                  <td><input type="text" class="std-input" id="std-acc-1-count" placeholder="如 >5人"></td>
+                  <td><input type="text" class="std-input" id="std-acc-1-limit" placeholder="如 不超过超过部分的1/2"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">内部业务招待</td>
+                  <td><input type="text" class="std-input" id="std-acc-2-count" placeholder="如 ≤10人"></td>
+                  <td><input type="text" class="std-input" id="std-acc-2-limit" placeholder="如 ≤3人"></td>
+                </tr>
+                <tr>
+                  <td class="std-label">内部业务招待</td>
+                  <td><input type="text" class="std-input" id="std-acc-3-count" placeholder="如 >10人"></td>
+                  <td><input type="text" class="std-input" id="std-acc-3-limit" placeholder="如 不超过招待对象的1/3"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="std-validation-error" class="std-error-msg"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn warning" onclick="resetStandardsToDefault()">🔄 重置为默认</button>
+        <button class="modal-btn" onclick="closeStandardsModal()">取消</button>
+        <button class="modal-btn primary" onclick="saveStandardsFromModal()">💾 保存</button>
+      </div>
     </div>
   </div>
 
@@ -1734,6 +2062,365 @@
         loadFormData(scenario);
       }
     });
+
+    // ================================================================
+    // ===== 标准设置模态框功能 =====
+    // ================================================================
+
+    /**
+     * 打开标准设置模态框，并将当前 STANDARDS_DATA 填充到表单中
+     */
+    function openStandardsModal() {
+      // 清除之前的验证错误
+      clearStdValidationErrors();
+
+      // 填充外事/商务/其他公务招待标准 (external)
+      STANDARDS_DATA.external.forEach(function(item, i) {
+        var banquetEl = document.getElementById('std-ext-' + i + '-banquet');
+        var giftEl = document.getElementById('std-ext-' + i + '-gift');
+        var otherEl = document.getElementById('std-ext-' + i + '-other');
+        var baijiuEl = document.getElementById('std-ext-' + i + '-baijiu');
+        var wineEl = document.getElementById('std-ext-' + i + '-wine');
+        if (banquetEl) banquetEl.value = item.externalBanquet || '';
+        if (giftEl) giftEl.value = item.externalGift || '';
+        if (otherEl) otherEl.value = item.otherBanquet || '';
+        // 解析酒水标准: "白酒≤400元/500ml，红酒≤400元/750ml"
+        var alcoholParts = (item.alcohol || '').split('，');
+        if (baijiuEl) baijiuEl.value = alcoholParts[0] || '';
+        if (wineEl) wineEl.value = alcoholParts[1] || '';
+      });
+
+      // 填充内部业务招待标准 (internal)
+      STANDARDS_DATA.internal.forEach(function(item, i) {
+        var stdEl = document.getElementById('std-int-' + i + '-standard');
+        var noteEl = document.getElementById('std-int-' + i + '-note');
+        if (stdEl) stdEl.value = item.standard || '';
+        if (noteEl) noteEl.value = item.note || '';
+      });
+
+      // 填充工作餐标准 (workmeal)
+      STANDARDS_DATA.workmeal.forEach(function(item, i) {
+        var stdEl = document.getElementById('std-wm-' + i + '-standard');
+        var noteEl = document.getElementById('std-wm-' + i + '-note');
+        if (stdEl) stdEl.value = item.standard || '';
+        if (noteEl) noteEl.value = item.note || '';
+      });
+
+      // 填充纪念品标准 (gift)
+      STANDARDS_DATA.gift.forEach(function(item, i) {
+        var extEl = document.getElementById('std-gift-' + i + '-ext');
+        var otherEl = document.getElementById('std-gift-' + i + '-other');
+        if (extEl) extEl.value = item.externalGift || '';
+        if (otherEl) otherEl.value = item.otherGift || '';
+      });
+
+      // 填充陪餐人数限制 (accompany)
+      STANDARDS_DATA.accompany.forEach(function(item, i) {
+        var countEl = document.getElementById('std-acc-' + i + '-count');
+        var limitEl = document.getElementById('std-acc-' + i + '-limit');
+        if (countEl) countEl.value = item.count || '';
+        if (limitEl) limitEl.value = item.limit || '';
+      });
+
+      // 显示模态框
+      document.getElementById('standards-modal').classList.add('active');
+    }
+
+    /**
+     * 关闭标准设置模态框
+     */
+    function closeStandardsModal() {
+      document.getElementById('standards-modal').classList.remove('active');
+    }
+
+    /**
+     * 切换标准分组的展开/折叠状态
+     * @param {HTMLElement} titleEl - 分组标题元素
+     */
+    function toggleStdGroup(titleEl) {
+      titleEl.classList.toggle('collapsed');
+      var content = titleEl.nextElementSibling;
+      if (content) {
+        content.classList.toggle('hidden');
+      }
+    }
+
+    /**
+     * 获取指定ID的输入元素的值，如果元素不存在则返回空字符串
+     * @param {string} id - 元素ID
+     * @returns {string} 输入值
+     */
+    function getStdVal(id) {
+      var el = document.getElementById(id);
+      return el ? el.value.trim() : '';
+    }
+
+    /**
+     * 清除所有标准输入框的验证错误样式
+     */
+    function clearStdValidationErrors() {
+      document.querySelectorAll('.std-input.error').forEach(function(el) {
+        el.classList.remove('error');
+      });
+      var errorMsg = document.getElementById('std-validation-error');
+      if (errorMsg) {
+        errorMsg.classList.remove('show');
+        errorMsg.textContent = '';
+      }
+    }
+
+    /**
+     * 显示标准设置验证错误
+     * @param {string} msg - 错误消息
+     * @param {string} [focusId] - 需要聚焦的输入框ID
+     */
+    function showStdValidationError(msg, focusId) {
+      var errorMsg = document.getElementById('std-validation-error');
+      if (errorMsg) {
+        errorMsg.textContent = '⚠️ ' + msg;
+        errorMsg.classList.add('show');
+      }
+      if (focusId) {
+        var focusEl = document.getElementById(focusId);
+        if (focusEl) {
+          focusEl.classList.add('error');
+          focusEl.focus();
+        }
+      }
+    }
+
+    /**
+     * 从模态框表单读取数据并保存到 STANDARDS_DATA 和 localStorage
+     * 保存后立即刷新页面显示的标准值
+     */
+    function saveStandardsFromModal() {
+      clearStdValidationErrors();
+
+      // ---- 验证并读取外事/商务/其他公务招待标准 ----
+      var newExternal = [];
+      var extLevels = ['省管中层', '市管中层', '其他人员'];
+      for (var i = 0; i < 3; i++) {
+        var banquet = getStdVal('std-ext-' + i + '-banquet');
+        var gift = getStdVal('std-ext-' + i + '-gift');
+        var other = getStdVal('std-ext-' + i + '-other');
+        var baijiu = getStdVal('std-ext-' + i + '-baijiu');
+        var wine = getStdVal('std-ext-' + i + '-wine');
+
+        // 验证必填字段（餐标不能为空）
+        if (!banquet) {
+          showStdValidationError('外事/商务餐标不能为空（' + extLevels[i] + '）', 'std-ext-' + i + '-banquet');
+          return;
+        }
+        if (!gift) {
+          showStdValidationError('外事/商务纪念品标准不能为空（' + extLevels[i] + '）', 'std-ext-' + i + '-gift');
+          return;
+        }
+        if (!other) {
+          showStdValidationError('其他公务餐标不能为空（' + extLevels[i] + '）', 'std-ext-' + i + '-other');
+          return;
+        }
+
+        newExternal.push({
+          level: extLevels[i],
+          externalBanquet: banquet,
+          externalGift: gift,
+          otherBanquet: other,
+          alcohol: (baijiu || '') + '，' + (wine || '')
+        });
+      }
+
+      // ---- 验证并读取内部业务招待标准 ----
+      var newInternal = [];
+      var intSubjects = ['省管中层经理', '市管中层经理', '其他人员'];
+      for (var j = 0; j < 3; j++) {
+        var standard = getStdVal('std-int-' + j + '-standard');
+        var note = getStdVal('std-int-' + j + '-note');
+        if (!standard) {
+          showStdValidationError('内部招待餐标不能为空（' + intSubjects[j] + '）', 'std-int-' + j + '-standard');
+          return;
+        }
+        newInternal.push({
+          subject: intSubjects[j],
+          standard: standard,
+          note: note
+        });
+      }
+
+      // ---- 验证并读取工作餐标准 ----
+      var newWorkmeal = [];
+      var wmScenes = ['单位食堂', '外出调研无法在食堂用餐'];
+      for (var k = 0; k < 2; k++) {
+        var wmStd = getStdVal('std-wm-' + k + '-standard');
+        var wmNote = getStdVal('std-wm-' + k + '-note');
+        if (!wmStd) {
+          showStdValidationError('工作餐标准不能为空（' + wmScenes[k] + '）', 'std-wm-' + k + '-standard');
+          return;
+        }
+        newWorkmeal.push({
+          scene: wmScenes[k],
+          standard: wmStd,
+          note: wmNote
+        });
+      }
+
+      // ---- 读取纪念品标准 ----
+      var newGift = [];
+      var giftLevels = ['省管中层', '市管中层', '其他人员'];
+      for (var m = 0; m < 3; m++) {
+        newGift.push({
+          level: giftLevels[m],
+          externalGift: getStdVal('std-gift-' + m + '-ext'),
+          otherGift: getStdVal('std-gift-' + m + '-other')
+        });
+      }
+
+      // ---- 读取陪餐人数限制 ----
+      var newAccompany = [];
+      var accTypes = ['对外业务招待', '对外业务招待', '内部业务招待', '内部业务招待'];
+      for (var n = 0; n < 4; n++) {
+        newAccompany.push({
+          type: accTypes[n],
+          count: getStdVal('std-acc-' + n + '-count'),
+          limit: getStdVal('std-acc-' + n + '-limit')
+        });
+      }
+
+      // ---- 更新 STANDARDS_DATA ----
+      STANDARDS_DATA.external = newExternal;
+      STANDARDS_DATA.internal = newInternal;
+      STANDARDS_DATA.workmeal = newWorkmeal;
+      STANDARDS_DATA.gift = newGift;
+      STANDARDS_DATA.accompany = newAccompany;
+
+      // ---- 保存到 localStorage ----
+      try {
+        localStorage.setItem('audit-standards-custom', JSON.stringify(STANDARDS_DATA));
+      } catch (e) {
+        showStdValidationError('保存失败：' + e.message);
+        return;
+      }
+
+      // ---- 刷新页面显示的标准值 ----
+      refreshStandardsDisplay();
+
+      // ---- 关闭模态框并提示 ----
+      closeStandardsModal();
+      showToast('✅ 标准设置已保存并生效');
+    }
+
+    /**
+     * 重置标准为默认值（清除 localStorage 中的自定义数据）
+     */
+    function resetStandardsToDefault() {
+      if (!confirm('确定要将所有标准重置为默认值吗？此操作将清除所有自定义设置。')) {
+        return;
+      }
+
+      // 清除 localStorage 中的自定义数据
+      localStorage.removeItem('audit-standards-custom');
+
+      // 恢复默认值
+      STANDARDS_DATA = JSON.parse(JSON.stringify(DEFAULT_STANDARDS));
+
+      // 重新填充模态框表单
+      openStandardsModal();
+
+      // 刷新页面显示
+      refreshStandardsDisplay();
+
+      showToast('🔄 标准已重置为默认值');
+    }
+
+    /**
+     * 刷新页面上显示的标准值（std-ref 区域）
+     * 在标准修改后立即生效
+     */
+    function refreshStandardsDisplay() {
+      // 刷新场景 A (商务) 的标准参考
+      refreshScenarioAStdRef();
+      // 刷新场景 D (内部业务) 的标准参考
+      refreshScenarioDStdRef();
+
+      // 如果当前有选中级别，刷新标准显示
+      refreshCurrentLevelStandards();
+    }
+
+    /**
+     * 刷新场景 A (商务) 的标准参考显示
+     */
+    function refreshScenarioAStdRef() {
+      var el = document.getElementById('scenario-A-std-ref');
+      if (!el) return;
+      var ext = STANDARDS_DATA.external;
+      if (!ext || ext.length < 3) return;
+
+      var html = '<strong>📊 餐标参考（按人员级别）：</strong><br>';
+      ext.forEach(function(item) {
+        var baijiu = (item.alcohol || '').split('，')[0] || '—';
+        var wine = (item.alcohol || '').split('，')[1] || '—';
+        html += item.level + '：外事/商务场景 ≤<span class="std-number">' +
+          escapeHtml(item.externalBanquet) + '</span> · 纪念品 ≤<span class="std-number">' +
+          escapeHtml(item.externalGift) + '</span> · 酒水 ' +
+          '<span class="std-number">' + escapeHtml(baijiu) + '</span>，' +
+          '<span class="std-number">' + escapeHtml(wine) + '</span><br>';
+      });
+      el.innerHTML = html;
+    }
+
+    /**
+     * 刷新场景 D (内部业务) 的标准参考显示
+     */
+    function refreshScenarioDStdRef() {
+      var el = document.getElementById('scenario-D-std-ref');
+      if (!el) return;
+      var intData = STANDARDS_DATA.internal;
+      var acc = STANDARDS_DATA.accompany;
+      if (!intData || intData.length < 3) return;
+
+      var html = '<strong>📊 餐标参考（按招待主体）：</strong><br>';
+      intData.forEach(function(item) {
+        html += escapeHtml(item.subject) + '：<span class="std-number">' +
+          escapeHtml(item.standard) + '</span> · ' +
+          escapeHtml(item.note || '') + '<br>';
+      });
+
+      if (acc && acc.length >= 4) {
+        html += '<br><strong>📊 陪餐人数限制：</strong><br>';
+        acc.forEach(function(item) {
+          html += escapeHtml(item.count) + '：<span class="std-number">' +
+            escapeHtml(item.limit) + '</span><br>';
+        });
+      }
+      el.innerHTML = html;
+    }
+
+    /**
+     * 刷新当前已选中级别对应的标准显示
+     * 遍历所有场景，如果该场景有选中的级别，则重新触发 onLevelChange
+     */
+    function refreshCurrentLevelStandards() {
+      var scenarios = ['A', 'B', 'C', 'D', 'E', 'F'];
+      scenarios.forEach(function(sc) {
+        var radio = document.querySelector('input[name="scenario-' + sc + '-level"]:checked');
+        if (radio) {
+          onLevelChange(sc);
+        }
+      });
+    }
+
+    /**
+     * HTML 转义，防止 XSS
+     * @param {string} str - 需要转义的字符串
+     * @returns {string} 转义后的字符串
+     */
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+    }
   </script>
 </body>
 </html>
