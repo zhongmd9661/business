@@ -214,6 +214,41 @@
     .save-toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 24px; background: var(--color-success); color: #fff; border-radius: var(--radius-md); font-size: var(--font-size-sm); box-shadow: var(--shadow-card-hover); opacity: 0; transform: translateY(10px); transition: all 300ms ease; pointer-events: none; z-index: 999; }
     .save-toast.show { opacity: 1; transform: translateY(0); }
 
+    /* ===== 密码验证弹窗 ===== */
+    .pwd-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 1100;
+      display: none; align-items: center; justify-content: center;
+    }
+    .pwd-overlay.active { display: flex; }
+    .pwd-box {
+      background: var(--color-bg-primary); border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25); padding: var(--spacing-2xl);
+      width: 380px; max-width: 90vw; text-align: center;
+      animation: modalSlideIn 250ms ease;
+    }
+    .pwd-box h3 {
+      font-size: var(--font-size-xl); color: #1e4a8a; margin-bottom: var(--spacing-md);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .pwd-box p { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--spacing-lg); }
+    .pwd-input-wrap { position: relative; margin-bottom: var(--spacing-md); }
+    .pwd-input {
+      width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+      padding: 10px 40px 10px 12px; font-size: var(--font-size-base);
+      font-family: var(--font-family); transition: all var(--transition);
+    }
+    .pwd-input:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+    .pwd-input.error { border-color: var(--color-error); background: var(--color-error-bg); }
+    .pwd-toggle {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--color-text-secondary);
+      font-size: 18px; padding: 4px;
+    }
+    .pwd-error { color: var(--color-error); font-size: var(--font-size-xs); margin-bottom: var(--spacing-md); display: none; }
+    .pwd-error.show { display: block; }
+    .pwd-btns { display: flex; gap: var(--spacing-md); justify-content: center; }
+
     /* ===== 标准设置模态框 ===== */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -1267,11 +1302,28 @@
 
     <!-- Action bar -->
     <div class="action-bar">
-      <button class="action-btn" onclick="openStandardsModal()">⚙️ 标准设置</button>
+      <button class="action-btn" onclick="onOpenStandardsClicked()">⚙️ 标准设置</button>
       <button class="action-btn" onclick="resetForm()">🔄 重置表单</button>
       <button class="action-btn" onclick="exportFormData()">📤 导出JSON</button>
       <button class="action-btn success" onclick="saveFormData()">💾 保存草稿</button>
       <button class="action-btn primary" onclick="submitRecord()">📋 提交记录</button>
+    </div>
+  </div>
+
+  <!-- ===== 密码验证弹窗 ===== -->
+  <div id="pwd-overlay" class="pwd-overlay" onclick="if(event.target===this)closePwdDialog()">
+    <div class="pwd-box">
+      <h3>🔐 密码验证</h3>
+      <p>修改标准设置需要输入管理员密码</p>
+      <div class="pwd-input-wrap">
+        <input type="password" id="pwd-input" class="pwd-input" placeholder="请输入密码" onkeydown="if(event.key==='Enter')verifyPwd()">
+        <button type="button" class="pwd-toggle" onclick="togglePwdVisibility()" id="pwd-toggle-btn">👁️</button>
+      </div>
+      <div id="pwd-error" class="pwd-error">密码错误，请重试</div>
+      <div class="pwd-btns">
+        <button class="modal-btn" onclick="closePwdDialog()">取消</button>
+        <button class="modal-btn primary" onclick="verifyPwd()">确认</button>
+      </div>
     </div>
   </div>
 
@@ -2062,6 +2114,83 @@
         loadFormData(scenario);
       }
     });
+
+    // ================================================================
+    // ===== 密码验证功能 =====
+    // ================================================================
+
+    // 管理员密码（默认值，可在部署时修改）
+    var ADMIN_PASSWORD = 'admin123';
+
+    /**
+     * 点击"标准设置"按钮时弹出密码验证
+     */
+    function onOpenStandardsClicked() {
+      // 重置密码输入框
+      var pwdInput = document.getElementById('pwd-input');
+      var pwdError = document.getElementById('pwd-error');
+      if (pwdInput) {
+        pwdInput.value = '';
+        pwdInput.classList.remove('error');
+      }
+      if (pwdError) pwdError.classList.remove('show');
+      // 显示密码弹窗
+      document.getElementById('pwd-overlay').classList.add('active');
+      setTimeout(function() {
+        if (pwdInput) pwdInput.focus();
+      }, 100);
+    }
+
+    /**
+     * 关闭密码验证弹窗
+     */
+    function closePwdDialog() {
+      document.getElementById('pwd-overlay').classList.remove('active');
+      var pwdInput = document.getElementById('pwd-input');
+      if (pwdInput) pwdInput.value = '';
+    }
+
+    /**
+     * 切换密码显示/隐藏
+     */
+    function togglePwdVisibility() {
+      var pwdInput = document.getElementById('pwd-input');
+      var toggleBtn = document.getElementById('pwd-toggle-btn');
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+      } else {
+        pwdInput.type = 'password';
+        toggleBtn.textContent = '👁️';
+      }
+    }
+
+    /**
+     * 验证密码，正确则打开标准设置模态框
+     */
+    function verifyPwd() {
+      var pwdInput = document.getElementById('pwd-input');
+      var pwdError = document.getElementById('pwd-error');
+      var pwd = pwdInput ? pwdInput.value : '';
+
+      if (pwd === ADMIN_PASSWORD) {
+        // 密码正确，关闭弹窗并打开标准设置
+        closePwdDialog();
+        openStandardsModal();
+      } else {
+        // 密码错误
+        if (pwdInput) {
+          pwdInput.classList.add('error');
+          pwdInput.focus();
+        }
+        if (pwdError) pwdError.classList.add('show');
+        // 1.5秒后清除错误样式
+        setTimeout(function() {
+          if (pwdInput) pwdInput.classList.remove('error');
+          if (pwdError) pwdError.classList.remove('show');
+        }, 1500);
+      }
+    }
 
     // ================================================================
     // ===== 标准设置模态框功能 =====
