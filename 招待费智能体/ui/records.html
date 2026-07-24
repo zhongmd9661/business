@@ -86,6 +86,7 @@
 
     /* Scenario badge */
     .scenario-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); background: var(--color-accent-light); color: var(--color-accent); }
+    .serial-number { font-family: "Cascadia Code", "Fira Code", "Consolas", monospace; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); color: var(--color-accent); background: var(--color-accent-light); padding: 2px 8px; border-radius: 4px; display: inline-block; letter-spacing: 0.5px; }
 
     /* Delete button */
     .delete-btn { padding: 4px 10px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); transition: all var(--transition); color: var(--color-text-secondary); }
@@ -174,6 +175,7 @@
         <thead>
           <tr>
             <th>#</th>
+            <th>流水号</th>
             <th>场景</th>
             <th>日期</th>
             <th>地点</th>
@@ -187,7 +189,7 @@
           </tr>
         </thead>
         <tbody id="records-body">
-          <tr><td colspan="11" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>
+          <tr><td colspan="12" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -201,7 +203,7 @@
 
     async function loadRecords() {
       const tbody = document.getElementById('records-body');
-      tbody.innerHTML = '<tr><td colspan="11" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="12" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>';
 
       const scenario = document.getElementById('filter-scenario').value;
       const status = document.getElementById('filter-status').value;
@@ -216,7 +218,7 @@
         renderRecords(records);
         updateSummary(records);
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">加载失败：' + err.message + '</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12" class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">加载失败：' + err.message + '</div></td></tr>';
       }
     }
 
@@ -224,13 +226,14 @@
       const tbody = document.getElementById('records-body');
 
       if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">暂无提交记录</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12" class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">暂无提交记录</div></td></tr>';
         return;
       }
 
       tbody.innerHTML = records.map(r => `
         <tr>
           <td>${r.id}</td>
+          <td><span class="serial-number">${escapeHtml(r.serial_number || '—')}</span></td>
           <td><span class="scenario-badge">${r.scenario_name}</span></td>
           <td>${formatDate(r.date)}</td>
           <td>${escapeHtml(r.location || '—')}</td>

@@ -175,6 +175,7 @@ class ReceptionRecord(Base):
     __tablename__ = "reception_records"
 
     id = Column(Integer, primary_key=True)
+    serial_number = Column(String, unique=True, nullable=False)  # 提交流水号，如 ZDF-20260724-0001
     scenario = Column(String, nullable=False)  # A/B/C/D/E/F
     scenario_name = Column(String, nullable=False)
     submitter = Column(String, default="匿名")

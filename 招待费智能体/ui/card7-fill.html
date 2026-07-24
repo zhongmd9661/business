@@ -2067,7 +2067,8 @@
         });
         const result = await response.json();
         if (response.ok) {
-          showToast('✅ ' + (result.message || '记录已提交'));
+          const sn = result.serial_number ? ` 流水号: ${result.serial_number}` : '';
+          showToast('✅ ' + (result.message || '记录已提交') + sn);
           // 提交后清空表单
           setTimeout(() => resetForm(), 1500);
         } else {

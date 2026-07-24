@@ -32,7 +32,7 @@ def _camel_to_snake(d):
 
 @router.post("/reception-records")
 async def create_record(request: Request):
-    """提交一条招待费记录"""
+    """提交一条招待费记录，自动生成流水号"""
     body_bytes = await request.body()
     try:
         payload = __import__("json").loads(body_bytes.decode("utf-8"))
@@ -41,6 +41,21 @@ async def create_record(request: Request):
     payload = _camel_to_snake(payload)
     session = SessionLocal()
     try:
+        # 生成流水号: ZDF-YYYYMMDD-NNNN
+        today = datetime.now().strftime("%Y%m%d")
+        prefix = f"ZDF-{today}-"
+        last = (
+            session.query(ReceptionRecord)
+            .filter(ReceptionRecord.serial_number.like(f"{prefix}%"))
+            .order_by(ReceptionRecord.serial_number.desc())
+            .first()
+        )
+        if last:
+            seq = int(last.serial_number.split("-")[-1]) + 1
+        else:
+            seq = 1
+        serial_number = f"{prefix}{seq:04d}"
+
         # 计算总金额（如果前端没传）
         per_capita = float(payload.get("per_capita") or 0)
         guests = int(payload.get("guests") or 0)
@@ -51,6 +66,7 @@ async def create_record(request: Request):
 
         record = ReceptionRecord(
             id=None,
+            serial_number=serial_number,
             scenario=payload.get("scenario", ""),
             scenario_name=payload.get("scenario_name", ""),
             submitter=payload.get("submitter", "匿名"),
@@ -79,7 +95,8 @@ async def create_record(request: Request):
         session.refresh(record)
         return {
             "id": record.id,
-            "message": "记录已提交",
+            "serial_number": record.serial_number,
+            "message": f"记录已提交，流水号: {record.serial_number}",
             "status": record.status,
         }
     except Exception as e:
@@ -108,6 +125,7 @@ def list_records(
         return [
             {
                 "id": r.id,
+                "serial_number": r.serial_number or "",
                 "scenario": r.scenario,
                 "scenario_name": r.scenario_name,
                 "submitter": r.submitter,
