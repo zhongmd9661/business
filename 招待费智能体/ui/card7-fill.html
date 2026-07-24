@@ -248,6 +248,30 @@
     .qichacha-recommendation { margin-top: var(--spacing-md); padding: var(--spacing-md); border-radius: var(--radius-sm); font-size: var(--font-size-xs); line-height: 1.7; }
     .qichacha-recommendation.success { background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--color-success); }
     .qichacha-recommendation.danger { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--color-error); }
+    .qichacha-compare-area { display: flex; gap: var(--spacing-lg); margin-top: var(--spacing-md); flex-wrap: wrap; }
+    .qichacha-original-img { flex: 0 0 320px; max-height: 400px; object-fit: contain; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fafbfc; }
+    .qichacha-markdown-view { flex: 1; min-width: 300px; max-height: 400px; overflow-y: auto; background: #fafbfc; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--spacing-md); font-size: var(--font-size-xs); line-height: 1.7; }
+    .qichacha-markdown-view h1, .qichacha-markdown-view h2, .qichacha-markdown-view h3 { margin: 8px 0 4px; color: #1e4a8a; }
+    .qichacha-markdown-view h1 { font-size: 14px; }
+    .qichacha-markdown-view h2 { font-size: 13px; }
+    .qichacha-markdown-view h3 { font-size: 12px; }
+    .qichacha-markdown-view ul, .qichacha-markdown-view ol { padding-left: 16px; margin: 4px 0; }
+    .qichacha-markdown-view li { margin: 2px 0; }
+    .qichacha-markdown-view table { border-collapse: collapse; width: 100%; margin: 6px 0; }
+    .qichacha-markdown-view th, .qichacha-markdown-view td { border: 1px solid #e5e7eb; padding: 4px 8px; text-align: left; font-size: 11px; }
+    .qichacha-markdown-view th { background: #f3f4f6; }
+    .qichacha-markdown-view blockquote { border-left: 3px solid var(--color-accent); margin: 6px 0; padding: 4px 12px; background: var(--color-accent-light); }
+    .qichacha-markdown-view p { margin: 4px 0; }
+    .qichacha-markdown-view code { background: #f3f4f6; padding: 1px 4px; border-radius: 3px; }
+    .qichacha-toggle-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); margin-top: var(--spacing-sm); transition: all var(--transition); }
+    .qichacha-toggle-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+    .qichacha-templates-area { margin-top: var(--spacing-md); padding: var(--spacing-sm); background: var(--color-bg-secondary); border-radius: var(--radius-sm); }
+    .qichacha-templates-area label { font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
+    .qichacha-template-list { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .qichacha-template-item { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: var(--color-accent-light); color: var(--color-accent); border-radius: 4px; font-size: var(--font-size-xs); }
+    .qichacha-template-item .remove-template { cursor: pointer; color: var(--color-error); font-weight: bold; margin-left: 2px; }
+    .qichacha-template-upload { font-size: var(--font-size-xs); color: var(--color-accent); cursor: pointer; text-decoration: underline; }
+    .qichacha-template-upload:hover { color: #2563eb; }
 
     /* Spinner */
     .spinner { width: 24px; height: 24px; border: 3px solid var(--color-border); border-top-color: var(--color-accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
@@ -458,6 +482,31 @@
               <div style="margin-top:8px; font-size:11px; color:var(--color-text-secondary);">
                 截图需包含：企业名称、经营状态（存续/注销/吊销/异常等）
               </div>
+            </div>
+            <!-- 原图与识别文字对比区 -->
+            <div id="qichachaCompareArea" style="display:none;">
+              <button class="qichacha-toggle-btn" onclick="toggleCompareView()">📄 查看识别文字对比</button>
+              <div id="qichachaCompareContent" style="display:none;">
+                <div class="qichacha-compare-area">
+                  <div>
+                    <div style="font-size:11px; font-weight:600; color:var(--color-text-secondary); margin-bottom:4px;">原图</div>
+                    <img id="qichachaOriginalImg" class="qichacha-original-img" src="" alt="原图">
+                  </div>
+                  <div>
+                    <div style="font-size:11px; font-weight:600; color:var(--color-text-secondary); margin-bottom:4px;">AI 识别文字 (Markdown)</div>
+                    <div id="qichachaMarkdownView" class="qichacha-markdown-view"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 模板管理 -->
+            <div class="qichacha-templates-area">
+              <label>📎 参考模板</label>
+              <div class="qichacha-template-list" id="qichachaTemplateList">
+                <span style="font-size:11px; color:var(--color-text-secondary);">暂无模板，</span>
+                <span class="qichacha-template-upload" onclick="document.getElementById('qichachaTemplateInput').click()">上传模板</span>
+              </div>
+              <input type="file" id="qichachaTemplateInput" accept="image/*" style="display:none" onchange="handleTemplateUpload(event)">
             </div>
           </div>
         </div>
@@ -2106,6 +2155,56 @@
     let qichachaFile = null;
     let qichachaResultData = null;
 
+    // ===== 模板管理 =====
+    let qichachaTemplates = JSON.parse(localStorage.getItem('qichacha-templates') || '[]');
+
+    function renderTemplates() {
+      const list = document.getElementById('qichachaTemplateList');
+      if (!list) return;
+
+      if (qichachaTemplates.length === 0) {
+        list.innerHTML = `<span style="font-size:11px; color:var(--color-text-secondary);">暂无模板，</span>
+          <span class="qichacha-template-upload" onclick="document.getElementById('qichachaTemplateInput').click()">上传模板</span>`;
+        return;
+      }
+
+      let html = '';
+      qichachaTemplates.forEach((t, idx) => {
+        html += `<span class="qichacha-template-item">
+          📎 ${escapeHtml(t.name)}
+          <span class="remove-template" onclick="removeTemplate(${idx})" title="删除模板">×</span>
+        </span>`;
+      });
+      html += `<span class="qichacha-template-upload" onclick="document.getElementById('qichachaTemplateInput').click()">+ 上传更多</span>`;
+      list.innerHTML = html;
+    }
+
+    function handleTemplateUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        qichachaTemplates.push({
+          name: file.name,
+          data: e.target.result,
+          uploaded_at: new Date().toISOString()
+        });
+        localStorage.setItem('qichacha-templates', JSON.stringify(qichachaTemplates));
+        renderTemplates();
+        showToast('✅ 模板已上传');
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    }
+
+    function removeTemplate(idx) {
+      qichachaTemplates.splice(idx, 1);
+      localStorage.setItem('qichacha-templates', JSON.stringify(qichachaTemplates));
+      renderTemplates();
+      showToast('🗑️ 模板已删除');
+    }
+
     function handleQichachaUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -2284,6 +2383,77 @@
       }
 
       resultCard.innerHTML = html;
+
+      // Show comparison area with original image and markdown text
+      const compareArea = document.getElementById('qichachaCompareArea');
+      const compareContent = document.getElementById('qichachaCompareContent');
+      const originalImg = document.getElementById('qichachaOriginalImg');
+      const markdownView = document.getElementById('qichachaMarkdownView');
+
+      // Get the original image preview source
+      const dropZone = document.getElementById('qichachaDropZone');
+      const previewImg = dropZone.querySelector('img');
+      if (previewImg) {
+        originalImg.src = previewImg.src;
+      }
+
+      if (data.markdown_text) {
+        markdownView.innerHTML = renderMarkdown(data.markdown_text);
+        compareArea.style.display = 'block';
+      } else {
+        compareArea.style.display = 'none';
+      }
+    }
+
+    function toggleCompareView() {
+      const content = document.getElementById('qichachaCompareContent');
+      const btn = document.querySelector('.qichacha-toggle-btn');
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        btn.textContent = '📄 隐藏识别文字对比';
+      } else {
+        content.style.display = 'none';
+        btn.textContent = '📄 查看识别文字对比';
+      }
+    }
+
+    // Simple Markdown renderer (basic support for headings, lists, tables, bold, italic, blockquote)
+    function renderMarkdown(text) {
+      let html = escapeHtml(text);
+
+      // Headers
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+      // Bold & Italic
+      html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+      // Inline code
+      html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+
+      // Blockquote
+      html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+      // Unordered lists
+      html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+      // Horizontal rule
+      html = html.replace(/^---$/gm, '<hr>');
+
+      // Paragraphs (double newlines)
+      html = html.replace(/\n\n/g, '</p><p>');
+      html = html.replace(/\n/g, '<br>');
+
+      // Clean up
+      html = '<p>' + html + '</p>';
+      html = html.replace(/<p><(h[1-3]|ul|ol|blockquote|hr)/g, '<$1');
+      html = html.replace(/<\/(h[1-3]|ul|ol|blockquote)><\/p>/g, '</$1>');
+
+      return html;
     }
 
     async function submitRecord() {
@@ -2374,6 +2544,9 @@
         const scenario = activeCard.id.replace('scenario-', '');
         loadFormData(scenario);
       }
+
+      // Render templates
+      renderTemplates();
 
       // 监听剪贴板粘贴事件 — 支持直接粘贴截图
       document.addEventListener('paste', function(e) {

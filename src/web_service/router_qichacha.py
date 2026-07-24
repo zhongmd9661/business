@@ -66,13 +66,18 @@ def _analyze_with_vision(image_b64: str, image_format: str = "png") -> dict:
 3. **risk_count**: 自身风险数量（如果有显示）
 4. **risk_summary**: 风险提示摘要（简要描述发现的風險信息）
 5. **is_abnormal**: 经营状态是否异常（布尔值）
-   - 以下状态视为**异常**：注销、吊销、经营异常、严重违法、停业、歇业、迁出、撤销
+   - 以下状态视为**异常**：注销、吊销、经营异常、严重违法、停业、歇业、迁出、撤销、被执行人、失信被执行人
    - 以下状态视为**正常**：存续、在业、开业
    - 无法确定时视为异常（安全优先）
+   - 注意：如果页面显示"被执行人"或"失信"标签，也视为异常
 6. **recommendation**: 处理建议（如果异常，说明原因并建议不提交；如果正常，建议可以提交）
+7. **markdown_text**: 将截图中识别到的**所有文字**整理为 Markdown 格式。要求：
+   - 保持页面结构（企业信息、联系方式、风险信息、动态等分区）
+   - 使用标题、列表、表格等 Markdown 语法组织内容
+   - 不要遗漏重要字段，方便人工与原图对比
 
 **重要**：请只返回JSON，不要包含markdown代码块标记，格式如下：
-{"company_name":"xxx","business_status":"xxx","risk_count":0,"risk_summary":"xxx","is_abnormal":false,"recommendation":"xxx"}"""
+{"company_name":"xxx","business_status":"xxx","risk_count":0,"risk_summary":"xxx","is_abnormal":false,"recommendation":"xxx","markdown_text":"# 企业名称\\n\\n基本信息\\n- 统一社会信用代码：xxx\\n..."}"""
 
     try:
         client = Anthropic(base_url=base_url, api_key=api_key)
