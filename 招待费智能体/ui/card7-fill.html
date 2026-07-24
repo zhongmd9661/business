@@ -225,6 +225,7 @@
     .qichacha-upload-area { width: 200px; flex-shrink: 0; }
     .qichacha-drop-zone { border: 2px dashed var(--color-border); border-radius: var(--radius-md); padding: var(--spacing-lg); text-align: center; cursor: pointer; transition: all var(--transition); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .qichacha-drop-zone:hover { border-color: var(--color-accent); background: var(--color-accent-light); }
+    .qichacha-drop-zone.drag-over { border-color: var(--color-success); background: var(--color-success-bg); transform: scale(1.02); }
     .qichacha-drop-zone.has-image { border-style: solid; border-color: var(--color-success); background: var(--color-success-bg); }
     .qichacha-drop-zone .upload-icon { font-size: 32px; margin-bottom: var(--spacing-sm); }
     .qichacha-drop-zone .upload-text { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
@@ -443,7 +444,7 @@
           <div class="qichacha-upload-area">
             <div class="qichacha-drop-zone" id="qichachaDropZone" onclick="document.getElementById('qichachaFileInput').click()">
               <div class="upload-icon">📸</div>
-              <div class="upload-text">点击上传企查查截图</div>
+              <div class="upload-text">点击上传 或 <strong>Ctrl+V</strong> 粘贴截图</div>
               <input type="file" id="qichachaFileInput" accept="image/*" style="display:none" onchange="handleQichachaUpload(event)">
             </div>
             <button class="qichacha-analyze-btn" id="qichachaAnalyzeBtn" onclick="analyzeQichacha()" disabled>🔍 开始识别</button>
@@ -2148,6 +2149,46 @@
       reader.readAsDataURL(file);
     }
 
+    // 处理剪贴板粘贴的图片
+    function handlePastedImage(blob) {
+      // Create a File object from the Blob
+      const pastedFile = new File([blob], 'paste_' + Date.now() + '.png', { type: blob.type || 'image/png' });
+
+      // Validate file size (max 10MB)
+      if (pastedFile.size > 10 * 1024 * 1024) {
+        showToast('❌ 图片大小不能超过 10MB');
+        return;
+      }
+
+      qichachaFile = pastedFile;
+      qichachaResultData = null;
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dropZone = document.getElementById('qichachaDropZone');
+        dropZone.innerHTML = `<img src="${e.target.result}" alt="企查查截图（粘贴）"><input type="file" id="qichachaFileInput" accept="image/*" style="display:none" onchange="handleQichachaUpload(event)">`;
+        dropZone.classList.add('has-image');
+
+        // Enable analyze button
+        document.getElementById('qichachaAnalyzeBtn').disabled = false;
+
+        // Reset result card
+        const resultCard = document.getElementById('qichachaResultCard');
+        resultCard.className = 'qichacha-result-card pending';
+        resultCard.innerHTML = `
+          <div class="qichacha-result-row">
+            <span class="qichacha-result-label">📋 状态</span>
+            <span class="qichacha-result-value">已粘贴截图，请点击"开始识别"</span>
+          </div>
+          <div style="margin-top:4px; font-size:11px; color:var(--color-success);">✅ 来自剪贴板</div>
+        `;
+      };
+      reader.readAsDataURL(blob);
+
+      showToast('✅ 已粘贴截图，点击"开始识别"');
+    }
+
     async function analyzeQichacha() {
       if (!qichachaFile) {
         showToast('⚠️ 请先上传企查查截图');
@@ -2332,6 +2373,50 @@
       if (activeCard) {
         const scenario = activeCard.id.replace('scenario-', '');
         loadFormData(scenario);
+      }
+
+      // 监听剪贴板粘贴事件 — 支持直接粘贴截图
+      document.addEventListener('paste', function(e) {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            e.preventDefault();
+            const blob = items[i].getAsFile();
+            if (blob) {
+              handlePastedImage(blob);
+            }
+            break;
+          }
+        }
+      });
+
+      // 拖拽上传支持
+      const dropZone = document.getElementById('qichachaDropZone');
+      if (dropZone) {
+        dropZone.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('drag-over');
+        });
+        dropZone.addEventListener('dragleave', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('drag-over');
+        });
+        dropZone.addEventListener('drop', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('drag-over');
+
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            const file = files[0];
+            if (file.type && file.type.indexOf('image') !== -1) {
+              const fakeEvent = { target: { files: [file] } };
+              handleQichachaUpload(fakeEvent);
+            }
+          }
+        });
       }
     });
 
