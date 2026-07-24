@@ -55,7 +55,7 @@ def _analyze_with_vision(image_b64: str, image_format: str = "png") -> dict:
 
     base_url = os.environ.get("ANTHROPIC_BASE_URL", "http://192.168.231.1:1235")
     api_key = os.environ.get("ANTHROPIC_AUTH_TOKEN", "lmstudio")
-    model = os.environ.get("LLM_MODEL", "qwen/qwen3.6-27b")
+    model = os.environ.get("LLM_MODEL", "Qwen/Qwen3.6-27B")
 
     system_prompt = """你是一个专业的企业信息分析助手。你的任务是分析企查查网页截图，提取关键信息。
 
