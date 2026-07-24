@@ -214,6 +214,44 @@
     .save-toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 24px; background: var(--color-success); color: #fff; border-radius: var(--radius-md); font-size: var(--font-size-sm); box-shadow: var(--shadow-card-hover); opacity: 0; transform: translateY(10px); transition: all 300ms ease; pointer-events: none; z-index: 999; }
     .save-toast.show { opacity: 1; transform: translateY(0); }
 
+    /* ===== 企查查截图上传区 ===== */
+    .qichacha-section { margin-bottom: var(--spacing-xl); }
+    .qichacha-card { background: var(--color-bg-primary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+    .qichacha-header { display: flex; align-items: center; gap: 8px; padding: var(--spacing-lg) var(--spacing-xl); border-bottom: 1px solid var(--color-border); background: linear-gradient(135deg, #f0f7ff, #e8f2ff); }
+    .qichacha-header-icon { font-size: 20px; }
+    .qichacha-header-title { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: #1e4a8a; }
+    .qichacha-header-desc { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-left: auto; }
+    .qichacha-body { padding: var(--spacing-xl); display: flex; gap: var(--spacing-xl); align-items: flex-start; flex-wrap: wrap; }
+    .qichacha-upload-area { width: 200px; flex-shrink: 0; }
+    .qichacha-drop-zone { border: 2px dashed var(--color-border); border-radius: var(--radius-md); padding: var(--spacing-lg); text-align: center; cursor: pointer; transition: all var(--transition); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .qichacha-drop-zone:hover { border-color: var(--color-accent); background: var(--color-accent-light); }
+    .qichacha-drop-zone.has-image { border-style: solid; border-color: var(--color-success); background: var(--color-success-bg); }
+    .qichacha-drop-zone .upload-icon { font-size: 32px; margin-bottom: var(--spacing-sm); }
+    .qichacha-drop-zone .upload-text { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+    .qichacha-drop-zone img { max-width: 100%; max-height: 160px; border-radius: var(--radius-sm); object-fit: contain; }
+    .qichacha-analyze-btn { margin-top: var(--spacing-sm); padding: 8px 16px; border: 1px solid var(--color-accent); background: var(--color-accent); color: #fff; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-sm); font-family: var(--font-family); font-weight: var(--font-weight-medium); transition: all var(--transition); width: 100%; }
+    .qichacha-analyze-btn:hover { background: #2563eb; }
+    .qichacha-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .qichacha-result { flex: 1; min-width: 280px; }
+    .qichacha-result-card { border-radius: var(--radius-md); padding: var(--spacing-lg); font-size: var(--font-size-sm); line-height: 1.8; }
+    .qichacha-result-card.pending { background: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .qichacha-result-card.success { background: var(--color-success-bg); border: 1px solid #a7f3d0; color: #065f46; }
+    .qichacha-result-card.danger { background: var(--color-error-bg); border: 1px solid #fecaca; color: #991b1b; }
+    .qichacha-result-card.loading { background: var(--color-bg-secondary); border: 1px solid var(--color-border); }
+    .qichacha-result-row { display: flex; gap: 8px; margin-bottom: 4px; }
+    .qichacha-result-label { font-weight: var(--font-weight-semibold); min-width: 80px; flex-shrink: 0; }
+    .qichacha-result-value { flex: 1; }
+    .qichacha-status-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 4px; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+    .qichacha-status-badge.normal { background: #dcfce7; color: #166534; }
+    .qichacha-status-badge.abnormal { background: #fee2e2; color: #991b1b; }
+    .qichacha-recommendation { margin-top: var(--spacing-md); padding: var(--spacing-md); border-radius: var(--radius-sm); font-size: var(--font-size-xs); line-height: 1.7; }
+    .qichacha-recommendation.success { background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--color-success); }
+    .qichacha-recommendation.danger { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--color-error); }
+
+    /* Spinner */
+    .spinner { width: 24px; height: 24px; border: 3px solid var(--color-border); border-top-color: var(--color-accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* ===== 密码验证弹窗 ===== */
     .pwd-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -393,6 +431,37 @@
       返回录入首页
     </a>
 
+    <!-- 企查查截图上传区 -->
+    <div class="qichacha-section">
+      <div class="qichacha-card">
+        <div class="qichacha-header">
+          <span class="qichacha-header-icon">🏢</span>
+          <span class="qichacha-header-title">企查查信用核查</span>
+          <span class="qichacha-header-desc">上传企查查截图，AI 自动识别接待单位经营状态</span>
+        </div>
+        <div class="qichacha-body">
+          <div class="qichacha-upload-area">
+            <div class="qichacha-drop-zone" id="qichachaDropZone" onclick="document.getElementById('qichachaFileInput').click()">
+              <div class="upload-icon">📸</div>
+              <div class="upload-text">点击上传企查查截图</div>
+              <input type="file" id="qichachaFileInput" accept="image/*" style="display:none" onchange="handleQichachaUpload(event)">
+            </div>
+            <button class="qichacha-analyze-btn" id="qichachaAnalyzeBtn" onclick="analyzeQichacha()" disabled>🔍 开始识别</button>
+          </div>
+          <div class="qichacha-result" id="qichachaResult">
+            <div class="qichacha-result-card pending" id="qichachaResultCard">
+              <div class="qichacha-result-row">
+                <span class="qichacha-result-label">📋 状态</span>
+                <span class="qichacha-result-value">请上传企查查截图进行核查</span>
+              </div>
+              <div style="margin-top:8px; font-size:11px; color:var(--color-text-secondary);">
+                截图需包含：企业名称、经营状态（存续/注销/吊销/异常等）
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Scenario Selector -->
     <div class="scenario-selector">
@@ -2032,6 +2101,150 @@
       D: '内部业务招待', E: '工作餐', F: '党政军机关'
     };
 
+    // ===== 企查查截图分析 =====
+    let qichachaFile = null;
+    let qichachaResultData = null;
+
+    function handleQichachaUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Validate file type
+      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowed.includes(file.type)) {
+        showToast('❌ 请上传 JPG/PNG 格式的图片');
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('❌ 图片大小不能超过 10MB');
+        return;
+      }
+
+      qichachaFile = file;
+      qichachaResultData = null;
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dropZone = document.getElementById('qichachaDropZone');
+        dropZone.innerHTML = `<img src="${e.target.result}" alt="企查查截图"><input type="file" id="qichachaFileInput" accept="image/*" style="display:none" onchange="handleQichachaUpload(event)">`;
+        dropZone.classList.add('has-image');
+
+        // Enable analyze button
+        document.getElementById('qichachaAnalyzeBtn').disabled = false;
+
+        // Reset result card
+        const resultCard = document.getElementById('qichachaResultCard');
+        resultCard.className = 'qichacha-result-card pending';
+        resultCard.innerHTML = `
+          <div class="qichacha-result-row">
+            <span class="qichacha-result-label">📋 状态</span>
+            <span class="qichacha-result-value">已上传图片，请点击"开始识别"</span>
+          </div>
+        `;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function analyzeQichacha() {
+      if (!qichachaFile) {
+        showToast('⚠️ 请先上传企查查截图');
+        return;
+      }
+
+      const btn = document.getElementById('qichachaAnalyzeBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ 识别中...';
+
+      const resultCard = document.getElementById('qichachaResultCard');
+      resultCard.className = 'qichacha-result-card loading';
+      resultCard.innerHTML = '<div style="text-align:center;padding:16px;"><div class="spinner" style="margin:0 auto 8px;"></div>正在识别企业经营状态...</div>';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', qichachaFile);
+
+        const response = await fetch('/api/qichacha/analyze', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || '识别失败');
+        }
+
+        qichachaResultData = data;
+        renderQichachaResult(data);
+        showToast('✅ 企查查截图识别完成');
+
+      } catch (err) {
+        resultCard.className = 'qichacha-result-card danger';
+        resultCard.innerHTML = `
+          <div class="qichacha-result-row">
+            <span class="qichacha-result-label">❌ 错误</span>
+            <span class="qichacha-result-value">${escapeHtml(err.message)}</span>
+          </div>
+        `;
+        showToast('❌ 识别失败：' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 开始识别';
+      }
+    }
+
+    function renderQichachaResult(data) {
+      const resultCard = document.getElementById('qichachaResultCard');
+      const isAbnormal = data.is_abnormal === true;
+
+      if (isAbnormal) {
+        resultCard.className = 'qichacha-result-card danger';
+      } else {
+        resultCard.className = 'qichacha-result-card success';
+      }
+
+      let html = '';
+
+      if (data.company_name) {
+        html += `<div class="qichacha-result-row">
+          <span class="qichacha-result-label">🏢 企业</span>
+          <span class="qichacha-result-value" style="font-weight:bold;">${escapeHtml(data.company_name)}</span>
+        </div>`;
+      }
+
+      const statusBadgeClass = isAbnormal ? 'abnormal' : 'normal';
+      html += `<div class="qichacha-result-row">
+        <span class="qichacha-result-label">📊 经营状态</span>
+        <span class="qichacha-result-value"><span class="qichacha-status-badge ${statusBadgeClass}">${escapeHtml(data.business_status || '未知')}</span></span>
+      </div>`;
+
+      if (data.risk_count > 0) {
+        html += `<div class="qichacha-result-row">
+          <span class="qichacha-result-label">⚠️ 风险数量</span>
+          <span class="qichacha-result-value" style="color:${isAbnormal ? '#dc2626' : '#d97706'}; font-weight:bold;">${data.risk_count} 条</span>
+        </div>`;
+      }
+
+      if (data.risk_summary) {
+        html += `<div class="qichacha-result-row">
+          <span class="qichacha-result-label">📝 风险摘要</span>
+          <span class="qichacha-result-value">${escapeHtml(data.risk_summary)}</span>
+        </div>`;
+      }
+
+      if (data.recommendation) {
+        const recClass = isAbnormal ? 'danger' : 'success';
+        html += `<div class="qichacha-recommendation ${recClass}">
+          ${isAbnormal ? '🚫' : '✅'} ${escapeHtml(data.recommendation)}
+        </div>`;
+      }
+
+      resultCard.innerHTML = html;
+    }
+
     async function submitRecord() {
       const activeCard = document.querySelector('.scenario-card.active');
       if (!activeCard) {
@@ -2052,6 +2265,12 @@
       }
       if (!data.guests || parseInt(data.guests) <= 0) {
         showToast('⚠️ 请填写招待对象人数');
+        return;
+      }
+
+      // 企查查核查校验
+      if (qichachaResultData && qichachaResultData.is_abnormal) {
+        showToast('🚫 禁止提交：该企业经营状态异常（' + qichachaResultData.business_status + '），存在合规风险');
         return;
       }
 
