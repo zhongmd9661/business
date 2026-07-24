@@ -3,6 +3,7 @@
 > **日期**: 2026-07-24
 > **问题**: 前端 `card7-fill.html` 录入页面点击"提交"后提示"提交失败"
 > **状态**: ✅ 已修复
+> **后续**: 新增提交流水号功能（`ZDF-YYYYMMDD-NNNN`）
 
 ---
 
@@ -171,7 +172,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8006 (Press CTRL+C to quit)
 | 提交记录 API | `GET http://127.0.0.1:8006/api/reception-records` | 返回 `[]`（空数组） |
 | Swagger 文档 | 浏览器打开 `http://127.0.0.1:8006/docs` | 能看到 `reception-records` 分组 |
 | 前端主页 | 浏览器打开 `http://127.0.0.1:8006/ui-index` | 正常显示招待费管理页面 |
-| 提交测试 | 进入录入页，填写表单并提交 | 提示 ✅ 记录已提交 |
+| 提交测试 | 进入录入页，填写表单并提交 | 提示 ✅ 记录已提交，流水号: ZDF-... |
 
 ### 6.4 常见启动问题
 
@@ -181,8 +182,41 @@ INFO:     Uvicorn running on http://0.0.0.0:8006 (Press CTRL+C to quit)
 | Python 环境找不到 | 确认 `.venv` 目录存在；使用完整路径 `& "$PWD\.venv\Scripts\python.exe"` |
 | 数据库文件缺失 | 服务启动时 `init_db()` 会自动创建 SQLite 数据库，无需手动操作 |
 | 服务启动后页面无响应 | 等待 10-15 秒（MinerU 引擎启动需要时间） |
+| 提交报错 `no such column: serial_number` | 执行数据库迁移脚本（见下方说明） |
 
-### 6.5 停止服务
+### 6.4.1 数据库迁移（新增 `serial_number` 字段后）
+
+如果新增字段后 SQLite 报错找不到列，手动加列：
+
+```powershell
+& "$PWD\.venv\Scripts\python.exe" -c "
+import sqlite3
+conn = sqlite3.connect('data/web_service.db')
+cur = conn.cursor()
+cols = [r[1] for r in cur.execute('PRAGMA table_info(reception_records)').fetchall()]
+if 'serial_number' not in cols:
+    cur.execute('ALTER TABLE reception_records ADD COLUMN serial_number TEXT')
+    conn.commit()
+    print('Done')
+conn.close()
+"
+```
+
+### 6.5 提交流水号
+
+每次提交自动生成唯一流水号，格式：`ZDF-YYYYMMDD-NNNN`
+
+| 示例 | 含义 |
+|---|---|
+| `ZDF-20260724-0001` | 2026年7月24日第1条提交 |
+| `ZDF-20260724-0042` | 2026年7月24日第42条提交 |
+| `ZDF-20260725-0001` | 次日从 0001 重新开始 |
+
+流水号展示位置：
+- **提交成功 Toast** — 录入页提交后立即显示
+- **查询记录列表** — 表格第二列，等宽字体高亮
+
+### 6.6 停止服务
 
 - **终端内**: 按 `Ctrl+C`
 - **命令行**: `taskkill /F /FI "WINDOWTITLE eq *uvicorn*"`
