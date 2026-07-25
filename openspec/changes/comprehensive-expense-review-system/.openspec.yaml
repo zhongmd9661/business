@@ -1,0 +1,10 @@
+name: comprehensive-expense-review-system
+description: "整合 OCR 解析、LLM 字段提取、规则制度 skill 化、批次审核与跨文档校对的完整业务招待费审核系统"
+status: active
+created: 2026-06-10
+replaces:
+  - batch-expense-review
+  - llm-field-extraction
+  - batch-proofreading-rules
+  - convert-rules-to-md
+  - generate-rules-skill

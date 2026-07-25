@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招待费录入模板</title>
+  <style>
+    :root {
+      --color-text-primary: #1a1a2e;
+      --color-text-secondary: #6b7280;
+      --color-text-placeholder: #9ca3af;
+      --color-border: #e5e7eb;
+      --color-border-focus: #3b82f6;
+      --color-border-error: #ef4444;
+      --color-bg-primary: #ffffff;
+      --color-bg-secondary: #f9fafb;
+      --color-bg-hover: #f3f4f6;
+      --color-bg-disabled: #f9fafb;
+      --color-accent: #3b82f6;
+      --color-accent-light: #eff6ff;
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-warning-bg: #fffbeb;
+      --color-error: #ef4444;
+      --color-error-bg: #fef2f2;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+      --spacing-xl: 24px;
+      --spacing-2xl: 32px;
+      --spacing-3xl: 48px;
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      --font-size-xs: 12px;
+      --font-size-sm: 13px;
+      --font-size-base: 14px;
+      --font-size-lg: 15px;
+      --font-size-xl: 18px;
+      --font-size-2xl: 22px;
+      --font-size-3xl: 28px;
+      --font-weight-regular: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --line-height-normal: 1.5;
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --transition: 200ms ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-family);
+      font-size: var(--font-size-base);
+      color: var(--color-text-primary);
+      background: var(--color-bg-secondary);
+      line-height: var(--line-height-normal);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-wrapper {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: var(--spacing-2xl) var(--spacing-xl);
+    }
+
+    .page-header {
+      margin-bottom: var(--spacing-3xl);
+      text-align: center;
+    }
+
+    .page-header h1 {
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-primary);
+      margin-bottom: var(--spacing-sm);
+      letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+    }
+
+    /* ===== Card Grid ===== */
+    .scenario-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-lg);
+    }
+
+    /* ===== Scenario Card ===== */
+    .scenario-card {
+      background: var(--color-bg-primary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      transition: box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .scenario-card:hover { box-shadow: var(--shadow-card-hover); }
+
+    .scenario-card.expanded {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.15), var(--shadow-card-hover);
+    }
+
+    /* Summary (click to expand) */
+    .card-summary {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-lg) var(--spacing-xl);
+      cursor: pointer;
+      user-select: none;
+      transition: background var(--transition);
+    }
+
+    .card-summary:hover { background: var(--color-bg-hover); }
+
+    .card-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .card-icon.blue   { background: #eff6ff; }
+    .card-icon.green  { background: #ecfdf5; }
+    .card-icon.purple { background: #f5f3ff; }
+    .card-icon.orange { background: #fff7ed; }
+    .card-icon.rose   { background: #fff1f2; }
+    .card-icon.teal   { background: #f0fdfa; }
+
+    .card-info { flex: 1; min-width: 0; }
+
+    .card-title {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+    }
+
+    .card-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+
+    .card-arrow {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform var(--transition);
+      color: var(--color-text-secondary);
+    }
+
+    .scenario-card.expanded .card-arrow {
+      transform: rotate(180deg);
+      color: var(--color-accent);
+    }
+
+    /* Detail (click to collapse) */
+    .card-detail {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 300ms ease;
+    }
+
+    .scenario-card.expanded .card-detail {
+      max-height: 2000px;
+    }
+
+    .card-detail-inner {
+      padding: 0 var(--spacing-xl) var(--spacing-xl);
+    }
+
+    .card-divider {
+      height: 1px;
+      background: var(--color-border);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    /* ===== Detail Fields ===== */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+    }
+
+    .detail-grid .full-width { grid-column: 1 / -1; }
+
+    .detail-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .detail-label {
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-secondary);
+      letter-spacing: 0.2px;
+    }
+
+    .detail-label .required {
+      color: var(--color-error);
+      margin-right: 2px;
+    }
+
+    .detail-input,
+    .detail-select,
+    .detail-textarea {
+      width: 100%;
+      height: 38px;
+      padding: 0 var(--spacing-md);
+      font-family: var(--font-family);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      background: var(--color-bg-primary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .detail-input::placeholder,
+    .detail-textarea::placeholder { color: var(--color-text-placeholder); }
+
+    .detail-input:hover,
+    .detail-select:hover,
+    .detail-textarea:hover { border-color: #d1d5db; }
+
+    .detail-input:focus,
+    .detail-select:focus,
+    .detail-textarea:focus {
+      border-color: var(--color-border-focus);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
+    }
+
+    .detail-input:disabled {
+      background: var(--color-bg-disabled);
+      color: var(--color-text-secondary);
+      cursor: not-allowed;
+    }
+
+    .detail-textarea {
+      height: auto;
+      min-height: 60px;
+      padding: var(--spacing-sm) var(--spacing-md);
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .detail-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+      cursor: pointer;
+    }
+
+    .detail-row { display: grid; gap: var(--spacing-sm); }
+    .detail-row.two { grid-template-columns: 1fr 1fr; }
+    .detail-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+    .amount-input-wrapper { position: relative; }
+
+    .amount-prefix,
+    .amount-suffix {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      pointer-events: none;
+    }
+
+    .amount-prefix { left: 10px; }
+    .amount-suffix { right: 10px; }
+
+    .amount-input-wrapper .detail-input { padding-left: 26px; }
+    .amount-input-wrapper .detail-input.has-suffix { padding-right: 36px; }
+
+    .tag-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 4px 6px;
+      min-height: 38px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-bg-primary);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .tag-wrapper:focus-within {
+      border-color: var(--color-border-focus);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
+    }
+
+    .tag-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 6px;
+      background: var(--color-accent-light);
+      color: var(--color-accent);
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: var(--font-weight-medium);
+    }
+
+    .tag-remove {
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity var(--transition);
+      font-size: 12px;
+    }
+
+    .tag-remove:hover { opacity: 1; }
+
+    .tag-input {
+      border: none;
+      outline: none;
+      font-size: var(--font-size-xs);
+      flex: 1;
+      min-width: 50px;
+      padding: 1px 0;
+      font-family: var(--font-family);
+      color: var(--color-text-primary);
+    }
+
+    .tag-input::placeholder { color: var(--color-text-placeholder); }
+
+    /* Info boxes */
+    .info-box {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-xs);
+      line-height: 1.7;
+    }
+
+    .info-box.warning {
+      background: var(--color-warning-bg);
+      border: 1px solid #fde68a;
+      color: #92400e;
+    }
+
+    .info-box.checklist {
+      background: var(--color-success-bg);
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+
+    .info-box .info-icon { margin-right: 4px; }
+
+    /* Card Actions */
+    .card-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 36px;
+      padding: 0 var(--spacing-lg);
+      font-family: var(--font-family);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      flex: 1;
+      text-align: center;
+    }
+
+    .btn-primary { background: var(--color-accent); color: white; border-color: var(--color-accent); }
+    .btn-primary:hover { background: #2563eb; }
+
+    .btn-secondary { background: var(--color-bg-primary); color: var(--color-text-primary); border-color: var(--color-border); }
+    .btn-secondary:hover { background: var(--color-bg-hover); }
+
+    .btn-ghost { background: transparent; color: var(--color-text-secondary); border-color: transparent; }
+    .btn-ghost:hover { background: var(--color-bg-hover); color: var(--color-text-primary); }
+
+    /* Amount Summary */
+    .amount-summary {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      padding: var(--spacing-md) var(--spacing-xl);
+      background: var(--color-bg-primary);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-card);
+      margin-top: var(--spacing-xl);
+    }
+
+    .amount-summary-label { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+    .amount-summary-value { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+    .amount-summary-currency { font-size: var(--font-size-base); color: var(--color-text-secondary); font-weight: var(--font-weight-medium); }
+
+    /* Global Actions */
+    .action-bar {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-lg);
+      padding: var(--spacing-xl) 0;
+      margin-top: var(--spacing-lg);
+    }
+
+    .action-bar .btn {
+      height: 42px;
+      padding: 0 var(--spacing-2xl);
+      font-size: var(--font-size-base);
+      flex: none;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1024px) {
+      .scenario-list { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .page-wrapper { padding: var(--spacing-xl) var(--spacing-md); }
+      .page-header h1 { font-size: var(--font-size-2xl); }
+      .detail-grid { grid-template-columns: 1fr; }
+      .detail-row.two, .detail-row.three { grid-template-columns: 1fr; }
+      .card-summary { padding: var(--spacing-md) var(--spacing-lg); }
+      .card-detail-inner { padding: 0 var(--spacing-lg) var(--spacing-lg); }
+      .action-bar { flex-direction: column; align-items: stretch; }
+      .action-bar .btn { width: 100%; }
+      .amount-summary { flex-direction: column; gap: var(--spacing-xs); align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    function toggleCard(card) {
+      const expanded = document.querySelector('.scenario-card.expanded');
+      if (expanded === card) {
+        card.classList.remove('expanded');
+      } else if (expanded) {
+        expanded.classList.remove('expanded');
+        card.classList.add('expanded');
+      } else {
+        card.classList.add('expanded');
+      }
+    }
+
+    function submitApproval(card) {
+      const fields = card.querySelectorAll('.detail-field');
+      let rows = '';
+      fields.forEach(f => {
+        const label = f.querySelector('.detail-label');
+        const input = f.querySelector('input, select, textarea');
+        const tagWrapper = f.querySelector('.tag-wrapper');
+        const tagNames = tagWrapper ? Array.from(tagWrapper.querySelectorAll('.tag-item')).map(t => t.textContent.trim()).join('、') : '';
+        let value = '';
+        if (tagWrapper && tagNames) {
+          value = tagNames;
+        } else if (input) {
+          value = input.value || input.placeholder || '—';
+        }
+        if (label) {
+          rows += `<div style="display:flex;gap:var(--spacing-md);padding:var(--spacing-sm) 0;border-bottom:1px solid var(--color-border);">
+            <span style="color:var(--color-text-secondary);font-size:var(--font-size-xs);white-space:nowrap;min-width:100px;">${label.textContent.trim()}</span>
+            <span style="color:var(--color-text-primary);font-size:var(--font-size-sm);">${value}</span>
+          </div>`;
+        }
+      });
+
+      const modal = document.getElementById('approvalModal');
+      const content = document.getElementById('approvalContent');
+      content.innerHTML = rows;
+      modal.style.display = 'flex';
+    }
+
+    function closeApproval() {
+      document.getElementById('approvalModal').style.display = 'none';
+    }
+
+    function confirmSubmit() {
+      const card = document.querySelector('.scenario-card.expanded');
+      const title = card.querySelector('.card-title').textContent;
+      const modal = document.getElementById('approvalModal');
+      const content = document.getElementById('approvalContent');
+      content.innerHTML = `<div style="text-align:center;padding:40px 0;">
+        <div style="font-size:48px;margin-bottom:16px;">✅</div>
+        <div style="font-size:var(--font-size-lg);font-weight:var(--font-weight-semibold);color:var(--color-text-primary);">"${title}" 已提交审批！</div>
+      </div>`;
+      setTimeout(() => {
+        closeApproval();
+      }, 2000);
+    }
+  </script>
+  <div class="page-wrapper">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>招待费录入</h1>
+      <p>选择场景类型，点击卡片展开填写明细。带 <span style="color:var(--color-error)">*</span> 为必填项</p>
+    </div>
+
+    <!-- Scenario List -->
+    <div class="scenario-list">
+
+      <!-- Card 1: 商务招待 -->
+      <div class="scenario-card expanded">
+        <div class="card-summary" onclick="toggleCard(this.closest('.scenario-card'))">
+          <div class="card-icon blue">🤝</div>
+          <div class="card-info">
+            <div class="card-title">商务招待</div>
+            <div class="card-subtitle">对外商务接待 · 客户/合作伙伴</div>
+          </div>
+          <div class="card-arrow">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <div class="card-divider"></div>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label class="detail-label">招待类型</label>
+                <input type="text" class="detail-input" value="商务招待" disabled>
+              </div>
+              <div class="detail-field">
+                <label class="detail-label"><span class="required">*</span> 招待对象</label>
+                <input type="text" class="detail-input" placeholder="如：XX科技有限公司 张总等3人">
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label"><span class="required">*</span> 招待事由</label>
+                <input type="text" class="detail-input" placeholder="如：洽谈XX项目合作意向">
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label"><span class="required">*</span> 招待人数</label>
+                  <input type="number" class="detail-input" placeholder="3" min="1" style="text-align:center;">
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">陪同人数</label>
+                  <input type="number" class="detail-input" placeholder="≤3人（对等）" min="0" style="text-align:center;">
+                </div>
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label">陪同人员</label>
+                <div class="tag-wrapper" onclick="event.stopPropagation()">
+                  <span class="tag-item">李经理 <span class="tag-remove" onclick="event.stopPropagation();this.parentElement.remove()">✕</span></span>
+                  <span class="tag-item">王主管 <span class="tag-remove" onclick="event.stopPropagation();this.parentElement.remove()">✕</span></span>
+                  <span class="tag-item">赵专员 <span class="tag-remove" onclick="event.stopPropagation();this.parentElement.remove()">✕</span></span>
+                  <input type="text" class="tag-input" placeholder="回车添加">
+                </div>
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label">人均标准</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="≤300" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">/人·次</span>
+                  </div>
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">预计总费用</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="≤900" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">元</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label">用餐地点</label>
+                <input type="text" class="detail-input" placeholder="如：XX餐厅（非高档场所）">
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label">酒水</label>
+                <input type="text" class="detail-input" placeholder="如：白酒≤300元/500ml 或 红酒≤300元/750ml">
+              </div>
+              <div class="detail-field">
+                <label class="detail-label">纪念品</label>
+                <div class="amount-input-wrapper">
+                  <span class="amount-prefix">¥</span>
+                  <input type="number" class="detail-input has-suffix" placeholder="≤300" min="0" step="0.01" style="padding-left:26px;">
+                  <span class="amount-suffix">/人·次</span>
+                </div>
+              </div>
+            </div>
+            <div class="info-box warning">
+              <span class="info-icon">⚠️</span> 对象不含党政军机关工作人员；如对象含党政军机关，应选"其他公务招待"
+            </div>
+            <div class="info-box checklist">
+              <span class="info-icon">✅</span> 需准备：事前审批单、费用明细清单、支付凭证、发票要素要一致
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-secondary">保存草稿</button>
+              <button class="btn btn-primary" onclick="event.stopPropagation();submitApproval(this.closest('.scenario-card'))">提交审批</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: 异地接待（含住宿） -->
+      <div class="scenario-card">
+        <div class="card-summary" onclick="toggleCard(this.closest('.scenario-card'))">
+          <div class="card-icon green">✈️</div>
+          <div class="card-info">
+            <div class="card-title">异地接待（含住宿）</div>
+            <div class="card-subtitle">对外·商务招待 · 含住宿安排</div>
+          </div>
+          <div class="card-arrow">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <div class="card-divider"></div>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label class="detail-label">招待类型</label>
+                <input type="text" class="detail-input" value="商务招待（异地）" disabled>
+              </div>
+              <div class="detail-field">
+                <label class="detail-label"><span class="required">*</span> 招待对象</label>
+                <input type="text" class="detail-input" placeholder="如：XX公司 张总等4人（异地）">
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label"><span class="required">*</span> 招待事由</label>
+                <input type="text" class="detail-input" placeholder="如：邀请XX供应商来清远进行年度合同谈判">
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label"><span class="required">*</span> 招待人数</label>
+                  <input type="number" class="detail-input" placeholder="4" min="1" style="text-align:center;">
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">陪同人数</label>
+                  <input type="number" class="detail-input" placeholder="≤4人（对等）" min="0" style="text-align:center;">
+                </div>
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label">陪同人员</label>
+                <div class="tag-wrapper" onclick="event.stopPropagation()">
+                  <input type="text" class="tag-input" placeholder="回车添加">
+                </div>
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label">用餐标准</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="≤300" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">/人·次</span>
+                  </div>
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">住宿安排</label>
+                  <select class="detail-select">
+                    <option value="" disabled>请选择</option>
+                    <option>单间</option>
+                    <option>标准间</option>
+                    <option>无需住宿</option>
+                  </select>
+                </div>
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label">住宿标准</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="参照差旅标准" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">/间·天</span>
+                  </div>
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">纪念品</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="≤300" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">/人·次</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label">用车安排</label>
+                <select class="detail-select">
+                  <option value="" disabled>请选择</option>
+                  <option>公司自有车辆</option>
+                  <option>租赁资质合格汽车租赁公司</option>
+                  <option>网约车</option>
+                  <option>无需用车</option>
+                </select>
+              </div>
+              <div class="detail-field">
+                <label class="detail-label">预计总费用</label>
+                <div class="amount-input-wrapper">
+                  <span class="amount-prefix">¥</span>
+                  <input type="number" class="detail-input has-suffix" placeholder="0" min="0" step="0.01" style="padding-left:26px;">
+                  <span class="amount-suffix">元</span>
+                </div>
+              </div>
+            </div>
+            <div class="info-box warning">
+              <span class="info-icon">⚠️</span> 住宿参照《差旅费管理办法》同城市相应级别；严禁公车私用
+            </div>
+            <div class="info-box checklist">
+              <span class="info-icon">✅</span> 需准备：事前审批单、住宿安排说明、用车审批、费用明细清单、支付凭证
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-secondary">保存草稿</button>
+              <button class="btn btn-primary" onclick="event.stopPropagation();submitApproval(this.closest('.scenario-card'))">提交审批</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: 公务接待 -->
+      <div class="scenario-card">
+        <div class="card-summary" onclick="toggleCard(this.closest('.scenario-card'))">
+          <div class="card-icon purple">🏛️</div>
+          <div class="card-info">
+            <div class="card-title">公务接待</div>
+            <div class="card-subtitle">党政机关/事业单位公务来访</div>
+          </div>
+          <div class="card-arrow">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <div class="card-divider"></div>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label class="detail-label">招待类型</label>
+                <input type="text" class="detail-input" value="公务接待" disabled>
+              </div>
+              <div class="detail-field">
+                <label class="detail-label"><span class="required">*</span> 接待单位</label>
+                <input type="text" class="detail-input" placeholder="来访单位全称">
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label"><span class="required">*</span> 来访事由</label>
+                <input type="text" class="detail-input" placeholder="公务来访原因及工作内容">
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label"><span class="required">*</span> 来访人员</label>
+                  <input type="text" class="detail-input" placeholder="姓名及职务">
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label"><span class="required">*</span> 人数</label>
+                  <input type="number" class="detail-input" placeholder="0" min="1" style="text-align:center;">
+                </div>
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label">接待标准</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="0" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">/人·次</span>
+                  </div>
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">审批人</label>
+                  <input type="text" class="detail-input" placeholder="审批人姓名">
+                </div>
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label">备注</label>
+                <textarea class="detail-textarea" rows="2" placeholder="其他需要说明的事项"></textarea>
+              </div>
+            </div>
+            <div class="info-box checklist">
+              <span class="info-icon">✅</span> 需准备：事前审批单、来访函件、费用明细清单、支付凭证
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-secondary">保存草稿</button>
+              <button class="btn btn-primary" onclick="event.stopPropagation();submitApproval(this.closest('.scenario-card'))">提交审批</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: 团队聚餐 -->
+      <div class="scenario-card">
+        <div class="card-summary" onclick="toggleCard(this.closest('.scenario-card'))">
+          <div class="card-icon orange">🍽️</div>
+          <div class="card-info">
+            <div class="card-title">团队聚餐</div>
+            <div class="card-subtitle">部门/团队内部聚餐</div>
+          </div>
+          <div class="card-arrow">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <div class="card-divider"></div>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label class="detail-label">招待类型</label>
+                <input type="text" class="detail-input" value="团队聚餐" disabled>
+              </div>
+              <div class="detail-field">
+                <label class="detail-label"><span class="required">*</span> 部门</label>
+                <select class="detail-select">
+                  <option value="" disabled>请选择</option>
+                  <option>技术部</option>
+                  <option>产品部</option>
+                  <option>市场部</option>
+                  <option>销售部</option>
+                  <option>综合部</option>
+                </select>
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label"><span class="required">*</span> 聚餐事由</label>
+                <input type="text" class="detail-input" placeholder="如：项目庆功 / 团队建设">
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label"><span class="required">*</span> 参与人数</label>
+                  <input type="number" class="detail-input" placeholder="0" min="1" style="text-align:center;">
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">人均标准</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="0" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">/人</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label">参与人员</label>
+                <div class="tag-wrapper" onclick="event.stopPropagation()">
+                  <input type="text" class="tag-input" placeholder="回车添加">
+                </div>
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label">聚餐地点</label>
+                  <input type="text" class="detail-input" placeholder="餐厅名称">
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">总费用</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="0.00" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">元</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="info-box checklist">
+              <span class="info-icon">✅</span> 需准备：聚餐事由说明、参与人员名单、费用明细清单
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-secondary">保存草稿</button>
+              <button class="btn btn-primary" onclick="event.stopPropagation();submitApproval(this.closest('.scenario-card'))">提交审批</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: 礼品赠送 -->
+      <div class="scenario-card">
+        <div class="card-summary" onclick="toggleCard(this.closest('.scenario-card'))">
+          <div class="card-icon rose">🎁</div>
+          <div class="card-info">
+            <div class="card-title">礼品赠送</div>
+            <div class="card-subtitle">商务礼品/纪念品</div>
+          </div>
+          <div class="card-arrow">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <div class="card-divider"></div>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label class="detail-label">招待类型</label>
+                <input type="text" class="detail-input" value="礼品赠送" disabled>
+              </div>
+              <div class="detail-field">
+                <label class="detail-label"><span class="required">*</span> 赠送对象</label>
+                <input type="text" class="detail-input" placeholder="客户/单位/个人名称">
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label"><span class="required">*</span> 赠送事由</label>
+                <input type="text" class="detail-input" placeholder="如：节日慰问 / 合作感谢">
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label">数量</label>
+                  <input type="number" class="detail-input" placeholder="0" min="1" style="text-align:center;">
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">单价</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="0" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">/件</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label">礼品类型</label>
+                  <select class="detail-select">
+                    <option value="" disabled>请选择</option>
+                    <option>纪念品</option>
+                    <option>定制礼品</option>
+                    <option>鲜花</option>
+                    <option>食品礼盒</option>
+                    <option>其他</option>
+                  </select>
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label">总金额</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="0.00" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">元</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="info-box warning">
+              <span class="info-icon">⚠️</span> 单笔金额超过 500 元需事前审批
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-secondary">保存草稿</button>
+              <button class="btn btn-primary">提交审批</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6: 其他 -->
+      <div class="scenario-card">
+        <div class="card-summary" onclick="toggleCard(this.closest('.scenario-card'))">
+          <div class="card-icon teal">📝</div>
+          <div class="card-info">
+            <div class="card-title">其他</div>
+            <div class="card-subtitle">其他招待场景</div>
+          </div>
+          <div class="card-arrow">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <div class="card-divider"></div>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label class="detail-label">招待类型</label>
+                <select class="detail-select">
+                  <option value="" disabled>请选择</option>
+                  <option>会议招待</option>
+                  <option>活动赞助</option>
+                  <option>差旅招待</option>
+                  <option>其他</option>
+                </select>
+              </div>
+              <div class="detail-field">
+                <label class="detail-label"><span class="required">*</span> 场景名称</label>
+                <input type="text" class="detail-input" placeholder="请描述场景名称">
+              </div>
+              <div class="detail-field full-width">
+                <label class="detail-label"><span class="required">*</span> 详细说明</label>
+                <textarea class="detail-textarea" rows="3" placeholder="请详细描述招待事由、对象、费用明细等"></textarea>
+              </div>
+              <div class="detail-row two">
+                <div class="detail-field">
+                  <label class="detail-label">对方单位</label>
+                  <input type="text" class="detail-input" placeholder="相关单位名称">
+                </div>
+                <div class="detail-field">
+                  <label class="detail-label"><span class="required">*</span> 费用金额</label>
+                  <div class="amount-input-wrapper">
+                    <span class="amount-prefix">¥</span>
+                    <input type="number" class="detail-input has-suffix" placeholder="0.00" min="0" step="0.01" style="padding-left:26px;">
+                    <span class="amount-suffix">元</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-secondary">保存草稿</button>
+              <button class="btn btn-primary" onclick="event.stopPropagation();submitApproval(this.closest('.scenario-card'))">提交审批</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Amount Summary -->
+    <div class="amount-summary">
+      <span class="amount-summary-label">合计金额</span>
+      <span class="amount-summary-currency">¥</span>
+      <span class="amount-summary-value">1,280.00</span>
+    </div>
+
+    <!-- Global Actions -->
+    <div class="action-bar">
+      <button class="btn btn-ghost">取消</button>
+      <button class="btn btn-secondary">批量保存</button>
+      <button class="btn btn-primary">批量提交审批</button>
+    </div>
+
+    <!-- Approval Modal -->
+    <div id="approvalModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
+      <div style="background:white;border-radius:var(--radius-lg);max-width:560px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg);">
+        <div style="padding:var(--spacing-xl);border-bottom:1px solid var(--color-border);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:var(--font-size-lg);font-weight:var(--font-weight-semibold);color:var(--color-text-primary);">提交审批确认</div>
+            <div style="font-size:var(--font-size-xs);color:var(--color-text-secondary);margin-top:4px;">请确认以下信息无误后提交</div>
+          </div>
+          <div onclick="closeApproval()" style="cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);transition:background var(--transition);" onmouseover="this.style.background='var(--color-bg-hover)'" onmouseout="this.style.background='transparent'">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div id="approvalContent" style="padding:var(--spacing-xl);"></div>
+        <div style="display:flex;gap:var(--spacing-md);padding:var(--spacing-lg) var(--spacing-xl);border-top:1px solid var(--color-border);">
+          <button class="btn btn-secondary" onclick="closeApproval()" style="flex:1;">取消</button>
+          <button class="btn btn-primary" onclick="confirmSubmit()" style="flex:1;">确认提交</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

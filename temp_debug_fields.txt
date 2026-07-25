@@ -1,0 +1,15 @@
+reception_date: 2026-02-27 00:00:00
+invoice_date: None
+invoice_amount: None
+actual_amount: 1050.0
+guest_count: 5
+companion_count: 2
+handler: 郭睿|21230208
+reception_type: 其他公务招待
+reimbursement_no: YWZD-QY-20260227001
+invoice_no: None
+department: 广东公司\清远分公司\办公室（党委办公室）
+host_unit: 广东广信君达（清远）律师事务所
+per_person_amount: None
+alcohol_price: None
+souvenir_amount: 0.0

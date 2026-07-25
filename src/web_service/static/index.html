@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业务招待费智能审核系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- 登录/注册页面 -->
+    <div id="auth-page" class="page">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1>业务招待费智能审核系统</h1>
+                <p class="subtitle">OCR 识别 + 规则审核 + 智能报告</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="switchAuthTab('login')">登录</button>
+                <button class="tab-btn" onclick="switchAuthTab('register')">注册</button>
+            </div>
+
+            <!-- 登录表单 -->
+            <form id="login-form" class="auth-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="login-username">用户名</label>
+                    <input type="text" id="login-username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">密码</label>
+                    <input type="password" id="login-password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary">登录</button>
+                <div id="login-error" class="error-message"></div>
+            </form>
+
+            <!-- 注册表单 -->
+            <form id="register-form" class="auth-form hidden" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="register-username">用户名</label>
+                    <input type="text" id="register-username" required minlength="2" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label for="register-password">密码</label>
+                    <input type="password" id="register-password" required minlength="6" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm">确认密码</label>
+                    <input type="password" id="register-confirm" required minlength="6" maxlength="100">
+                </div>
+                <button type="submit" class="btn btn-primary">注册</button>
+                <div id="register-error" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 主应用页面 -->
+    <div id="app-page" class="page hidden">
+        <!-- 侧边栏 -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>智能审核系统</h2>
+            </div>
+
+            <div class="user-info">
+                <span id="username-display"></span>
+                <span id="role-badge" class="badge"></span>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="switchTab('tasks')">
+                    <span class="nav-icon">📋</span>
+                    <span>任务管理</span>
+                </li>
+                <li class="nav-item" onclick="switchTab('upload')">
+                    <span class="nav-icon">📤</span>
+                    <span>文件上传</span>
+                </li>
+                <li class="nav-item" onclick="switchTab('reports')">
+                    <span class="nav-icon">📊</span>
+                    <span>审核报告</span>
+                </li>
+                <li class="nav-item" onclick="switchTab('rules')">
+                    <span class="nav-icon">⚙️</span>
+                    <span>审核标准</span>
+                </li>
+                <li class="nav-item admin-only" onclick="switchTab('sync')">
+                    <span class="nav-icon">🔄</span>
+                    <span>制度同步</span>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-logout" onclick="handleLogout()">退出登录</button>
+            </div>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 任务管理 -->
+            <section id="tasks-tab" class="tab-content active">
+                <div class="tab-header">
+                    <h2>任务管理</h2>
+                    <button class="btn btn-secondary" onclick="refreshTasks()">刷新</button>
+                </div>
+                <div id="tasks-list" class="tasks-container">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+
+            <!-- 文件上传 -->
+            <section id="upload-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>文件上传</h2>
+                </div>
+                <div class="upload-container">
+                    <div id="drop-zone" class="drop-zone">
+                        <div class="upload-icon">📁</div>
+                        <h3>拖拽文件到此处</h3>
+                        <p>或点击选择文件</p>
+                        <p class="upload-hint">支持 PDF、JPG、PNG、XML、DOCX、XLSX 格式</p>
+                        <input type="file" id="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.xml,.docx,.xlsx" style="display: none;">
+                    </div>
+                    <div id="file-list" class="file-list"></div>
+                    <button id="upload-btn" class="btn btn-primary" onclick="uploadFiles()" disabled>开始上传</button>
+                </div>
+            </section>
+
+            <!-- 审核报告 -->
+            <section id="reports-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>审核报告</h2>
+                </div>
+                <div id="report-container" class="report-container">
+                    <div class="empty-state">
+                        <p>选择一个已完成的任务查看审核报告</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 规则管理 -->
+            <section id="rules-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>审核规则管理</h2>
+                    <button class="btn btn-secondary" onclick="refreshRules()">刷新</button>
+                    <button class="btn btn-primary" onclick="showAddRuleModal()">新增规则</button>
+                </div>
+                <div id="rules-list" class="rules-container">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+
+            <!-- 制度同步 -->
+            <section id="sync-tab" class="tab-content">
+                <div class="tab-header">
+                    <h2>制度文件同步</h2>
+                    <button class="btn btn-secondary" onclick="triggerSync()">手动同步</button>
+                </div>
+                <div id="sync-status" class="sync-container">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 任务详情模态框 -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>任务详情</h3>
+                <button class="close-btn" onclick="closeModal('task-modal')">&times;</button>
+            </div>
+            <div id="task-details" class="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- 新增规则模态框 -->
+    <div id="rule-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新增审核规则</h3>
+                <button class="close-btn" onclick="closeModal('rule-modal')">&times;</button>
+            </div>
+            <form id="rule-form" class="modal-body" onsubmit="addRule(event)">
+                <div class="form-group">
+                    <label for="rule-category">规则分类</label>
+                    <select id="rule-category" required>
+                        <option value="单据完整性">单据完整性</option>
+                        <option value="金额标准">金额标准</option>
+                        <option value="招待类型与陪同人数">招待类型与陪同人数</option>
+                        <option value="禁止性规定">禁止性规定</option>
+                        <option value="报销合规">报销合规</option>
+                        <option value="交叉稽核">交叉稽核</option>
+                        <option value="校对规则">校对规则</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="rule-name">规则名称</label>
+                    <input type="text" id="rule-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="rule-clause">条款引用</label>
+                    <input type="text" id="rule-clause" placeholder="如：管理办法 第九条">
+                </div>
+                <div class="form-group">
+                    <label for="rule-level">风险等级</label>
+                    <select id="rule-level" required>
+                        <option value="高">高</option>
+                        <option value="中">中</option>
+                        <option value="低">低</option>
+                        <option value="提示">提示</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="rule-description">规则描述</label>
+                    <textarea id="rule-description" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

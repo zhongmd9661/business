@@ -1,0 +1,4 @@
+name: generate-rules-skill
+description: "将 00规则制度_md 的规则文档生成为 Claude Code skill，放到 skill 文件夹"
+status: active
+created: 2026-06-11

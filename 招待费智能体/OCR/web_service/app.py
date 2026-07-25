@@ -27,7 +27,7 @@ app.add_middleware(
 )
 
 # 静态文件 - 使用相对路径
-static_dir = Path(__file__).parent.parent / "ui"
+static_dir = Path(__file__).parent.parent.parent / "ui"
 app.mount("/ui", StaticFiles(directory=str(static_dir)), name="ui")
 
 # Web页面路由

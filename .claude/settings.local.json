@@ -4,7 +4,6 @@
   },
   "permissions": {
     "allow": [
-      "*",
       "Bash(python *)",
       "Bash(pip install *)",
       "Bash(pytest *)",

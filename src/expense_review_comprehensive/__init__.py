@@ -5,6 +5,11 @@ from .checkers import ComprehensiveChecker
 from .reporter import ComprehensiveReporter
 from .notifier import WebhookNotifier
 
+try:
+    from .llm_extractor import LlmFieldExtractor
+except ImportError:
+    LlmFieldExtractor = None
+
 __all__ = [
     "Finding",
     "ExtractedFields",
@@ -13,6 +18,7 @@ __all__ = [
     "BatchFinding",
     "BatchReviewReport",
     "FieldExtractor",
+    "LlmFieldExtractor",
     "ComprehensiveChecker",
     "ComprehensiveReporter",
     "WebhookNotifier",

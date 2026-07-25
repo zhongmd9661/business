@@ -1,0 +1,4 @@
+name: web-service
+description: "构建 Web 后端服务，提供用户登录、文件上传、OCR 识别、规则审核的完整 API"
+status: active
+created: 2026-07-07

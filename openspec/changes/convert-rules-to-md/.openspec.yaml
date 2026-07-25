@@ -1,0 +1,4 @@
+name: convert-rules-to-md
+description: "将 00规则制度 目录下的 docx 规则文档转换为 Markdown，输出到 00规则制度_md 文件夹"
+status: active
+created: 2026-06-11

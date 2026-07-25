@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>业务招待申请单生成</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    font-size: 14px;
+}
+
+/* 顶部栏 */
+.topbar {
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.topbar .title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+.topbar .actions {
+    display: flex;
+    gap: 8px;
+}
+.btn {
+    padding: 6px 16px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    background: #fff;
+    color: #333;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn:hover { border-color: #1890ff; color: #1890ff; }
+.btn-primary {
+    background: #1890ff;
+    border-color: #1890ff;
+    color: #fff;
+}
+.btn-primary:hover { background: #40a9ff; border-color: #40a9ff; }
+.btn-success {
+    background: #52c41a;
+    border-color: #52c41a;
+    color: #fff;
+}
+.btn-success:hover { background: #73d13d; }
+.btn-danger {
+    background: #ff4d4f;
+    border-color: #ff4d4f;
+    color: #fff;
+}
+.btn-danger:hover { background: #ff7875; }
+
+/* 主体布局 */
+.main {
+    display: flex;
+    height: calc(100vh - 56px);
+}
+
+/* 左侧模板 */
+.sidebar {
+    width: 300px;
+    background: #fff;
+    border-right: 1px solid #e8e8e8;
+    overflow-y: auto;
+    padding: 16px;
+    flex-shrink: 0;
+}
+.sidebar h3 {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.template-card {
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafafa;
+}
+.template-card:hover {
+    border-color: #1890ff;
+    background: #f0f7ff;
+}
+.template-card.active {
+    border-color: #1890ff;
+    background: #e6f4ff;
+    box-shadow: 0 0 0 2px rgba(24,144,255,0.1);
+}
+.template-card .tc-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.template-card .tc-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.template-card .tc-icon.blue { background: #e6f4ff; }
+.template-card .tc-icon.green { background: #f6ffed; }
+.template-card .tc-icon.purple { background: #f9f0ff; }
+.template-card .tc-icon.orange { background: #fff7e6; }
+.template-card .tc-icon.teal { background: #e6fffb; }
+.template-card .tc-icon.rose { background: #fff1f0; }
+.template-card .tc-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+.template-card .tc-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-top: 2px;
+}
+.tc-tag.external { background: #e6f4ff; color: #1890ff; }
+.tc-tag.internal { background: #f6ffed; color: #52c41a; }
+.template-card .tc-desc {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+}
+
+/* 右侧编辑器 */
+.editor {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+.editor-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #999;
+}
+.editor-empty .empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.3;
+}
+.editor-empty p {
+    font-size: 15px;
+}
+
+/* 表单 */
+.form-container { max-width: 900px; }
+.form-section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.form-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+    align-items: center;
+}
+.form-row:last-child { margin-bottom: 0; }
+.form-label {
+    font-size: 13px;
+    color: #666;
+    text-align: right;
+}
+.form-label .req {
+    color: #ff4d4f;
+    margin-left: 2px;
+}
+.form-input, .form-select, .form-textarea {
+    padding: 6px 10px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #333;
+    background: #fff;
+    transition: border-color 0.2s;
+    width: 100%;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #1890ff;
+    box-shadow: 0 0 0 2px rgba(24,144,255,0.1);
+}
+.form-textarea {
+    resize: vertical;
+    min-height: 50px;
+    font-family: inherit;
+}
+.form-readonly {
+    background: #f5f5f5;
+    color: #999;
+    border-color: #e8e8e8;
+    font-weight: 600;
+}
+.form-highlight {
+    color: #1890ff;
+    font-weight: 600;
+    font-size: 14px;
+}
+.form-full {
+    grid-column: 1 / -1;
+}
+
+/* 校验条 */
+.validation-bar {
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.validation-bar .v-icon {
+    font-size: 20px;
+}
+.validation-bar .v-text {
+    font-size: 13px;
+    color: #666;
+}
+.validation-bar.pass { border-left: 3px solid #52c41a; }
+.validation-bar.fail { border-left: 3px solid #ff4d4f; }
+.validation-bar.warn { border-left: 3px solid #faad14; }
+
+.validation-messages {
+    margin-bottom: 16px;
+}
+.validation-messages .msg {
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+.validation-messages .msg.error {
+    background: #fff2f0;
+    border: 1px solid #ffccc7;
+    color: #cf1322;
+}
+.validation-messages .msg.warning {
+    background: #fffbe6;
+    border: 1px solid #ffe58f;
+    color: #d48806;
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部栏 -->
+<div class="topbar">
+    <div class="title">📋 业务招待申请单生成</div>
+    <div class="actions" id="toolbar" style="display:none;">
+        <button class="btn" onclick="resetForm()">🔄 重置</button>
+        <button class="btn btn-primary" onclick="previewForm()">👁️ 预览</button>
+        <button class="btn btn-success" onclick="downloadJSON()">📥 JSON</button>
+        <button class="btn btn-primary" onclick="downloadHTML()">🖨️ 下载HTML</button>
+    </div>
+</div>
+
+<!-- 主体 -->
+<div class="main">
+    <!-- 左侧模板 -->
+    <div class="sidebar">
+        <h3>选择场景模板</h3>
+        <div class="template-list" id="templateList"></div>
+    </div>
+
+    <!-- 右侧编辑器 -->
+    <div class="editor" id="editor">
+        <div class="editor-empty">
+            <div>
+                <div class="empty-icon">📋</div>
+                <p>从左侧选择一个场景模板<br>系统将自动预填申请单信息</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 预览弹窗 -->
+<div id="previewModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:8px;width:95vw;height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #e8e8e8;">
+            <span style="font-size:15px;font-weight:600;">📄 申请单预览</span>
+            <button class="btn" onclick="closePreview()">关闭</button>
+        </div>
+        <iframe id="previewFrame" style="flex:1;border:none;"></iframe>
+        <div style="padding:10px 20px;border-top:1px solid #e8e8e8;display:flex;justify-content:flex-end;gap:8px;">
+            <button class="btn" onclick="closePreview()">关闭</button>
+            <button class="btn btn-primary" onclick="printPreview()">🖨️ 打印</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentForm = null;
+let currentTemplate = null;
+
+// 加载模板列表
+async function loadTemplates() {
+    const res = await fetch('/api/standards/templates');
+    const templates = await res.json();
+    const list = document.getElementById('templateList');
+    list.innerHTML = templates.map(t => `
+        <div class="template-card" data-id="${t.id}" onclick="selectTemplate('${t.id}')">
+            <div class="tc-header">
+                <div class="tc-icon ${t.icon_class}">${t.icon}</div>
+                <div>
+                    <div class="tc-name">${t.title}</div>
+                    <span class="tc-tag ${t.category === '对外业务招待' ? 'external' : 'internal'}">${t.category} · ${t.reception_type}</span>
+                </div>
+            </div>
+            <div class="tc-desc">点击加载预填示例</div>
+        </div>
+    `).join('');
+}
+
+// 选择模板
+async function selectTemplate(id) {
+    document.querySelectorAll('.template-card').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.template-card[data-id="${id}"]`)?.classList.add('active');
+
+    const res = await fetch(`/api/standards/templates/${id}`);
+    currentTemplate = await res.json();
+
+    const formRes = await fetch(`/api/application-form/load/${id}`);
+    currentForm = await formRes.json();
+
+    document.getElementById('toolbar').style.display = 'flex';
+    renderEditor(currentForm);
+}
+
+// 渲染编辑器
+function renderEditor(form) {
+    document.getElementById('editor').innerHTML = `
+        <div class="form-container">
+            <div style="background:#e6f4ff;border:1px solid #91d5ff;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#0050b3;">
+                💡 点击字段即可编辑，灰色背景为只读字段（系统自动计算）
+            </div>
+            ${renderSection(form, '📋 基本信息', [
+                { key: 'application_no', label: '申请单号', type: 'readonly', value: form.application_no },
+                { key: 'applicant', label: '申请人', type: 'text', value: form.applicant, req: true },
+                { key: 'department', label: '申请部门', type: 'text', value: form.department, req: true },
+                { key: 'position', label: '职务/职级', type: 'select', value: form.position, options: ['省管中层','市管中层','其他人员'], req: true },
+                { key: 'application_date', label: '申请日期', type: 'date', value: form.application_date, req: true },
+            ])}
+            ${renderSection(form, '🍽️ 招待信息', [
+                { key: 'reception_type', label: '招待类型', type: 'select', value: form.reception_type, options: ['商务招待','外事招待','其他公务招待','内部业务招待','工作餐'], req: true },
+                { key: 'reception_category', label: '招待类别', type: 'select', value: form.reception_category, options: ['对外业务招待','内部业务招待'], req: true },
+                { key: 'reason', label: '招待事由', type: 'textarea', value: form.reason, req: true, full: true },
+                { key: 'guest_info', label: '招待对象', type: 'text', value: form.guest_info, req: true },
+                { key: 'guest_count', label: '招待人数', type: 'number', value: form.guest_count, req: true },
+                { key: 'date', label: '招待日期', type: 'date', value: form.date, req: true },
+                { key: 'time_period', label: '用餐时段', type: 'select', value: form.time_period, options: ['早餐','午餐','晚餐'], req: true },
+                { key: 'venue', label: '用餐地点', type: 'text', value: form.venue, req: true, full: true },
+                { key: 'is_holiday', label: '是否节假日', type: 'boolean', value: form.is_holiday },
+            ])}
+            ${renderSection(form, '👥 陪同人员', [
+                { key: 'companion_list', label: '陪同人员', type: 'textarea', value: form.companion_list, req: true, full: true },
+                { key: 'companion_count', label: '陪同人数', type: 'number', value: form.companion_count, req: true },
+                { key: 'companion_limit_info', label: '陪同人数规定', type: 'readonly', value: form.companion_limit_info },
+            ])}
+            ${renderSection(form, '💰 费用预算', [
+                { key: 'per_person_limit', label: '人均标准', type: 'readonly', value: form.per_person_limit },
+                { key: 'per_person_actual', label: '人均金额（元）', type: 'number', value: form.per_person_actual, req: true },
+                { key: 'total_amount', label: '预计总金额（元）', type: 'readonly', value: form.total_amount },
+                { key: 'accommodation', label: '住宿安排', type: 'textarea', value: form.accommodation, full: true },
+                { key: 'transport', label: '用车安排', type: 'textarea', value: form.transport, full: true },
+                { key: 'alcohol', label: '酒水情况', type: 'select', value: form.alcohol, options: ['无酒水','白酒','红酒','白酒+红酒'], req: true },
+                { key: 'alcohol_detail', label: '酒水明细', type: 'textarea', value: form.alcohol_detail, full: true },
+                { key: 'souvenir', label: '纪念品', type: 'select', value: form.souvenir, options: ['无纪念品','有纪念品'], req: true },
+                { key: 'souvenir_detail', label: '纪念品明细', type: 'textarea', value: form.souvenir_detail, full: true },
+            ])}
+            ${renderSection(form, '✅ 审批信息', [
+                { key: 'pre_approval', label: '事前审批', type: 'select', value: form.pre_approval, options: ['已审批','待审批','紧急后补'], req: true },
+                { key: 'approver', label: '审批人', type: 'text', value: form.approver },
+                { key: 'approval_opinion', label: '审批意见', type: 'textarea', value: form.approval_opinion, full: true },
+                { key: 'attachment_notes', label: '附件说明', type: 'textarea', value: form.attachment_notes, full: true },
+            ])}
+            <div id="validationBar" style="display:none;"></div>
+            <div id="validationMsgs" class="validation-messages"></div>
+        </div>
+    `;
+
+    document.querySelectorAll('#editor [data-key]').forEach(el => {
+        el.addEventListener('input', onFieldChange);
+        el.addEventListener('change', onFieldChange);
+    });
+}
+
+function renderSection(form, title, fields) {
+    return `
+        <div class="form-section">
+            <div class="form-section-title">${title}</div>
+            ${fields.map(f => {
+                const val = f.value ?? '';
+                const isReadonly = f.type === 'readonly';
+                const isRequired = f.req ? '<span class="req">*</span>' : '';
+                const fullClass = f.full ? ' form-full' : '';
+
+                if (f.type === 'textarea') {
+                    return `<div class="form-row${fullClass}">
+                        <div class="form-label">${f.label}${isRequired}</div>
+                        <textarea class="form-textarea ${isReadonly ? 'form-readonly' : ''}" data-key="${f.key}" rows="3" ${isReadonly ? 'readonly' : ''}>${val}</textarea>
+                    </div>`;
+                }
+                if (f.type === 'select') {
+                    return `<div class="form-row${fullClass}">
+                        <div class="form-label">${f.label}${isRequired}</div>
+                        <select class="form-select" data-key="${f.key}" ${isReadonly ? 'readonly' : ''}>
+                            <option value="">请选择</option>
+                            ${(f.options || []).map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}
+                        </select>
+                    </div>`;
+                }
+                if (f.type === 'boolean') {
+                    return `<div class="form-row${fullClass}">
+                        <div class="form-label">${f.label}${isRequired}</div>
+                        <select data-key="${f.key}">
+                            <option value="false" ${!val ? 'selected' : ''}>否</option>
+                            <option value="true" ${val ? 'selected' : ''}>是</option>
+                        </select>
+                    </div>`;
+                }
+                const inputType = f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : 'text');
+                return `<div class="form-row${fullClass}">
+                    <div class="form-label">${f.label}${isRequired}</div>
+                    <input type="${inputType}" class="form-input ${isReadonly ? 'form-readonly' : ''}" data-key="${f.key}" value="${val}" ${isReadonly ? 'readonly' : ''}>
+                </div>`;
+            }).join('')}
+        </div>
+    `;
+}
+
+// 字段变更
+function onFieldChange() {
+    if (!currentForm) return;
+
+    document.querySelectorAll('[data-key]').forEach(el => {
+        const key = el.dataset.key;
+        const val = el.value;
+        if (el.type === 'number') {
+            currentForm[key] = val ? parseFloat(val) : (el.dataset.type === 'number' ? 0 : '');
+        } else {
+            currentForm[key] = val;
+        }
+    });
+
+    if (currentForm.per_person_actual && currentForm.guest_count) {
+        currentForm.total_amount = currentForm.per_person_actual * currentForm.guest_count;
+    }
+
+    validate();
+}
+
+// 校验
+async function validate() {
+    const bar = document.getElementById('validationBar');
+    const msgs = document.getElementById('validationMsgs');
+
+    const res = await fetch('/api/application-form/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentForm),
+    });
+    const report = await res.json();
+
+    bar.style.display = 'block';
+    msgs.innerHTML = '';
+
+    if (report.passed) {
+        bar.className = 'validation-bar pass';
+        bar.innerHTML = `<span class="v-icon">✅</span><span class="v-text">校验通过 — 所有必填字段已填写，金额标准符合要求</span>`;
+        if (report.warnings.length > 0) {
+            msgs.innerHTML = report.warnings.map(w => `<div class="msg warning">⚠️ ${w}</div>`).join('');
+        }
+    } else {
+        bar.className = 'validation-bar fail';
+        bar.innerHTML = `<span class="v-icon">❌</span><span class="v-text">校验失败</span>`;
+        msgs.innerHTML = report.errors.map(e => `<div class="msg error">❌ ${e}</div>`).join('');
+    }
+}
+
+// 预览
+async function previewForm() {
+    const res = await fetch('/api/application-form/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentForm),
+    });
+    const html = await res.text();
+    document.getElementById('previewFrame').srcdoc = html;
+    document.getElementById('previewModal').style.display = 'flex';
+}
+
+function closePreview() {
+    document.getElementById('previewModal').style.display = 'none';
+}
+
+function printPreview() {
+    document.getElementById('previewFrame').contentWindow.print();
+}
+
+// 下载
+function downloadJSON() {
+    const blob = new Blob([JSON.stringify(currentForm, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentForm.application_no || '申请单'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+async function downloadHTML() {
+    const res = await fetch('/api/application-form/html', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentForm),
+    });
+    const html = await res.text();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentForm.application_no || '申请单'}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function resetForm() {
+    if (currentTemplate) selectTemplate(currentTemplate.id);
+}
+
+loadTemplates();
+</script>
+</body>
+</html>

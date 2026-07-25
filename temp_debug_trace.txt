@@ -1,0 +1,35 @@
+
+===== Processing Table 0 =====
+  Row 0: HORIZONTAL KV (4 pairs)
+  Row 1: HORIZONTAL KV (4 pairs)
+  Row 2: HORIZONTAL KV (3 pairs)
+  Row 3: HORIZONTAL KV (3 pairs)
+  Row 4: HORIZONTAL KV (1 pairs)
+  Row 5 (1 non-empty): SKIP header
+
+===== Processing Table 1 =====
+  Row 0 (1 non-empty): SKIP header
+  Row 1: HORIZONTAL KV (3 pairs)
+  Row 2: HORIZONTAL KV (3 pairs)
+  Row 3: HORIZONTAL KV (3 pairs)
+  Row 4: HORIZONTAL KV (1 pairs)
+  Row 5: HORIZONTAL KV (3 pairs)
+  Row 6: HORIZONTAL KV (2 pairs)
+  Row 7: HORIZONTAL KV (1 pairs)
+
+===== Processing Table 2 =====
+  Row 0 (1 non-empty): SKIP header
+  Row 1: HORIZONTAL KV (2 pairs)
+  Row 2: HORIZONTAL KV (1 pairs)
+
+===== Processing Table 3 =====
+  Row 0 (1 non-empty): SKIP header
+  Row 1: HORIZONTAL KV (3 pairs)
+
+===== FINAL KEY CHECK =====
+  接待日期: '2026-02-27'
+  招待类型: '其他公务'
+  来宾单位: '广东广信君达（清远）律师事务所'
+  来源系统单号: 'YWZD-QY-20260227001'
+  预计支出金额: '1,050.00'
+  宴请支出: '1,050.00'

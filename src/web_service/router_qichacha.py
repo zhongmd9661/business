@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File
+from loguru import logger
 from PIL import Image
 
 router = APIRouter()
@@ -113,17 +114,28 @@ def _analyze_with_vision(image_b64: str, image_format: str = "png") -> dict:
         elif "```" in content:
             content = content.split("```")[1].split("```")[0]
 
-        data = json.loads(content.strip())
+        # Try to find JSON object in the response
+        json_start = content.find('{')
+        json_end = content.rfind('}')
+        if json_start >= 0 and json_end > json_start:
+            json_str = content[json_start:json_end + 1]
+        else:
+            json_str = content.strip()
+
+        data = json.loads(json_str)
         return data
 
     except Exception as e:
+        import traceback
+        logger.error(f"企查查截图识别失败: {e}\n{traceback.format_exc()}")
         # Return a safe fallback — don't block if vision engine fails
         return {
             "company_name": "",
             "business_status": "无法识别",
             "risk_count": 0,
             "risk_summary": f"视觉识别引擎暂时不可用: {str(e)}",
-            "is_abnormal": False,  # Don't block if analysis fails
+            "is_abnormal": False,
             "recommendation": "分析服务暂时不可用，暂不限制提交。建议人工核对企业经营状态。",
+            "markdown_text": "",
             "_error": str(e)
         }

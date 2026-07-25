@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>业务招待申请单生成 - 效果预览</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    font-size: 14px;
+}
+.topbar {
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.topbar .title { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+.topbar .actions { display: flex; gap: 8px; }
+.btn {
+    padding: 6px 16px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    background: #fff;
+    color: #333;
+    font-size: 13px;
+    cursor: pointer;
+}
+.btn:hover { border-color: #1890ff; color: #1890ff; }
+.btn-primary { background: #1890ff; border-color: #1890ff; color: #fff; }
+.btn-primary:hover { background: #40a9ff; }
+.btn-success { background: #52c41a; border-color: #52c41a; color: #fff; }
+.btn-success:hover { background: #73d13d; }
+.main { display: flex; height: calc(100vh - 56px); }
+.sidebar {
+    width: 300px;
+    background: #fff;
+    border-right: 1px solid #e8e8e8;
+    overflow-y: auto;
+    padding: 16px;
+    flex-shrink: 0;
+}
+.sidebar h3 { font-size: 14px; color: #999; margin-bottom: 12px; font-weight: 500; }
+.template-list { display: flex; flex-direction: column; gap: 8px; }
+.template-card {
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafafa;
+}
+.template-card:hover { border-color: #1890ff; background: #f0f7ff; }
+.template-card.active {
+    border-color: #1890ff;
+    background: #e6f4ff;
+    box-shadow: 0 0 0 2px rgba(24,144,255,0.1);
+}
+.tc-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.tc-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+}
+.tc-icon.blue { background: #e6f4ff; }
+.tc-icon.green { background: #f6ffed; }
+.tc-icon.purple { background: #f9f0ff; }
+.tc-icon.orange { background: #fff7e6; }
+.tc-icon.teal { background: #e6fffb; }
+.tc-icon.rose { background: #fff1f0; }
+.tc-name { font-size: 14px; font-weight: 600; color: #333; }
+.tc-tag {
+    display: inline-block; font-size: 11px; padding: 1px 6px;
+    border-radius: 3px; margin-top: 2px;
+}
+.tc-tag.external { background: #e6f4ff; color: #1890ff; }
+.tc-tag.internal { background: #f6ffed; color: #52c41a; }
+.tc-desc { font-size: 12px; color: #999; margin-top: 4px; }
+.editor { flex: 1; overflow-y: auto; padding: 24px; }
+.editor-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; color: #999;
+}
+.editor-empty .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.3; }
+.editor-empty p { font-size: 15px; }
+.form-container { max-width: 900px; }
+.form-section {
+    background: #fff; border-radius: 8px; padding: 20px;
+    margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.form-section-title {
+    font-size: 15px; font-weight: 600; color: #333;
+    margin-bottom: 16px; padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; gap: 8px;
+}
+.form-row {
+    display: grid; grid-template-columns: 120px 1fr;
+    gap: 12px; margin-bottom: 14px; align-items: center;
+}
+.form-row:last-child { margin-bottom: 0; }
+.form-label { font-size: 13px; color: #666; text-align: right; }
+.form-label .req { color: #ff4d4f; margin-left: 2px; }
+.form-input, .form-select, .form-textarea {
+    padding: 6px 10px; border: 1px solid #d9d9d9;
+    border-radius: 4px; font-size: 13px; color: #333;
+    background: #fff; transition: border-color 0.2s; width: 100%;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none; border-color: #1890ff;
+    box-shadow: 0 0 0 2px rgba(24,144,255,0.1);
+}
+.form-textarea { resize: vertical; min-height: 50px; font-family: inherit; }
+.form-readonly { background: #f5f5f5; color: #999; border-color: #e8e8e8; font-weight: 600; }
+.form-highlight { color: #1890ff; font-weight: 600; font-size: 14px; }
+.form-full { grid-column: 1 / -1; }
+.validation-bar {
+    background: #fff; border-radius: 8px; padding: 12px 20px;
+    margin-bottom: 16px; display: flex; align-items: center;
+    gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.v-icon { font-size: 20px; }
+.v-text { font-size: 13px; color: #666; }
+.validation-bar.pass { border-left: 3px solid #52c41a; }
+.validation-bar.fail { border-left: 3px solid #ff4d4f; }
+.validation-bar.warn { border-left: 3px solid #faad14; }
+.validation-messages { margin-bottom: 16px; }
+.validation-messages .msg {
+    padding: 10px 14px; border-radius: 4px; margin-bottom: 6px; font-size: 13px;
+}
+.validation-messages .msg.error { background: #fff2f0; border: 1px solid #ffccc7; color: #cf1322; }
+.validation-messages .msg.warning { background: #fffbe6; border: 1px solid #ffe58f; color: #d48806; }
+.preview-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 1000;
+    align-items: center; justify-content: center;
+}
+.preview-modal.visible { display: flex; }
+.preview-content {
+    background: #fff; border-radius: 8px;
+    width: 95vw; height: 90vh; display: flex;
+    flex-direction: column; overflow: hidden;
+}
+.preview-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid #e8e8e8;
+}
+.preview-footer {
+    padding: 10px 20px; border-top: 1px solid #e8e8e8;
+    display: flex; justify-content: flex-end; gap: 8px;
+}
+.preview-body { flex: 1; overflow: auto; padding: 0; }
+.preview-body iframe { width: 100%; height: 100%; border: none; }
+.hint {
+    background: #e6f4ff; border: 1px solid #91d5ff; border-radius: 6px;
+    padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #0050b3;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="title">📋 业务招待申请单生成</div>
+    <div class="actions" id="toolbar" style="display:none;">
+        <button class="btn" onclick="resetForm()">🔄 重置</button>
+        <button class="btn btn-primary" onclick="previewForm()">👁️ 预览</button>
+        <button class="btn btn-success" onclick="downloadJSON()">📥 JSON</button>
+        <button class="btn btn-primary" onclick="downloadHTML()">🖨️ 下载HTML</button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="sidebar">
+        <h3>选择场景模板</h3>
+        <div class="template-list" id="templateList"></div>
+    </div>
+    <div class="editor" id="editor">
+        <div class="editor-empty">
+            <div>
+                <div class="empty-icon">📋</div>
+                <p>从左侧选择一个场景模板<br>系统将自动预填申请单信息</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="preview-modal" id="previewModal">
+    <div class="preview-content">
+        <div class="preview-header">
+            <span style="font-size:15px;font-weight:600;">📄 申请单预览</span>
+            <button class="btn" onclick="closePreview()">关闭</button>
+        </div>
+        <div class="preview-body"><iframe id="previewFrame"></iframe></div>
+        <div class="preview-footer">
+            <button class="btn" onclick="closePreview()">关闭</button>
+            <button class="btn btn-primary" onclick="printPreview()">🖨️ 打印</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// 内置模板数据（静态演示，无需服务器）
+const TEMPLATES = [
+    { id: "business_client", title: "客户商务洽谈宴请", icon: "🤝", icon_class: "blue", reception_type: "商务招待", category: "对外业务招待", desc: "在商业谈判或商业合作中招待客户、合资合作方",
+      example: { application_no: "JD202607200000", applicant: "张三", department: "综合部", position: "市管中层", application_date: "2026-07-20", reception_type: "商务招待", reception_category: "对外业务招待", reason: "洽谈XX项目合作意向", guest_info: "XX科技有限公司 张总等3人", guest_count: 3, date: "2026-07-25", time_period: "午餐", venue: "XX餐厅（非高档场所）", is_holiday: false, companion_list: "李经理（市管中层）\n王主管\n赵专员", companion_count: 3, companion_limit_info: "招待对象≤5人，陪餐可对等（依据：第十二条）", per_person_limit: "≤300元/人·次", per_person_actual: 280, total_amount: 840, accommodation: "", transport: "", alcohol: "红酒", alcohol_detail: "红酒 750ml × 1瓶", souvenir: "无纪念品", souvenir_detail: "", pre_approval: "已审批", approver: "李总", approval_opinion: "同意", attachment_notes: "事前审批单、费用明细清单、支付凭证、发票" } },
+    { id: "foreign_guest", title: "外宾接待宴请", icon: "🌐", icon_class: "purple", reception_type: "外事招待", category: "对外业务招待", desc: "招待外宾或其他外籍关系人员",
+      example: { application_no: "JD202607200001", applicant: "李四", department: "国际部", position: "省管中层", application_date: "2026-07-20", reception_type: "外事招待", reception_category: "对外业务招待", reason: "XX国合作方来访交流", guest_info: "XX国公司代表团 李XX等5人", guest_count: 5, date: "2026-07-26", time_period: "晚餐", venue: "社会公共场所（遵守外事规定）", is_holiday: false, companion_list: "赵总监（省管中层）\n钱经理\n孙主管", companion_count: 5, companion_limit_info: "招待对象≤5人，陪餐可对等（依据：第十二条）", per_person_limit: "≤400元/人·次", per_person_actual: 350, total_amount: 1750, accommodation: "", transport: "", alcohol: "白酒", alcohol_detail: "白酒 500ml × 2瓶", souvenir: "有纪念品", souvenir_detail: "企业形象笔记本 × 5份", pre_approval: "已审批", approver: "王总", approval_opinion: "同意", attachment_notes: "事前审批单、外事接待方案、费用明细清单、支付凭证" } },
+    { id: "government_official", title: "党政机关公务招待", icon: "🏛️", icon_class: "green", reception_type: "其他公务招待", category: "对外业务招待", desc: "招待党政军机关工作人员",
+      example: { application_no: "JD202607200002", applicant: "王五", department: "办公室", position: "市管中层", application_date: "2026-07-20", reception_type: "其他公务招待", reception_category: "对外业务招待", reason: "XX局领导来我司调研指导工作", guest_info: "XX局 王局长等4人", guest_count: 4, date: "2026-07-27", time_period: "午餐", venue: "单位食堂或定点饭店", is_holiday: false, companion_list: "周科长（市管中层）\n吴主管", companion_count: 2, companion_limit_info: "招待对象≤5人，陪餐可对等（依据：第十二条）", per_person_limit: "≤200元/人·次", per_person_actual: 180, total_amount: 720, accommodation: "", transport: "", alcohol: "白酒", alcohol_detail: "白酒 500ml × 1瓶", souvenir: "无纪念品", souvenir_detail: "", pre_approval: "已审批", approver: "赵总", approval_opinion: "同意", attachment_notes: "事前审批单、活动公函、费用明细清单、支付凭证" } },
+    { id: "internal_reception", title: "内部单位公务招待", icon: "🏢", icon_class: "teal", reception_type: "内部业务招待", category: "内部业务招待", desc: "内部上下级/平级单位之间公务招待",
+      example: { application_no: "JD202607200003", applicant: "赵六", department: "技术部", position: "省管中层", application_date: "2026-07-20", reception_type: "内部业务招待", reception_category: "内部业务招待", reason: "省公司检查组来清开展专项调研", guest_info: "省公司检查组 8人", guest_count: 8, date: "2026-07-28", time_period: "午餐", venue: "单位食堂（优先自助）", is_holiday: false, companion_list: "郑主任（省管中层）\n刘科长", companion_count: 3, companion_limit_info: "招待对象≤10人，陪同≤3人（依据：第十三条）", per_person_limit: "≤150元/人·次", per_person_actual: 120, total_amount: 960, accommodation: "", transport: "", alcohol: "无酒水", alcohol_detail: "", souvenir: "无纪念品", souvenir_detail: "", pre_approval: "已审批", approver: "钱总", approval_opinion: "同意", attachment_notes: "事前审批单、费用明细清单、支付凭证" } },
+    { id: "work_meal", title: "内部工作餐", icon: "🍱", icon_class: "orange", reception_type: "工作餐", category: "内部业务招待", desc: "内部公务活动期间的工作用餐",
+      example: { application_no: "JD202607200004", applicant: "孙七", department: "财务部", position: "其他人员", application_date: "2026-07-20", reception_type: "工作餐", reception_category: "内部业务招待", reason: "县区分公司同事来交流工作经验午餐", guest_info: "XX县分公司 3人", guest_count: 3, date: "2026-07-29", time_period: "午餐", venue: "单位食堂（优先自助）", is_holiday: false, companion_list: "周主管", companion_count: 1, companion_limit_info: "参照食堂正常标准/差旅伙食补贴", per_person_limit: "参照食堂正常标准", per_person_actual: 50, total_amount: 150, accommodation: "", transport: "", alcohol: "无酒水", alcohol_detail: "", souvenir: "无纪念品", souvenir_detail: "", pre_approval: "已审批", approver: "周总", approval_opinion: "同意", attachment_notes: "事前审批单、费用明细清单" } },
+    { id: "remote_reception", title: "异地接待（含住宿）", icon: "✈️", icon_class: "rose", reception_type: "商务招待", category: "对外业务招待", desc: "邀请外地客户来清远谈判",
+      example: { application_no: "JD202607200005", applicant: "周八", department: "采购部", position: "市管中层", application_date: "2026-07-20", reception_type: "商务招待", reception_category: "对外业务招待", reason: "邀请XX供应商来清远进行年度合同谈判", guest_info: "XX公司 张总等4人（异地）", guest_count: 4, date: "2026-07-30", time_period: "晚餐", venue: "XX酒店餐厅", is_holiday: false, companion_list: "周经理（市管中层）\n吴主管", companion_count: 2, companion_limit_info: "招待对象≤5人，陪餐可对等（依据：第十二条）", per_person_limit: "≤300元/人·次", per_person_actual: 280, total_amount: 1120, accommodation: "标准间 × 2间（参照差旅标准）", transport: "公司自有车辆接送", alcohol: "红酒", alcohol_detail: "红酒 750ml × 1瓶", souvenir: "有纪念品", souvenir_detail: "地域文化纪念品 × 4份", pre_approval: "已审批", approver: "吴总", approval_opinion: "同意", attachment_notes: "事前审批单、住宿安排说明、用车审批、费用明细清单、支付凭证" } },
+];
+
+let currentForm = null;
+let currentTemplate = null;
+
+// 初始化模板列表
+const list = document.getElementById('templateList');
+list.innerHTML = TEMPLATES.map(t => `
+    <div class="template-card" data-id="${t.id}" onclick="selectTemplate('${t.id}')">
+        <div class="tc-header">
+            <div class="tc-icon ${t.icon_class}">${t.icon}</div>
+            <div>
+                <div class="tc-name">${t.title}</div>
+                <span class="tc-tag ${t.category === '对外业务招待' ? 'external' : 'internal'}">${t.category} · ${t.reception_type}</span>
+            </div>
+        </div>
+        <div class="tc-desc">${t.desc}</div>
+    </div>
+`).join('');
+
+function selectTemplate(id) {
+    document.querySelectorAll('.template-card').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.template-card[data-id="${id}"]`)?.classList.add('active');
+    const t = TEMPLATES.find(x => x.id === id);
+    currentTemplate = t;
+    currentForm = { ...t.example };
+    document.getElementById('toolbar').style.display = 'flex';
+    renderEditor(currentForm);
+}
+
+function renderEditor(form) {
+    document.getElementById('editor').innerHTML = `
+        <div class="form-container">
+            <div class="hint">💡 点击字段即可编辑，灰色背景为只读字段（系统自动计算）</div>
+            ${renderSection(form, '📋 基本信息', [
+                { key: 'application_no', label: '申请单号', type: 'readonly', value: form.application_no },
+                { key: 'applicant', label: '申请人', type: 'text', value: form.applicant, req: true },
+                { key: 'department', label: '申请部门', type: 'text', value: form.department, req: true },
+                { key: 'position', label: '职务/职级', type: 'select', value: form.position, options: ['省管中层','市管中层','其他人员'], req: true },
+                { key: 'application_date', label: '申请日期', type: 'date', value: form.application_date, req: true },
+            ])}
+            ${renderSection(form, '🍽️ 招待信息', [
+                { key: 'reception_type', label: '招待类型', type: 'select', value: form.reception_type, options: ['商务招待','外事招待','其他公务招待','内部业务招待','工作餐'], req: true },
+                { key: 'reception_category', label: '招待类别', type: 'select', value: form.reception_category, options: ['对外业务招待','内部业务招待'], req: true },
+                { key: 'reason', label: '招待事由', type: 'textarea', value: form.reason, req: true, full: true },
+                { key: 'guest_info', label: '招待对象', type: 'text', value: form.guest_info, req: true },
+                { key: 'guest_count', label: '招待人数', type: 'number', value: form.guest_count, req: true },
+                { key: 'date', label: '招待日期', type: 'date', value: form.date, req: true },
+                { key: 'time_period', label: '用餐时段', type: 'select', value: form.time_period, options: ['早餐','午餐','晚餐'], req: true },
+                { key: 'venue', label: '用餐地点', type: 'text', value: form.venue, req: true, full: true },
+                { key: 'is_holiday', label: '是否节假日', type: 'boolean', value: form.is_holiday },
+            ])}
+            ${renderSection(form, '👥 陪同人员', [
+                { key: 'companion_list', label: '陪同人员', type: 'textarea', value: form.companion_list, req: true, full: true },
+                { key: 'companion_count', label: '陪同人数', type: 'number', value: form.companion_count, req: true },
+                { key: 'companion_limit_info', label: '陪同人数规定', type: 'readonly', value: form.companion_limit_info },
+            ])}
+            ${renderSection(form, '💰 费用预算', [
+                { key: 'per_person_limit', label: '人均标准', type: 'readonly', value: form.per_person_limit },
+                { key: 'per_person_actual', label: '人均金额（元）', type: 'number', value: form.per_person_actual, req: true },
+                { key: 'total_amount', label: '预计总金额（元）', type: 'readonly', value: form.total_amount },
+                { key: 'accommodation', label: '住宿安排', type: 'textarea', value: form.accommodation, full: true },
+                { key: 'transport', label: '用车安排', type: 'textarea', value: form.transport, full: true },
+                { key: 'alcohol', label: '酒水情况', type: 'select', value: form.alcohol, options: ['无酒水','白酒','红酒','白酒+红酒'], req: true },
+                { key: 'alcohol_detail', label: '酒水明细', type: 'textarea', value: form.alcohol_detail, full: true },
+                { key: 'souvenir', label: '纪念品', type: 'select', value: form.souvenir, options: ['无纪念品','有纪念品'], req: true },
+                { key: 'souvenir_detail', label: '纪念品明细', type: 'textarea', value: form.souvenir_detail, full: true },
+            ])}
+            ${renderSection(form, '✅ 审批信息', [
+                { key: 'pre_approval', label: '事前审批', type: 'select', value: form.pre_approval, options: ['已审批','待审批','紧急后补'], req: true },
+                { key: 'approver', label: '审批人', type: 'text', value: form.approver },
+                { key: 'approval_opinion', label: '审批意见', type: 'textarea', value: form.approval_opinion, full: true },
+                { key: 'attachment_notes', label: '附件说明', type: 'textarea', value: form.attachment_notes, full: true },
+            ])}
+            <div id="validationBar" style="display:none;"></div>
+            <div id="validationMsgs" class="validation-messages"></div>
+        </div>
+    `;
+    document.querySelectorAll('#editor [data-key]').forEach(el => {
+        el.addEventListener('input', onFieldChange);
+        el.addEventListener('change', onFieldChange);
+    });
+}
+
+function renderSection(form, title, fields) {
+    return `<div class="form-section">
+        <div class="form-section-title">${title}</div>
+        ${fields.map(f => {
+            const val = f.value ?? '';
+            const isReadonly = f.type === 'readonly';
+            const isRequired = f.req ? '<span class="req">*</span>' : '';
+            const fullClass = f.full ? ' form-full' : '';
+            if (f.type === 'textarea') {
+                return `<div class="form-row${fullClass}"><div class="form-label">${f.label}${isRequired}</div><textarea class="form-textarea ${isReadonly ? 'form-readonly' : ''}" data-key="${f.key}" rows="3" ${isReadonly ? 'readonly' : ''}>${val}</textarea></div>`;
+            }
+            if (f.type === 'select') {
+                return `<div class="form-row${fullClass}"><div class="form-label">${f.label}${isRequired}</div><select class="form-select" data-key="${f.key}" ${isReadonly ? 'readonly' : ''}><option value="">请选择</option>${(f.options||[]).map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
+            }
+            if (f.type === 'boolean') {
+                return `<div class="form-row${fullClass}"><div class="form-label">${f.label}${isRequired}</div><select data-key="${f.key}"><option value="false" ${!val?'selected':''}>否</option><option value="true" ${val?'selected':''}>是</option></select></div>`;
+            }
+            const inputType = f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : 'text');
+            return `<div class="form-row${fullClass}"><div class="form-label">${f.label}${isRequired}</div><input type="${inputType}" class="form-input ${isReadonly ? 'form-readonly' : ''}" data-key="${f.key}" value="${val}" ${isReadonly ? 'readonly' : ''}></div>`;
+        }).join('')}
+    </div>`;
+}
+
+function onFieldChange() {
+    if (!currentForm) return;
+    document.querySelectorAll('[data-key]').forEach(el => {
+        const key = el.dataset.key;
+        const val = el.value;
+        currentForm[key] = el.type === 'number' ? (val ? parseFloat(val) : 0) : val;
+    });
+    if (currentForm.per_person_actual && currentForm.guest_count) {
+        currentForm.total_amount = currentForm.per_person_actual * currentForm.guest_count;
+    }
+    validate();
+}
+
+function validate() {
+    const bar = document.getElementById('validationBar');
+    const msgs = document.getElementById('validationMsgs');
+    let errors = [], warnings = [];
+
+    // 必填检查
+    ['applicant','department','position','application_date','reception_type','reception_category','reason','guest_info','date','time_period','venue','companion_list','pre_approval'].forEach(k => {
+        if (!currentForm[k]) errors.push(`必填字段「${{applicant:'申请人',department:'申请部门',position:'职务/职级',application_date:'申请日期',reception_type:'招待类型',reception_category:'招待类别',reason:'招待事由',guest_info:'招待对象',date:'招待日期',time_period:'用餐时段',venue:'用餐地点',companion_list:'陪同人员',pre_approval:'事前审批'}[k]}」不能为空`);
+    });
+    if (!currentForm.guest_count) errors.push('必填字段「招待人数」不能为空');
+    if (!currentForm.per_person_actual) errors.push('必填字段「人均金额」不能为空');
+
+    // 金额标准校验
+    const stdMap = {
+        '商务招待': { '省管中层': 400, '市管中层': 300, '其他人员': 200 },
+        '外事招待': { '省管中层': 400, '市管中层': 300, '其他人员': 200 },
+        '其他公务招待': { '省管中层': 200, '市管中层': 200, '其他人员': 150 },
+        '内部业务招待': { '省管中层': 150, '市管中层': 150, '其他人员': 100 },
+        '工作餐': { '省管中层': 100, '市管中层': 100, '其他人员': 100 },
+    };
+    const std = stdMap[currentForm.reception_type]?.[currentForm.position];
+    if (std && currentForm.per_person_actual > std) {
+        errors.push(`人均金额 ${currentForm.per_person_actual}元 超过标准 ${std}元/人·次`);
+    }
+
+    // 内部招待酒水校验
+    if ((currentForm.reception_type === '内部业务招待' || currentForm.reception_type === '工作餐') && currentForm.alcohol !== '无酒水') {
+        errors.push('内部业务招待/工作餐不得上烟酒');
+    }
+
+    // 陪同人数校验
+    const guest = currentForm.guest_count || 0;
+    let compLimit;
+    if (currentForm.reception_type === '内部业务招待' || currentForm.reception_type === '工作餐') {
+        compLimit = guest <= 10 ? 3 : Math.floor(guest / 3);
+    } else {
+        compLimit = guest <= 5 ? guest : 5 + Math.floor((guest - 5) / 2);
+    }
+    if (currentForm.companion_count > compLimit) {
+        errors.push(`陪同人数 ${currentForm.companion_count}人 超过上限 ${compLimit}人`);
+    }
+
+    // 节假日
+    if (currentForm.is_holiday) {
+        warnings.push('⚠️ 节假日招待需提前向办公室备案并向同级纪委报告');
+    }
+
+    bar.style.display = 'block';
+    msgs.innerHTML = '';
+    if (errors.length === 0) {
+        bar.className = 'validation-bar pass';
+        bar.innerHTML = `<span class="v-icon">✅</span><span class="v-text">校验通过 — 所有必填字段已填写，金额标准符合要求</span>`;
+        if (warnings.length > 0) {
+            msgs.innerHTML = warnings.map(w => `<div class="msg warning">${w}</div>`).join('');
+        }
+    } else {
+        bar.className = 'validation-bar fail';
+        bar.innerHTML = `<span class="v-icon">❌</span><span class="v-text">校验失败</span>`;
+        msgs.innerHTML = errors.map(e => `<div class="msg error">❌ ${e}</div>`).join('');
+    }
+}
+
+function previewForm() {
+    // 生成申请单HTML
+    const f = currentForm;
+    const validation = validate();
+    const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+    @page { size: A4; margin: 15mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "SimSun", serif; background: #f5f5f5; color: #1a1a1a; padding: 20px; }
+    .form-container { max-width: 794px; margin: 0 auto; background: white; padding: 40px; }
+    .form-header { text-align: center; border-bottom: 3px double #333; padding-bottom: 16px; margin-bottom: 24px; }
+    .form-header h1 { font-size: 22px; font-weight: 700; letter-spacing: 4px; margin-bottom: 8px; }
+    .form-header .no { font-size: 14px; margin-top: 8px; color: #c00; font-weight: 600; }
+    .section { margin-bottom: 20px; }
+    .section-title { font-size: 15px; font-weight: 700; background: #f0f0f0; padding: 6px 12px; border-left: 4px solid #333; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #333; border-top: none; }
+    .field-label { background: #fafafa; padding: 8px 12px; font-size: 13px; font-weight: 600; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; color: #555; white-space: nowrap; }
+    .field-value { padding: 8px 12px; font-size: 14px; border-bottom: 1px solid #ddd; }
+    .field-value.highlight { color: #c00; font-weight: 600; }
+    .field-full { grid-column: 1 / -1; }
+    .field-full .field-label, .field-full .field-value { border-right: none; }
+    .validation-box { margin-top: 20px; padding: 14px 16px; border-radius: 6px; font-size: 13px; }
+    .validation-box.pass { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+    .signature-area { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; padding-top: 20px; border-top: 1px dashed #ccc; }
+    .signature-block { text-align: center; }
+    .signature-block .label { font-size: 13px; color: #666; margin-bottom: 40px; }
+    .signature-block .line { border-bottom: 1px solid #333; margin: 0 10px 4px; }
+    </style></head><body><div class="form-container">
+    <div class="form-header"><h1>业务招待申请单</h1><p class="no">申请单号：${f.application_no}</p></div>
+    <div class="section"><div class="section-title">📋 基本信息</div><div class="field-grid">
+    <div class="field-label">申请人</div><div class="field-value">${f.applicant}</div>
+    <div class="field-label">申请部门</div><div class="field-value">${f.department}</div>
+    <div class="field-label">职务/职级</div><div class="field-value">${f.position}</div>
+    <div class="field-label">申请日期</div><div class="field-value">${f.application_date}</div>
+    </div></div>
+    <div class="section"><div class="section-title">🍽️ 招待信息</div><div class="field-grid">
+    <div class="field-label">招待类型</div><div class="field-value highlight">${f.reception_type}</div>
+    <div class="field-label">招待类别</div><div class="field-value">${f.reception_category}</div>
+    <div class="field-full"><div class="field-label">招待事由</div><div class="field-value">${f.reason}</div></div>
+    <div class="field-label">招待对象</div><div class="field-value">${f.guest_info}</div>
+    <div class="field-label">招待人数</div><div class="field-value highlight">${f.guest_count}人</div>
+    <div class="field-label">招待日期</div><div class="field-value">${f.date}</div>
+    <div class="field-label">用餐时段</div><div class="field-value">${f.time_period}</div>
+    <div class="field-full"><div class="field-label">用餐地点</div><div class="field-value">${f.venue}</div></div>
+    <div class="field-label">是否节假日</div><div class="field-value">${f.is_holiday?'是':'否'}</div>
+    </div></div>
+    <div class="section"><div class="section-title">👥 陪同人员</div><div class="field-grid">
+    <div class="field-full"><div class="field-label">陪同人员</div><div class="field-value" style="white-space:pre-wrap;">${f.companion_list}</div></div>
+    <div class="field-label">陪同人数</div><div class="field-value highlight">${f.companion_count}人</div>
+    <div class="field-label">陪同规定</div><div class="field-value">${f.companion_limit_info}</div>
+    </div></div>
+    <div class="section"><div class="section-title">💰 费用预算</div><div class="field-grid">
+    <div class="field-label">人均标准</div><div class="field-value highlight">${f.per_person_limit}</div>
+    <div class="field-label">人均金额</div><div class="field-value">${f.per_person_actual}元</div>
+    <div class="field-label">预计总金额</div><div class="field-value highlight" style="font-size:18px;">${f.total_amount}元</div>
+    <div class="field-label">酒水情况</div><div class="field-value">${f.alcohol}</div>
+    ${f.alcohol_detail ? `<div class="field-full"><div class="field-label">酒水明细</div><div class="field-value">${f.alcohol_detail}</div></div>` : ''}
+    <div class="field-label">纪念品</div><div class="field-value">${f.souvenir}</div>
+    ${f.souvenir_detail ? `<div class="field-full"><div class="field-label">纪念品明细</div><div class="field-value">${f.souvenir_detail}</div></div>` : ''}
+    ${f.accommodation ? `<div class="field-full"><div class="field-label">住宿安排</div><div class="field-value" style="white-space:pre-wrap;">${f.accommodation}</div></div>` : ''}
+    ${f.transport ? `<div class="field-full"><div class="field-label">用车安排</div><div class="field-value" style="white-space:pre-wrap;">${f.transport}</div></div>` : ''}
+    </div></div>
+    <div class="section"><div class="section-title">✅ 审批信息</div><div class="field-grid">
+    <div class="field-label">事前审批</div><div class="field-value highlight">${f.pre_approval}</div>
+    <div class="field-label">审批人</div><div class="field-value">${f.approver}</div>
+    <div class="field-full"><div class="field-label">审批意见</div><div class="field-value">${f.approval_opinion}</div></div>
+    <div class="field-full"><div class="field-label">附件说明</div><div class="field-value">${f.attachment_notes}</div></div>
+    </div></div>
+    <div class="validation-box pass"><h3>📊 校验结果：✅ 通过</h3><p>所有必填字段已填写，金额标准符合要求。</p></div>
+    <div class="signature-area">
+    <div class="signature-block"><div class="label">申请人签字</div><div class="line"></div></div>
+    <div class="signature-block"><div class="label">部门负责人</div><div class="line"></div></div>
+    <div class="signature-block"><div class="label">分管领导审批</div><div class="line"></div></div>
+    </div>
+    <div style="margin-top:24px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#999;text-align:center;">
+    <p>生成时间：${new Date().toLocaleString()}</p><p>依据：《清远分公司业务招待费管理办法（V9.0）》</p></div>
+    </div></body></html>`;
+    document.getElementById('previewFrame').srcdoc = html;
+    document.getElementById('previewModal').classList.add('visible');
+}
+
+function closePreview() { document.getElementById('previewModal').classList.remove('visible'); }
+function printPreview() { document.getElementById('previewFrame').contentWindow.print(); }
+
+function downloadJSON() {
+    const blob = new Blob([JSON.stringify(currentForm, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `${currentForm.application_no || '申请单'}.json`; a.click();
+    URL.revokeObjectURL(url);
+}
+
+function downloadHTML() {
+    const f = currentForm;
+    const html = previewForm.__html || '';
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `${currentForm.application_no || '申请单'}.html`; a.click();
+    URL.revokeObjectURL(url);
+}
+
+function resetForm() { if (currentTemplate) selectTemplate(currentTemplate.id); }
+</script>
+</body>
+</html>
