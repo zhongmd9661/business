@@ -26,8 +26,8 @@ data/
 ### 2. 运行批量解析
 
 ```powershell
-$env:PYTHONPATH = "D:\02_ocr"
-& D:\02_ocr\.venv\Scripts\python.exe D:\02_ocr\scripts\batch_parse.py
+$env:PYTHONPATH = "D:\00_项目\02_ocr\招待费智能体"
+& D:\00_项目\02_ocr\招待费智能体\.venv\Scripts\python.exe D:\00_项目\02_ocr\招待费智能体\scripts\batch_parse.py
 ```
 
 ### 3. 查看输出

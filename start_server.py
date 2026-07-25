@@ -39,7 +39,7 @@ def main():
 
     cmd = [
         sys.executable, "-m", "uvicorn",
-        "OCR.web_service.app:app",
+        "src.web_service.app:app",
         "--host", args.host,
         "--port", str(args.port),
         "--reload",  # 开发模式热重载

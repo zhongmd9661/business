@@ -31,12 +31,12 @@ static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # 招待费智能体 UI — 挂载整个 ui 目录
-ui_dir = Path(__file__).parent.parent.parent / "招待费智能体" / "ui"
+ui_dir = Path(__file__).parent.parent.parent / "ui"
 if ui_dir.exists():
     app.mount("/ui", StaticFiles(directory=str(ui_dir), html=True), name="ui-static")
 
 # 审核标准 — 挂载参考案例、政策法规等静态资源
-base_dir = Path(__file__).parent.parent.parent / "招待费智能体"
+base_dir = Path(__file__).parent.parent.parent
 standards_dir = base_dir / "审核标准"
 if standards_dir.exists():
     app.mount("/审核标准", StaticFiles(directory=str(standards_dir)), name="standards-static")
