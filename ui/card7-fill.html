@@ -248,8 +248,8 @@
     .qichacha-recommendation { margin-top: var(--spacing-md); padding: var(--spacing-md); border-radius: var(--radius-sm); font-size: var(--font-size-xs); line-height: 1.7; }
     .qichacha-recommendation.success { background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--color-success); }
     .qichacha-recommendation.danger { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--color-error); }
-    .qichacha-compare-area { display: flex; gap: var(--spacing-lg); margin-top: var(--spacing-md); flex-wrap: wrap; }
-    .qichacha-original-img { flex: 0 0 auto; max-width: 420px; max-height: 480px; object-fit: contain; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fafbfc; display: block; }
+    .qichacha-compare-area { display: flex; gap: var(--spacing-lg); margin-top: var(--spacing-md); flex-wrap: wrap; align-items: flex-start; }
+    .qichacha-original-img { width: 420px; max-height: 480px; object-fit: contain; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fafbfc; display: block; }
     .qichacha-html-view { flex: 1; min-width: 300px; max-height: 400px; overflow: auto; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm); position: relative; }
     .qichacha-html-view .ocr-canvas {
       position: relative; font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
@@ -2492,7 +2492,7 @@
         originalImg.src = previewImg.src;
       }
 
-      if (data.markdown_text || (data.ocr_lines && data.ocr_lines.length > 0)) {
+      if ((data.ocr_blocks && data.ocr_blocks.length > 0) || (data.ocr_lines && data.ocr_lines.length > 0) || data.markdown_text) {
         htmlView.innerHTML = renderOcrAsHtml(data);
         compareArea.style.display = 'block';
       } else {
@@ -2512,99 +2512,64 @@
       }
     }
 
-    // Render OCR result as structured HTML mimicking original 企查查 screenshot layout
+    // Render OCR result with absolute positioning matching original image layout
     function renderOcrAsHtml(data) {
-      var lines = data.ocr_lines || [];
-      var companyName = data.company_name || '';
-      var businessStatus = data.business_status || '无法识别';
-      var riskCount = data.risk_count || 0;
-      var riskSummary = data.risk_summary || '';
-      var isAbnormal = data.is_abnormal === true;
-      var recommendation = data.recommendation || '';
+      var blocks = data.ocr_blocks || [];
+      var imgW = data.img_width || 0;
+      var imgH = data.img_height || 0;
       var mdText = data.markdown_text || '';
+      var lines = data.ocr_lines || [];
 
-      // If we have VLM markdown but no raw lines, parse the markdown into lines
-      if (lines.length === 0 && mdText) {
-        lines = mdText.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-      }
+      // Container width: match the original image display width (max 420px)
+      var containerW = 420;
+      var containerH = imgW > 0 ? Math.round(containerW * imgH / imgW) : 600;
+      var scale = imgW > 0 ? containerW / imgW : 1;
 
-      // Determine status badge class
-      var badgeClass = 'unknown';
-      if (isAbnormal) badgeClass = 'abnormal';
-      else if (businessStatus === '存续' || businessStatus === '在业' || businessStatus === '开业') badgeClass = 'normal';
+      var html = '';
 
-      var html = '<div class="ocr-replica">';
+      if (blocks.length > 0 && imgW > 0) {
+        // Absolute positioning mode: each block placed at its original coordinates, scaled
+        html += '<div class="ocr-canvas" style="width:' + containerW + 'px;height:' + containerH + 'px;">';
 
-      // === Header bar (blue, like 企查查 top bar) ===
-      html += '<div class="ocr-replica-header">';
-      html += '<span class="ocr-replica-logo">企查查</span>';
-      html += '<span class="ocr-replica-company">' + escapeHtml(companyName || '未识别企业') + '</span>';
-      html += '</div>';
+        // Sort blocks by y then x for deterministic rendering order
+        var sorted = blocks.slice().sort(function(a, b) {
+          if (Math.abs(a.y - b.y) > 3) return a.y - b.y;
+          return a.x - b.x;
+        });
 
-      // === Status bar ===
-      html += '<div class="ocr-replica-status-bar">';
-      html += '<span class="ocr-replica-status-label">经营状态</span>';
-      html += '<span class="ocr-replica-status-badge ' + badgeClass + '">' + escapeHtml(businessStatus) + '</span>';
-      if (riskCount > 0) {
-        html += '<span class="ocr-replica-status-badge abnormal">风险 ' + riskCount + ' 条</span>';
-      }
-      html += '</div>';
+        for (var i = 0; i < sorted.length; i++) {
+          var blk = sorted[i];
+          var left = Math.round(blk.x * scale);
+          var top = Math.round(blk.y * scale);
+          var w = Math.max(Math.round(blk.w * scale), 2);
+          var h = Math.max(Math.round(blk.h * scale), 2);
+          var fontSize = Math.max(Math.round(h * 0.85), 10);
+          var text = escapeHtml(blk.text);
 
-      // === Key info grid (extracted fields) ===
-      if (companyName || riskSummary) {
-        html += '<div class="ocr-replica-info-grid">';
-        if (companyName) {
-          html += '<div class="ocr-replica-info-row">';
-          html += '<div class="ocr-replica-info-label">企业名称</div>';
-          html += '<div class="ocr-replica-info-value">' + escapeHtml(companyName) + '</div>';
-          html += '</div>';
+          // Low confidence highlight
+          var cls = 'ocr-block';
+          if (blk.score !== undefined && blk.score < 0.5) {
+            cls += ' low-confidence';
+          }
+
+          html += '<span class="' + cls + '" style="left:' + left + 'px;top:' + top + 'px;width:' + w + 'px;font-size:' + fontSize + 'px;">';
+          html += text;
+          html += '<span class="ocr-block-tooltip">行' + (i + 1) + ' 置信度:' + (blk.score || 1).toFixed(2) + '</span>';
+          html += '</span>';
         }
-        html += '<div class="ocr-replica-info-row">';
-        html += '<div class="ocr-replica-info-label">经营状态</div>';
-        html += '<div class="ocr-replica-info-value"><span class="ocr-replica-status-badge ' + badgeClass + '">' + escapeHtml(businessStatus) + '</span></div>';
-        html += '</div>';
-        if (riskCount > 0 || riskSummary) {
-          html += '<div class="ocr-replica-info-row">';
-          html += '<div class="ocr-replica-info-label">风险提示</div>';
-          html += '<div class="ocr-replica-info-value">' + escapeHtml(riskSummary || '暂无') + '</div>';
-          html += '</div>';
-        }
-        html += '</div>';
-      }
 
-      // === Recommendation block ===
-      if (recommendation) {
-        var recClass = isAbnormal ? 'danger' : 'success';
-        html += '<div class="ocr-replica-risk-block ' + recClass + '">';
-        html += escapeHtml(recommendation);
         html += '</div>';
-      }
-
-      // === Raw OCR lines section (for proofreading) ===
-      if (lines.length > 0) {
-        html += '<div class="ocr-replica-section">';
-        html += '<div class="ocr-replica-section-title">📝 原始识别文字（共 ' + lines.length + ' 行）</div>';
-        html += '</div>';
-        html += '<div class="ocr-replica-lines">';
-        for (var i = 0; i < lines.length; i++) {
-          var line = lines[i];
-          // Highlight lines containing company name, status, or risk keywords
-          var isHighlight = false;
-          if (companyName && line.indexOf(companyName) >= 0) isHighlight = true;
-          if (line.indexOf('经营状态') >= 0 || line.indexOf(businessStatus) >= 0) isHighlight = true;
-          if (line.indexOf('风险') >= 0 || line.indexOf('异常') >= 0 || line.indexOf('处罚') >= 0) isHighlight = true;
-
-          html += '<div class="ocr-replica-line' + (isHighlight ? ' highlight' : '') + '">';
-          html += '<span class="ocr-replica-line-num">' + (i + 1) + '</span>';
-          html += '<span class="ocr-replica-line-text">' + escapeHtml(line) + '</span>';
-          html += '</div>';
+      } else if (lines.length > 0 || mdText) {
+        // Fallback: no position data (VLM mode), show line-by-line list
+        var allLines = lines.length > 0 ? lines : mdText.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+        html += '<div class="ocr-canvas" style="width:' + containerW + 'px;padding:8px;font-size:12px;line-height:1.8;color:#374151;min-height:' + containerH + 'px;">';
+        for (var i = 0; i < allLines.length; i++) {
+          html += '<div style="padding:1px 4px;border-bottom:1px dotted #e5e7eb;">' + escapeHtml(allLines[i]) + '</div>';
         }
         html += '</div>';
+      } else {
+        html += '<div class="ocr-canvas" style="width:' + containerW + 'px;padding:20px;text-align:center;color:#9ca3af;">暂无识别文字</div>';
       }
-
-      // === Footer ===
-      html += '<div class="ocr-replica-footer">OCR 识别结果 · ' + (data._method === 'vlm' ? 'VLM 视觉识别' : 'RapidOCR 文字识别') + ' · ' + (data.analyzed_at || '') + '</div>';
-      html += '</div>';
 
       return html;
     }
