@@ -2229,9 +2229,7 @@
       var overlay = document.createElement('div');
       overlay.id = 'templateLightbox';
       overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
-      overlay.onclick = function(e) {
-        if (e.target === overlay) overlay.remove();
-      };
+      overlay.onclick = function() { overlay.remove(); };
 
       // 按 ESC 关闭
       var escHandler = function(e) { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', escHandler); } };
@@ -2248,12 +2246,11 @@
       // 关闭提示
       var hint = document.createElement('div');
       hint.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);color:#fff;font-size:14px;font-family:var(--font-family);z-index:2001;background:rgba(0,0,0,0.55);padding:8px 20px;border-radius:20px;pointer-events:none;white-space:nowrap;animation: hintFlash 2s ease-in-out infinite;';
-      hint.textContent = '按 ESC 或点击背景关闭';
+      hint.textContent = '按 ESC 或点击任意位置关闭';
 
       var img = document.createElement('img');
       img.src = src;
-      img.style.cssText = 'max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);cursor:default;';
-      img.onclick = function(e) { e.stopPropagation(); };
+      img.style.cssText = 'max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);cursor:zoom-out;';
 
       overlay.appendChild(hint);
       overlay.appendChild(img);
