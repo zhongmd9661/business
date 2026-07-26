@@ -111,9 +111,14 @@ async def on_startup():
     from . import service
     await service.start_engine()
 
-    # 3. Load routers (lazy to avoid circular imports)
+    # 3. Init app settings (base_url, api_key, model → os.environ)
+    from .config import init_app_settings
+    init_app_settings()
+
+    # 4. Load routers (lazy to avoid circular imports)
     from . import router, router_rule, router_standards, router_standards_admin, router_application_form, router_reception_records, router_qichacha
 
+    app.include_router(router.settings_router, prefix="/api", tags=["settings"])
     app.include_router(router.task_router, prefix="/api", tags=["tasks"])
     app.include_router(router.auth_router, prefix="/api", tags=["auth"])
     app.include_router(router_rule.rule_router, prefix="/api", tags=["rules"])
@@ -149,3 +154,17 @@ async def on_shutdown():
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "version": "0.1.0"}
+
+
+@app.get("/api/qichacha-templates")
+def list_qichacha_templates():
+    """列出 ui资源 目录下所有图片模板文件"""
+    ui_res_dir = ui_dir / "ui资源" if ui_dir.exists() else None
+    if not ui_res_dir or not ui_res_dir.exists():
+        return []
+    img_exts = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
+    files = []
+    for f in sorted(ui_res_dir.iterdir()):
+        if f.is_file() and f.suffix.lower() in img_exts:
+            files.append({"name": f.name, "path": f"/ui/ui资源/{f.name}"})
+    return files
