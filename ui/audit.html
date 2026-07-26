@@ -14,13 +14,13 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
       background: #f5f7fa;
-      min-height: 100vh;
+      height: 100vh;
       width: 100vw;
       position: relative;
-      overflow-x: hidden;
+      overflow: hidden;
       display: flex;
       justify-content: center;
-      padding: clamp(24px, 4vh, 48px) 0;
+      align-items: center;
     }
 
     /* ---- 背景光晕 ---- */
@@ -56,6 +56,12 @@
       background: radial-gradient(ellipse, rgba(37, 99, 235, 0.04) 0%, transparent 60%);
     }
 
+    /* ---- 缩放包装器 ---- */
+    .scale-wrapper {
+      transform-origin: center center;
+      width: 100%;
+    }
+
     /* ---- 主内容 ---- */
     .container {
       width: 100%;
@@ -71,7 +77,8 @@
     /* ---- 标题 ---- */
     .page-header {
       text-align: center;
-      margin-bottom: clamp(28px, 4vh, 48px);
+      margin-bottom: clamp(12px, 3vmin, 48px);
+      flex-shrink: 0;
     }
 
     .page-title {
@@ -98,8 +105,8 @@
       margin-right: auto;
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: clamp(16px, 2vw, 20px);
-      padding: clamp(36px, 5vh, 56px) clamp(32px, 4vw, 52px);
+      border-radius: clamp(12px, 2vmin, 20px);
+      padding: clamp(16px, 3vmin, 56px) clamp(16px, 4vw, 52px);
       position: relative;
       overflow: hidden;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -136,19 +143,20 @@
     }
 
     .upload-card-desc {
-      font-size: clamp(13px, 1.4vw, 15px);
+      font-size: clamp(12px, 1.4vmin, 15px);
       color: #64748b;
-      margin-bottom: clamp(24px, 3vh, 36px);
+      margin-bottom: clamp(10px, 2vmin, 36px);
       line-height: 1.7;
       text-align: center;
+      flex-shrink: 0;
     }
 
     /* ---- 文件上传网格 ---- */
     .upload-grid {
       display: grid;
-      grid-template-columns: repeat(3, 280px);
-      gap: 20px;
-      margin-bottom: clamp(28px, 4vh, 40px);
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(8px, 1.5vmin, 20px);
+      margin-bottom: clamp(12px, 2.5vmin, 40px);
       justify-content: center;
       width: 100%;
     }
@@ -156,18 +164,18 @@
     /* ---- 单个上传项 ---- */
     .upload-item {
       border: 2px dashed #cbd5e1;
-      border-radius: 12px;
-      padding: clamp(20px, 3vh, 28px);
+      border-radius: clamp(8px, 1vmin, 12px);
+      padding: clamp(10px, 2vmin, 28px) clamp(8px, 1.5vmin, 16px);
       text-align: center;
       transition: all 0.25s ease;
       cursor: pointer;
       position: relative;
       background: #f8fafc;
-      min-height: 180px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      min-height: 0;
     }
 
     .upload-item:hover {
@@ -183,15 +191,16 @@
     }
 
     .upload-item .upload-icon {
-      width: 48px;
-      height: 48px;
-      margin-bottom: 12px;
+      width: clamp(28px, 5vmin, 48px);
+      height: clamp(28px, 5vmin, 48px);
+      margin-bottom: clamp(4px, 1.5vmin, 12px);
       border-radius: 50%;
       background: #eff6ff;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.25s ease;
+      flex-shrink: 0;
     }
 
     .upload-item:hover .upload-icon {
@@ -204,8 +213,8 @@
     }
 
     .upload-icon svg {
-      width: 24px;
-      height: 24px;
+      width: 55%;
+      height: 55%;
       stroke: #1e40af;
       stroke-width: 1.8;
       transition: all 0.25s ease;
@@ -216,21 +225,12 @@
     }
 
     .upload-item-name {
-      font-size: 20px;
+      font-size: clamp(12px, 2vmin, 20px);
       font-weight: 600;
       color: #1e3a5f;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       letter-spacing: 0.3px;
-    }
-
-    .upload-item-hint {
-      font-size: 16px;
-      color: #94a3b8;
-      line-height: 1.5;
-    }
-
-    .upload-item.uploaded .upload-item-hint {
-      color: #059669;
+      line-height: 1.3;
     }
 
     .upload-item input[type="file"] {
@@ -239,12 +239,13 @@
 
     /* 文件已上传后的文件名显示 */
     .file-name {
-      font-size: 16px;
+      font-size: clamp(10px, 1.4vmin, 16px);
       color: #059669;
-      margin-top: 6px;
+      margin-top: 4px;
       word-break: break-all;
       max-width: 100%;
       display: none;
+      line-height: 1.3;
     }
 
     .upload-item.uploaded .file-name {
@@ -285,20 +286,21 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      margin-bottom: clamp(24px, 3vh, 36px);
-      padding: 14px 20px;
+      gap: clamp(6px, 1.5vmin, 12px);
+      margin-bottom: clamp(10px, 2.5vmin, 36px);
+      padding: clamp(6px, 1.2vmin, 14px) clamp(10px, 2vmin, 20px);
       background: #f8fafc;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
+      border-radius: clamp(6px, 1vmin, 10px);
       max-width: 500px;
       margin-left: auto;
       margin-right: auto;
+      flex-shrink: 0;
     }
 
     .progress-track {
       flex: 1;
-      height: 8px;
+      height: clamp(4px, 0.8vmin, 8px);
       background: #e2e8f0;
       border-radius: 4px;
       overflow: hidden;
@@ -313,7 +315,7 @@
     }
 
     .progress-text {
-      font-size: 14px;
+      font-size: clamp(11px, 1.6vmin, 14px);
       font-weight: 600;
       color: #1e3a5f;
       white-space: nowrap;
@@ -323,26 +325,28 @@
     .btn-row {
       display: flex;
       justify-content: center;
-      gap: 20px;
+      gap: clamp(8px, 2vmin, 20px);
       flex-wrap: wrap;
+      flex-shrink: 0;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: clamp(14px, 2.2vh, 18px) clamp(40px, 5vw, 64px);
-      font-size: clamp(17px, 2vw, 20px);
+      gap: clamp(4px, 1vmin, 8px);
+      padding: clamp(8px, 1.6vmin, 18px) clamp(24px, 4vmin, 64px);
+      font-size: clamp(13px, 2vmin, 20px);
       font-weight: 600;
       color: #ffffff;
       background: #1e40af;
       border: none;
-      border-radius: 8px;
+      border-radius: clamp(4px, 1vmin, 8px);
       cursor: pointer;
-      letter-spacing: clamp(1px, 0.3vw, 3px);
+      letter-spacing: clamp(0.5px, 0.3vmin, 3px);
       transition: all 0.25s ease;
       box-shadow: 0 1px 3px rgba(30, 64, 175, 0.15);
       text-decoration: none;
+      white-space: nowrap;
     }
 
     .btn:hover {
@@ -376,17 +380,18 @@
     }
 
     .btn svg {
-      width: 20px;
-      height: 20px;
+      width: clamp(14px, 2vmin, 20px);
+      height: clamp(14px, 2vmin, 20px);
       stroke: currentColor;
       stroke-width: 1.8;
+      flex-shrink: 0;
     }
 
     /* ---- 审核结果区域 ---- */
     .result-section {
       width: 100%;
       max-width: 1100px;
-      margin-top: 28px;
+      margin-top: clamp(10px, 2vmin, 28px);
       display: none;
     }
 
@@ -403,8 +408,8 @@
     .result-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: clamp(16px, 2vw, 20px);
-      padding: clamp(36px, 5vh, 56px) clamp(32px, 4vw, 52px);
+      border-radius: clamp(12px, 2vmin, 20px);
+      padding: clamp(16px, 3vmin, 56px) clamp(16px, 4vw, 52px);
       position: relative;
       overflow: hidden;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -468,207 +473,21 @@
       color: #64748b;
     }
 
-    /* ---- 示例按钮 ---- */
-    .example-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 8px;
-      padding: 4px 12px;
-      font-size: 16px;
-      font-weight: 500;
-      color: #3b82f6;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .example-btn:hover {
-      background: #dbeafe;
-      border-color: #93c5fd;
-      color: #1e40af;
-    }
-
-    .example-btn svg {
-      width: 14px;
-      height: 14px;
-      stroke: currentColor;
-      stroke-width: 2;
-    }
-
-    /* ---- 模态框 ---- */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(4px);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      padding: 24px;
-      animation: fadeInModal 0.2s ease;
-    }
-
-    .modal-overlay.visible {
-      display: flex;
-    }
-
-    @keyframes fadeInModal {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .modal-content {
-      background: #ffffff;
-      border-radius: 16px;
-      width: 90vw;
-      max-width: 960px;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
-      animation: slideUpModal 0.3s ease;
-      overflow: hidden;
-    }
-
-    @keyframes slideUpModal {
-      from { opacity: 0; transform: translateY(24px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 24px;
-      border-bottom: 1px solid #e2e8f0;
-      flex-shrink: 0;
-    }
-
-    .modal-header-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1e3a5f;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .modal-header-title svg {
-      width: 20px;
-      height: 20px;
-      stroke: #3b82f6;
-      stroke-width: 2;
-    }
-
-    .modal-close {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      border: none;
-      background: #f1f5f9;
-      color: #64748b;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-    }
-
-    .modal-close:hover {
-      background: #fee2e2;
-      color: #dc2626;
-    }
-
-    .modal-body {
-      flex: 1;
-      overflow: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f8fafc;
-      min-height: 0;
-    }
-
-    .modal-body img {
-      max-width: 100%;
-      max-height: 70vh;
-      object-fit: contain;
-      display: block;
-    }
-
-    .modal-body iframe {
-      width: 100%;
-      height: 70vh;
-      border: none;
-    }
-
-    .modal-body pre {
-      padding: 24px;
-      font-size: 13px;
-      line-height: 1.6;
-      color: #334155;
-      white-space: pre-wrap;
-      word-break: break-word;
-      width: 100%;
-      max-height: 70vh;
-      overflow: auto;
-      font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
-    }
-
-    .modal-loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      color: #64748b;
-      font-size: 14px;
-    }
-
-    .modal-loading .spinner {
-      width: 32px;
-      height: 32px;
-      border-width: 3px;
-    }
-
-    .modal-error {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      color: #dc2626;
-      font-size: 14px;
-      padding: 40px;
-      text-align: center;
-    }
-
     /* ---- 响应式 ---- */
     @media (max-width: 768px) {
       .upload-grid {
-        grid-template-columns: 1fr;
-        max-width: 400px;
-      }
-
-      .upload-card {
-        padding: clamp(28px, 6vw, 40px) clamp(20px, 5vw, 32px);
+        grid-template-columns: repeat(3, 1fr);
       }
 
       .bg-glow {
         opacity: 0.5;
       }
+    }
 
-      .btn-row {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .modal-content {
-        width: 98vw;
-        max-height: 90vh;
+    @media (max-aspect-ratio: 1/1) {
+      /* 竖屏或很窄的屏幕：缩小装饰光晕 */
+      .bg-glow {
+        opacity: 0.3;
       }
     }
   </style>
@@ -678,6 +497,7 @@
   <div class="bg-glow bg-glow--2"></div>
   <div class="bg-glow bg-glow--3"></div>
 
+  <div class="scale-wrapper" id="scaleWrapper">
   <div class="container">
     <!-- 标题 -->
     <div class="page-header">
@@ -719,11 +539,6 @@
             </svg>
           </div>
           <div class="upload-item-name">审批单</div>
-          <div class="upload-item-hint">支持 JPG / PDF</div>
-          <button class="example-btn" onclick="event.stopPropagation(); openExample('业务招待审批单.jpg', this)" title="查看示例文件">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            查看示例
-          </button>
           <div class="file-name"></div>
           <input type="file" accept=".jpg,.jpeg,.png,.pdf" />
         </div>
@@ -740,11 +555,6 @@
             </svg>
           </div>
           <div class="upload-item-name">申请单</div>
-          <div class="upload-item-hint">支持 PDF</div>
-          <button class="example-btn" onclick="event.stopPropagation(); openExample('业务招待申请单.pdf', this)" title="查看示例文件">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            查看示例
-          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -761,11 +571,6 @@
             </svg>
           </div>
           <div class="upload-item-name">报账单</div>
-          <div class="upload-item-hint">支持 PDF</div>
-          <button class="example-btn" onclick="event.stopPropagation(); openExample('业务招待费报账单.pdf', this)" title="查看示例文件">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            查看示例
-          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -782,11 +587,6 @@
             </svg>
           </div>
           <div class="upload-item-name">发票（XML格式）</div>
-          <div class="upload-item-hint">支持 XML</div>
-          <button class="example-btn" onclick="event.stopPropagation(); openExample('【发票】_XML格式.xml', this)" title="查看示例文件">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            查看示例
-          </button>
           <div class="file-name"></div>
           <input type="file" accept=".xml" />
         </div>
@@ -803,11 +603,6 @@
             </svg>
           </div>
           <div class="upload-item-name">电子发票（PDF格式）</div>
-          <div class="upload-item-hint">支持 PDF</div>
-          <button class="example-btn" onclick="event.stopPropagation(); openExample('【电子发票】_PDF格式.pdf', this)" title="查看示例文件">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            查看示例
-          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -823,11 +618,6 @@
             </svg>
           </div>
           <div class="upload-item-name">招待单位经营状态</div>
-          <div class="upload-item-hint">支持 PNG / JPG</div>
-          <button class="example-btn" onclick="event.stopPropagation(); openExample('招待单位经营状态.PNG', this)" title="查看示例文件">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            查看示例
-          </button>
           <div class="file-name"></div>
           <input type="file" accept=".png,.jpg,.jpeg" />
         </div>
@@ -842,11 +632,6 @@
             </svg>
           </div>
           <div class="upload-item-name">支付凭证</div>
-          <div class="upload-item-hint">支持 JPG / PNG</div>
-          <button class="example-btn" onclick="event.stopPropagation(); openExample('支付凭证.jpg', this)" title="查看示例文件">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            查看示例
-          </button>
           <div class="file-name"></div>
           <input type="file" accept=".jpg,.jpeg,.png" />
         </div>
@@ -863,11 +648,6 @@
             </svg>
           </div>
           <div class="upload-item-name">支付流水证明</div>
-          <div class="upload-item-hint">支持 PDF</div>
-          <button class="example-btn" onclick="event.stopPropagation(); openExample('支付流水证明.pdf', this)" title="查看示例文件">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            查看示例
-          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -882,11 +662,6 @@
             </svg>
           </div>
           <div class="upload-item-name">活动函件</div>
-          <div class="upload-item-hint">支持 PDF</div>
-          <button class="example-btn" onclick="event.stopPropagation(); openExample('活动函件.pdf', this)" title="查看示例文件">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            查看示例
-          </button>
           <div class="file-name"></div>
           <input type="file" accept=".pdf" />
         </div>
@@ -911,30 +686,6 @@
       </div>
     </div>
 
-    <!-- 示例文件预览模态框 -->
-    <div class="modal-overlay" id="exampleModal" onclick="closeExampleOnOverlay(event)">
-      <div class="modal-content">
-        <div class="modal-header">
-          <div class="modal-header-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
-            <span id="modalTitle">示例文件</span>
-          </div>
-          <button class="modal-close" onclick="closeExample()" title="关闭">×</button>
-        </div>
-        <div class="modal-body" id="modalBody">
-          <div class="modal-loading">
-            <div class="spinner"></div>
-            <span>正在加载示例文件...</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 审核结果区域 -->
     <div class="result-section" id="resultSection">
       <div class="result-card">
@@ -953,8 +704,46 @@
       </div>
     </div>
   </div>
+  </div>
 
   <script>
+    /* ---- 自动缩放适配 ---- */
+    (function () {
+      var wrapper = document.getElementById('scaleWrapper');
+      var body = document.body;
+
+      function scaleToFit() {
+        var availW = window.innerWidth;
+        var availH = window.innerHeight;
+        var contentW = wrapper.scrollWidth;
+        var contentH = wrapper.scrollHeight;
+        if (contentW === 0 || contentH === 0) return;
+        var scaleX = availW / contentW;
+        var scaleY = availH / contentH;
+        var scale = Math.min(scaleX, scaleY, 1); // 不放大，只缩小
+        // 留一点边距
+        scale *= 0.97;
+        wrapper.style.transform = 'scale(' + scale + ')';
+      }
+
+      // 使用 requestAnimationFrame 确保在布局完成后计算
+      function requestScale() {
+        requestAnimationFrame(scaleToFit);
+      }
+
+      window.addEventListener('resize', requestScale);
+      // 页面加载完成后执行
+      window.addEventListener('load', requestScale);
+      // 也立即执行一次（DOMContentLoaded 后）
+      requestScale();
+      // 当审核结果区域显示时重新计算
+      var origAdd = Element.prototype.classList.add;
+      var observer = new MutationObserver(function () {
+        requestScale();
+      });
+      observer.observe(document.body, { attributes: true, subtree: true, attributesFilter: ['class'] });
+    })();
+
     const totalFiles = 9;
     let uploadedCount = 0;
 
@@ -999,123 +788,42 @@
       uploadedCount = 0;
       updateProgress();
       document.getElementById('resultSection').classList.remove('visible');
+      // 重新计算缩放
+      requestAnimationFrame(function () {
+        var wrapper = document.getElementById('scaleWrapper');
+        var availW = window.innerWidth;
+        var availH = window.innerHeight;
+        var contentW = wrapper.scrollWidth;
+        var contentH = wrapper.scrollHeight;
+        if (contentW === 0 || contentH === 0) return;
+        var scaleX = availW / contentW;
+        var scaleY = availH / contentH;
+        var scale = Math.min(scaleX, scaleY, 1);
+        scale *= 0.97;
+        wrapper.style.transform = 'scale(' + scale + ')';
+      });
     }
 
     function startAudit() {
       const resultSection = document.getElementById('resultSection');
       resultSection.classList.add('visible');
-      resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // 重新计算缩放，因为内容增加了
+      requestAnimationFrame(function () {
+        var wrapper = document.getElementById('scaleWrapper');
+        var availW = window.innerWidth;
+        var availH = window.innerHeight;
+        var contentW = wrapper.scrollWidth;
+        var contentH = wrapper.scrollHeight;
+        if (contentW === 0 || contentH === 0) return;
+        var scaleX = availW / contentW;
+        var scaleY = availH / contentH;
+        var scale = Math.min(scaleX, scaleY, 1);
+        scale *= 0.97;
+        wrapper.style.transform = 'scale(' + scale + ')';
+      });
       // TODO: 对接后端审核 API
     }
 
-    // ---- 示例文件预览 ----
-    const exampleBasePath = '../审核标准/参考案例/案例标准测试材料';
-    let exampleLoadTimer = null;
-
-    function openExample(fileName, btn) {
-      const overlay = document.getElementById('exampleModal');
-      const body = document.getElementById('modalBody');
-      const title = document.getElementById('modalTitle');
-
-      // 获取父级 upload-item 的名称作为标题
-      const uploadItem = btn.closest('.upload-item');
-      const itemName = uploadItem.querySelector('.upload-item-name').textContent;
-      title.textContent = `示例 — ${itemName}`;
-
-      // 显示加载状态
-      body.innerHTML = `
-        <div class="modal-loading">
-          <div class="spinner"></div>
-          <span>正在加载示例文件...</span>
-        </div>`;
-
-      overlay.classList.add('visible');
-      document.body.style.overflow = 'hidden';
-
-      const ext = fileName.split('.').pop().toLowerCase();
-      const url = `${exampleBasePath}/${fileName}`;
-
-      // 清除上一次的超时定时器
-      if (exampleLoadTimer) { clearTimeout(exampleLoadTimer); exampleLoadTimer = null; }
-
-      function showLoadingError() {
-        body.innerHTML = `<div class="modal-error">⚠️ 无法加载该示例文件<br><small>${fileName}</small><br><small>请确认文件存在于: ${url}</small></div>`;
-      }
-
-      // 10 秒超时兜底，防止 loading 卡死
-      exampleLoadTimer = setTimeout(showLoadingError, 10000);
-
-      if (ext === 'pdf') {
-        const iframe = document.createElement('iframe');
-        iframe.src = url;
-        iframe.title = 'PDF 预览';
-        iframe.onload = function () { clearTimeout(exampleLoadTimer); };
-        iframe.onerror = function () {
-          clearTimeout(exampleLoadTimer);
-          showLoadingError();
-        };
-        body.innerHTML = '';
-        body.appendChild(iframe);
-      } else if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
-        const img = document.createElement('img');
-        img.title = fileName;
-        img.alt = `示例: ${itemName}`;
-        img.onload = function () {
-          clearTimeout(exampleLoadTimer);
-          body.innerHTML = '';
-          body.appendChild(img);
-        };
-        img.onerror = function () {
-          clearTimeout(exampleLoadTimer);
-          showLoadingError();
-        };
-        img.src = url;
-      } else if (ext === 'xml' || ext === 'json' || ext === 'txt') {
-        // file:// 协议下 fetch 被 CORS 阻止，改用 iframe 直接加载
-        const iframe = document.createElement('iframe');
-        iframe.src = url;
-        iframe.title = `${ext.toUpperCase()} 预览`;
-        iframe.style.fontFamily = '"Cascadia Code", "Fira Code", "Consolas", monospace';
-        iframe.onload = function () { clearTimeout(exampleLoadTimer); };
-        iframe.onerror = function () {
-          clearTimeout(exampleLoadTimer);
-          showLoadingError();
-        };
-        body.innerHTML = '';
-        body.appendChild(iframe);
-      } else {
-        clearTimeout(exampleLoadTimer);
-        body.innerHTML = `<div class="modal-error">⚠️ 暂不支持预览此类型文件<br><small>${fileName}</small></div>`;
-      }
-    }
-
-    function closeExample() {
-      if (exampleLoadTimer) { clearTimeout(exampleLoadTimer); exampleLoadTimer = null; }
-      const overlay = document.getElementById('exampleModal');
-      overlay.classList.remove('visible');
-      document.body.style.overflow = '';
-      // 清空 iframe 防止后台继续加载
-      document.getElementById('modalBody').innerHTML = '';
-    }
-
-    function closeExampleOnOverlay(e) {
-      if (e.target === e.currentTarget) {
-        closeExample();
-      }
-    }
-
-    // ESC 键关闭模态框
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') {
-        closeExample();
-      }
-    });
-
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
   </script>
 </body>
 </html>
