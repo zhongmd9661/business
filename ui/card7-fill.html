@@ -249,28 +249,41 @@
     .qichacha-recommendation.success { background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--color-success); }
     .qichacha-recommendation.danger { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--color-error); }
     .qichacha-compare-area { display: flex; gap: var(--spacing-lg); margin-top: var(--spacing-md); flex-wrap: wrap; }
-    .qichacha-original-img { flex: 0 0 320px; max-height: 400px; object-fit: contain; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fafbfc; }
-    .qichacha-markdown-view { flex: 1; min-width: 300px; max-height: 400px; overflow-y: auto; background: #fafbfc; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--spacing-md); font-size: var(--font-size-xs); line-height: 1.7; }
-    .qichacha-markdown-view h1, .qichacha-markdown-view h2, .qichacha-markdown-view h3 { margin: 8px 0 4px; color: #1e4a8a; }
-    .qichacha-markdown-view h1 { font-size: 14px; }
-    .qichacha-markdown-view h2 { font-size: 13px; }
-    .qichacha-markdown-view h3 { font-size: 12px; }
-    .qichacha-markdown-view ul, .qichacha-markdown-view ol { padding-left: 16px; margin: 4px 0; }
-    .qichacha-markdown-view li { margin: 2px 0; }
-    .qichacha-markdown-view table { border-collapse: collapse; width: 100%; margin: 6px 0; }
-    .qichacha-markdown-view th, .qichacha-markdown-view td { border: 1px solid #e5e7eb; padding: 4px 8px; text-align: left; font-size: 11px; }
-    .qichacha-markdown-view th { background: #f3f4f6; }
-    .qichacha-markdown-view blockquote { border-left: 3px solid var(--color-accent); margin: 6px 0; padding: 4px 12px; background: var(--color-accent-light); }
-    .qichacha-markdown-view p { margin: 4px 0; }
-    .qichacha-markdown-view code { background: #f3f4f6; padding: 1px 4px; border-radius: 3px; }
+    .qichacha-original-img { flex: 0 0 auto; max-width: 420px; max-height: 480px; object-fit: contain; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fafbfc; display: block; }
+    .qichacha-html-view { flex: 1; min-width: 300px; max-height: 400px; overflow: auto; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm); position: relative; }
+    .qichacha-html-view .ocr-canvas {
+      position: relative; font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background: #fff; margin: 0; overflow: hidden;
+    }
+    .qichacha-html-view .ocr-block {
+      position: absolute; white-space: nowrap; line-height: 1.1;
+      color: #1a1a2e; overflow: hidden; text-overflow: ellipsis;
+      /* slight shadow to distinguish from background */
+      text-shadow: 0 0 1px rgba(0,0,0,0.02);
+    }
+    .qichacha-html-view .ocr-block:hover {
+      background: rgba(59,130,246,0.08); outline: 1px solid rgba(59,130,246,0.3);
+      z-index: 10;
+    }
+    .qichacha-html-view .ocr-block.low-confidence {
+      background: rgba(251,191,36,0.15);
+    }
+    .qichacha-html-view .ocr-block .ocr-block-tooltip {
+      display: none; position: absolute; bottom: 100%; left: 0;
+      background: #1a1a2e; color: #fff; padding: 3px 8px; border-radius: 3px;
+      font-size: 10px; white-space: nowrap; z-index: 100; pointer-events: none;
+    }
+    .qichacha-html-view .ocr-block:hover .ocr-block-tooltip {
+      display: block;
+    }
     .qichacha-toggle-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); margin-top: var(--spacing-sm); transition: all var(--transition); }
     .qichacha-toggle-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
     .qichacha-templates-area { margin-top: var(--spacing-md); padding: var(--spacing-sm); background: var(--color-bg-secondary); border-radius: var(--radius-sm); }
     .qichacha-templates-area label { font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); color: var(--color-text-secondary); display: block; margin-bottom: 6px; }
-    .qichacha-template-list { display: flex; gap: 10px; flex-wrap: wrap; }
-    .qichacha-template-preview { flex-shrink: 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); overflow: hidden; background: #fff; cursor: zoom-in; transition: box-shadow var(--transition); }
+    .qichacha-template-list { display: flex; gap: 12px; flex-wrap: wrap; }
+    .qichacha-template-preview { width: 120px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); overflow: hidden; background: #fff; cursor: zoom-in; transition: box-shadow var(--transition); }
     .qichacha-template-preview:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-    .qichacha-template-preview img { display: block; max-width: 560px; max-height: 320px; object-fit: contain; }
+    .qichacha-template-preview img { display: block; width: 120px; height: 80px; object-fit: cover; }
     .qichacha-template-preview .template-caption { padding: 4px 8px; font-size: 11px; color: var(--color-text-secondary); text-align: center; background: var(--color-bg-secondary); border-top: 1px solid var(--color-border); word-break: break-all; }
 
     /* Spinner */
@@ -521,8 +534,8 @@
                     <img id="qichachaOriginalImg" class="qichacha-original-img" src="" alt="原图">
                   </div>
                   <div>
-                    <div style="font-size:11px; font-weight:600; color:var(--color-text-secondary); margin-bottom:4px;">AI 识别文字 (Markdown)</div>
-                    <div id="qichachaMarkdownView" class="qichacha-markdown-view"></div>
+                    <div style="font-size:11px; font-weight:600; color:var(--color-text-secondary); margin-bottom:4px;">AI 识别文字 (HTML)</div>
+                    <div id="qichachaHtmlView" class="qichacha-html-view"></div>
                   </div>
                 </div>
               </div>
@@ -2466,11 +2479,11 @@
 
       resultCard.innerHTML = html;
 
-      // Show comparison area with original image and markdown text
+      // Show comparison area with original image and HTML text
       const compareArea = document.getElementById('qichachaCompareArea');
       const compareContent = document.getElementById('qichachaCompareContent');
       const originalImg = document.getElementById('qichachaOriginalImg');
-      const markdownView = document.getElementById('qichachaMarkdownView');
+      const htmlView = document.getElementById('qichachaHtmlView');
 
       // Get the original image preview source
       const dropZone = document.getElementById('qichachaDropZone');
@@ -2479,8 +2492,8 @@
         originalImg.src = previewImg.src;
       }
 
-      if (data.markdown_text) {
-        markdownView.innerHTML = renderMarkdown(data.markdown_text);
+      if (data.markdown_text || (data.ocr_lines && data.ocr_lines.length > 0)) {
+        htmlView.innerHTML = renderOcrAsHtml(data);
         compareArea.style.display = 'block';
       } else {
         compareArea.style.display = 'none';
@@ -2499,41 +2512,99 @@
       }
     }
 
-    // Simple Markdown renderer (basic support for headings, lists, tables, bold, italic, blockquote)
-    function renderMarkdown(text) {
-      let html = escapeHtml(text);
+    // Render OCR result as structured HTML mimicking original 企查查 screenshot layout
+    function renderOcrAsHtml(data) {
+      var lines = data.ocr_lines || [];
+      var companyName = data.company_name || '';
+      var businessStatus = data.business_status || '无法识别';
+      var riskCount = data.risk_count || 0;
+      var riskSummary = data.risk_summary || '';
+      var isAbnormal = data.is_abnormal === true;
+      var recommendation = data.recommendation || '';
+      var mdText = data.markdown_text || '';
 
-      // Headers
-      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-      html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+      // If we have VLM markdown but no raw lines, parse the markdown into lines
+      if (lines.length === 0 && mdText) {
+        lines = mdText.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+      }
 
-      // Bold & Italic
-      html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+      // Determine status badge class
+      var badgeClass = 'unknown';
+      if (isAbnormal) badgeClass = 'abnormal';
+      else if (businessStatus === '存续' || businessStatus === '在业' || businessStatus === '开业') badgeClass = 'normal';
 
-      // Inline code
-      html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+      var html = '<div class="ocr-replica">';
 
-      // Blockquote
-      html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+      // === Header bar (blue, like 企查查 top bar) ===
+      html += '<div class="ocr-replica-header">';
+      html += '<span class="ocr-replica-logo">企查查</span>';
+      html += '<span class="ocr-replica-company">' + escapeHtml(companyName || '未识别企业') + '</span>';
+      html += '</div>';
 
-      // Unordered lists
-      html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
-      html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+      // === Status bar ===
+      html += '<div class="ocr-replica-status-bar">';
+      html += '<span class="ocr-replica-status-label">经营状态</span>';
+      html += '<span class="ocr-replica-status-badge ' + badgeClass + '">' + escapeHtml(businessStatus) + '</span>';
+      if (riskCount > 0) {
+        html += '<span class="ocr-replica-status-badge abnormal">风险 ' + riskCount + ' 条</span>';
+      }
+      html += '</div>';
 
-      // Horizontal rule
-      html = html.replace(/^---$/gm, '<hr>');
+      // === Key info grid (extracted fields) ===
+      if (companyName || riskSummary) {
+        html += '<div class="ocr-replica-info-grid">';
+        if (companyName) {
+          html += '<div class="ocr-replica-info-row">';
+          html += '<div class="ocr-replica-info-label">企业名称</div>';
+          html += '<div class="ocr-replica-info-value">' + escapeHtml(companyName) + '</div>';
+          html += '</div>';
+        }
+        html += '<div class="ocr-replica-info-row">';
+        html += '<div class="ocr-replica-info-label">经营状态</div>';
+        html += '<div class="ocr-replica-info-value"><span class="ocr-replica-status-badge ' + badgeClass + '">' + escapeHtml(businessStatus) + '</span></div>';
+        html += '</div>';
+        if (riskCount > 0 || riskSummary) {
+          html += '<div class="ocr-replica-info-row">';
+          html += '<div class="ocr-replica-info-label">风险提示</div>';
+          html += '<div class="ocr-replica-info-value">' + escapeHtml(riskSummary || '暂无') + '</div>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
 
-      // Paragraphs (double newlines)
-      html = html.replace(/\n\n/g, '</p><p>');
-      html = html.replace(/\n/g, '<br>');
+      // === Recommendation block ===
+      if (recommendation) {
+        var recClass = isAbnormal ? 'danger' : 'success';
+        html += '<div class="ocr-replica-risk-block ' + recClass + '">';
+        html += escapeHtml(recommendation);
+        html += '</div>';
+      }
 
-      // Clean up
-      html = '<p>' + html + '</p>';
-      html = html.replace(/<p><(h[1-3]|ul|ol|blockquote|hr)/g, '<$1');
-      html = html.replace(/<\/(h[1-3]|ul|ol|blockquote)><\/p>/g, '</$1>');
+      // === Raw OCR lines section (for proofreading) ===
+      if (lines.length > 0) {
+        html += '<div class="ocr-replica-section">';
+        html += '<div class="ocr-replica-section-title">📝 原始识别文字（共 ' + lines.length + ' 行）</div>';
+        html += '</div>';
+        html += '<div class="ocr-replica-lines">';
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          // Highlight lines containing company name, status, or risk keywords
+          var isHighlight = false;
+          if (companyName && line.indexOf(companyName) >= 0) isHighlight = true;
+          if (line.indexOf('经营状态') >= 0 || line.indexOf(businessStatus) >= 0) isHighlight = true;
+          if (line.indexOf('风险') >= 0 || line.indexOf('异常') >= 0 || line.indexOf('处罚') >= 0) isHighlight = true;
+
+          html += '<div class="ocr-replica-line' + (isHighlight ? ' highlight' : '') + '">';
+          html += '<span class="ocr-replica-line-num">' + (i + 1) + '</span>';
+          html += '<span class="ocr-replica-line-text">' + escapeHtml(line) + '</span>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+
+      // === Footer ===
+      html += '<div class="ocr-replica-footer">OCR 识别结果 · ' + (data._method === 'vlm' ? 'VLM 视觉识别' : 'RapidOCR 文字识别') + ' · ' + (data.analyzed_at || '') + '</div>';
+      html += '</div>';
 
       return html;
     }
