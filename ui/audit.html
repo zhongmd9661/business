@@ -1162,6 +1162,20 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
+    /* PDF 预览模式下，取消 canvas 约束以支持缩放 */
+    .ocr-panel-content.pdf-preview-active canvas {
+      max-width: none;
+      max-height: none;
+    }
+
+    .ocr-panel-content.pdf-preview-active {
+      cursor: grab;
+    }
+
+    .ocr-panel-content.pdf-preview-active.grabbing {
+      cursor: grabbing;
+    }
+
     /* ---- OCR 弹窗遮罩 ---- */
     .ocr-modal-overlay {
       display: none;
@@ -1284,6 +1298,62 @@
       flex-shrink: 0;
     }
 
+    /* ---- PDF 缩放控制条 ---- */
+    .pdf-zoom-controls {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+    }
+
+    .pdf-zoom-controls.visible {
+      display: inline-flex;
+    }
+
+    .pdf-zoom-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #475569;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      line-height: 1;
+    }
+
+    .pdf-zoom-btn:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1e40af;
+    }
+
+    .pdf-zoom-btn:active {
+      background: #dbeafe;
+    }
+
+    .pdf-zoom-level {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1e40af;
+      min-width: 42px;
+      text-align: center;
+      font-family: "Cascadia Code", "Fira Code", monospace;
+    }
+
+    .pdf-zoom-divider {
+      width: 1px;
+      height: 16px;
+      background: #e2e8f0;
+      margin: 0 2px;
+    }
+
     .ocr-panel-header .dot--blue { background: #3b82f6; }
     .ocr-panel-header .dot--green { background: #059669; }
 
@@ -1356,6 +1426,17 @@
       font-size: 13px;
       white-space: pre-wrap;
       word-break: break-all;
+    }
+
+    .ocr-text-content .ocr-document-pre {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      padding: 16px 20px;
+      color: #1a1a2e;
+      line-height: 1.8;
+      font-size: 13px;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .ocr-text-content .ocr-engine-badge {
@@ -1936,10 +2017,32 @@
   </style>
   <!-- Tesseract.js for client-side OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-  <!-- PDF.js for rendering PDF pages -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
+  <!-- PDF.js for rendering PDF pages (v3 for UMD compatibility) -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <!-- Mammoth.js for extracting Word document text -->
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+  <script>
+    /* ---- Dynamic PDF.js loader (fallback if CDN fails) ---- */
+    var _pdfjsLoaded = false;
+    function ensurePdfjsLib() {
+      if (typeof pdfjsLib !== 'undefined') {
+        _pdfjsLoaded = true;
+        return Promise.resolve(pdfjsLib);
+      }
+      if (_pdfjsLoaded) return Promise.reject(new Error('PDF.js CDN failed'));
+      _pdfjsLoaded = true;
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+        s.onload = function () {
+          if (typeof pdfjsLib !== 'undefined') resolve(pdfjsLib);
+          else reject(new Error('PDF.js loaded but pdfjsLib not found'));
+        };
+        s.onerror = function () { reject(new Error('无法加载 PDF.js CDN')); };
+        document.head.appendChild(s);
+      });
+    }
+  </script>
 </head>
 <body>
   <div class="bg-glow bg-glow--1"></div>
@@ -2640,6 +2743,16 @@
         <div class="ocr-panel">
           <div class="ocr-panel-header">
             <span class="dot dot--blue"></span> 原始文件预览
+            <!-- PDF 缩放控制 -->
+            <div class="pdf-zoom-controls" id="pdfZoomControls">
+              <button class="pdf-zoom-btn" onclick="pdfZoomFit()" title="适应窗口">⊡</button>
+              <button class="pdf-zoom-btn" onclick="pdfZoomOut()" title="缩小">−</button>
+              <span class="pdf-zoom-level" id="pdfZoomLevel">100%</span>
+              <button class="pdf-zoom-btn" onclick="pdfZoomIn()" title="放大">+</button>
+              <div class="pdf-zoom-divider"></div>
+              <button class="pdf-zoom-btn" onclick="pdfRotateLeft()" title="左旋">↺</button>
+              <button class="pdf-zoom-btn" onclick="pdfRotateRight()" title="右旋">↻</button>
+            </div>
           </div>
           <div class="ocr-panel-content" id="ocrPanelContent">
             <img id="ocrOriginalImage" src="" alt="原始图片" />
@@ -3078,24 +3191,28 @@
               item.dataset.pdfBuffer = JSON.stringify(Array.from(typedArray)); // 暂存
               item._pdfBuffer = typedArray; // 同时保存在 DOM 元素上
 
-              // 渲染第一页作为预览
-              pdfjsLib.getDocument({ data: typedArray.slice() }).promise.then(function (pdf) {
-                pdf.getPage(1).then(function (page) {
-                  var viewport = page.getViewport({ scale: 1 });
-                  var canvas = document.createElement('canvas');
-                  var ctx = canvas.getContext('2d');
-                  canvas.width = viewport.width;
-                  canvas.height = viewport.height;
-                  // 缩放到预览宽度
-                  var previewScale = 200 / viewport.width;
-                  var scaledViewport = page.getViewport({ scale: previewScale });
-                  canvas.width = scaledViewport.width;
-                  canvas.height = scaledViewport.height;
-                  page.render({ canvasContext: ctx, viewport: scaledViewport }).promise.then(function () {
-                    imgPreview.src = canvas.toDataURL();
+              // 渲染第一页作为缩略图预览
+              if (typeof pdfjsLib === 'undefined') {
+                console.warn('[triggerUpload] pdfjsLib not loaded yet, skipping PDF thumbnail');
+              } else {
+                pdfjsLib.getDocument({ data: typedArray.slice() }).promise.then(function (pdf) {
+                  pdf.getPage(1).then(function (page) {
+                    var viewport = page.getViewport({ scale: 1 });
+                    var canvas = document.createElement('canvas');
+                    var ctx = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    // 缩放到预览宽度
+                    var previewScale = 200 / viewport.width;
+                    var scaledViewport = page.getViewport({ scale: previewScale });
+                    canvas.width = scaledViewport.width;
+                    canvas.height = scaledViewport.height;
+                    page.render({ canvasContext: ctx, viewport: scaledViewport }).promise.then(function () {
+                      imgPreview.src = canvas.toDataURL();
+                    });
                   });
                 });
-              });
+              }
             };
             pdfReader.readAsArrayBuffer(file);
           } else if (fileType === 'doc' || fileType === 'xml') {
@@ -3211,7 +3328,7 @@
     // 设置 PDF.js worker（等 CDN 加载完成后设置）
     (function initPDFWorker() {
       if (typeof pdfjsLib !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.js';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
       } else {
         setTimeout(initPDFWorker, 100);
       }
@@ -3278,6 +3395,10 @@
           if (result.status === 'success') {
             item.dataset.ocrResult = result.markdown;
             item.dataset.ocrRecordId = result.record_id || '';
+            // PDF 文件：附加 _pdfBuffer 供弹窗渲染
+            if (file.type === 'application/pdf' && item._pdfBuffer) {
+              file._pdfBuffer = item._pdfBuffer;
+            }
             showOCRMdModal(file.name, file, result, slotName);
           } else {
             showResultError('OCR 识别失败: ' + (result.error || '未知错误'));
@@ -3349,18 +3470,25 @@
       document.getElementById('ocrResultTitle').textContent = 'PDF 文件内容';
       showProgress('正在加载 PDF...');
 
-      pdfjsLib.getDocument({ data: pdfBuffer.slice() }).promise.then(function (pdf) {
-        ocrState.pdfDoc = pdf;
-        ocrState.pdfTotal = pdf.numPages;
+      waitForPdfjsLib().then(function (pjs) {
+        pjs.getDocument({ data: pdfBuffer.slice() }).promise.then(function (pdf) {
+          ocrState.pdfDoc = pdf;
+          ocrState.pdfTotal = pdf.numPages;
 
-        if (pdf.numPages > 1) {
-          document.getElementById('ocrPageNav').classList.add('visible');
-        }
+          if (pdf.numPages > 1) {
+            document.getElementById('ocrPageNav').classList.add('visible');
+          }
 
-        // 渲染第一页 + OCR
-        renderPDFPage(1, btn);
+          // 渲染第一页 + OCR
+          renderPDFPage(1, btn);
+        }).catch(function (err) {
+          showResultError('PDF 加载失败: ' + (err.message || err));
+          btn.disabled = false;
+          restoreOCRBtn(btn);
+          ocrState.isProcessing = false;
+        });
       }).catch(function (err) {
-        showResultError('PDF 加载失败: ' + (err.message || err));
+        showResultError('PDF 引擎加载失败: ' + (err.message || err));
         btn.disabled = false;
         restoreOCRBtn(btn);
         ocrState.isProcessing = false;
@@ -3433,13 +3561,21 @@
 
     function ocrPrevPage() {
       if (ocrState.pdfPage > 1) {
-        renderPDFPage(ocrState.pdfPage - 1, document.querySelector('.ocr-btn'));
+        if (ocrState.pdfPreviewMode) {
+          renderPdfPreviewPage(ocrState.pdfPage - 1);
+        } else {
+          renderPDFPage(ocrState.pdfPage - 1, document.querySelector('.ocr-btn'));
+        }
       }
     }
 
     function ocrNextPage() {
       if (ocrState.pdfPage < ocrState.pdfTotal) {
-        renderPDFPage(ocrState.pdfPage + 1, document.querySelector('.ocr-btn'));
+        if (ocrState.pdfPreviewMode) {
+          renderPdfPreviewPage(ocrState.pdfPage + 1);
+        } else {
+          renderPDFPage(ocrState.pdfPage + 1, document.querySelector('.ocr-btn'));
+        }
       }
     }
 
@@ -3602,7 +3738,11 @@
       document.getElementById('ocrModalOverlay').classList.remove('visible');
       // 清理
       ocrState.pdfDoc = null;
+      ocrState.pdfPreviewMode = false;
+      document.getElementById('ocrPageNav').classList.remove('visible');
+      document.getElementById('pdfZoomControls').classList.remove('visible');
       var container = document.getElementById('ocrPanelContent');
+      container.classList.remove('pdf-preview-active');
       var canvas = container.querySelector('canvas');
       if (canvas) canvas.remove();
       var wp = container.querySelector('.word-placeholder');
@@ -3622,7 +3762,7 @@
 
     document.getElementById('ocrModalOverlay').addEventListener('click', function (e) {
       if (e.target === this) {
-        this.classList.remove('visible');
+        closeOCRModal();
       }
     });
 
@@ -3659,7 +3799,10 @@
     }
 
     /* ---- 页面加载时拉取提交记录 ---- */
-    document.addEventListener('DOMContentLoaded', loadRecords);
+    document.addEventListener('DOMContentLoaded', function() {
+      loadRecords();
+      setupPdfWheelZoom();
+    });
 
     /* ==================== 模板查看功能 ==================== */
     // 上传槽位 index → 模板文件名的映射（与后端一致）
@@ -3798,6 +3941,10 @@
         if (result.status === 'success') {
           item.dataset.ocrResult = result.markdown;
           item.dataset.ocrRecordId = result.record_id || '';
+          // PDF 文件：附加 _pdfBuffer 供弹窗渲染
+          if (file.type === 'application/pdf' && item._pdfBuffer) {
+            file._pdfBuffer = item._pdfBuffer;
+          }
           showOCRMdModal(file.name, file, result, slotName);
         } else {
           alert('OCR 识别失败: ' + (result.error || '未知错误'));
@@ -3866,6 +4013,239 @@
       }
     }
 
+    /* ---- 等待/加载 pdfjsLib ---- */
+    function waitForPdfjsLib() {
+      if (typeof pdfjsLib !== 'undefined') {
+        // 已加载，配置 worker
+        ensurePdfjsWorker();
+        return Promise.resolve(pdfjsLib);
+      }
+      // 动态加载 CDN 脚本
+      return ensurePdfjsLib().then(function (pdfjs) {
+        ensurePdfjsWorker();
+        return pdfjs;
+      });
+    }
+
+    function ensurePdfjsWorker() {
+      if (typeof pdfjsLib !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      }
+    }
+
+    /* ---- PDF 缩放/平移/旋转状态 ---- */
+    var pdfZoom = {
+      scale: 1.0,       // 缩放倍数（1.0 = 原始大小）
+      panX: 0,          // 平移 X
+      panY: 0,          // 平移 Y
+      rotation: 0,      // 旋转角度（90/180/270）
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      dragPanStartX: 0,
+      dragPanStartY: 0
+    };
+
+    var PDF_ZOOM_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0];
+
+    /* ---- 找到当前最接近的缩放级别索引 ---- */
+    function findZoomIndex(scale) {
+      var closest = 0;
+      var minDiff = Math.abs(PDF_ZOOM_STEPS[0] - scale);
+      for (var i = 1; i < PDF_ZOOM_STEPS.length; i++) {
+        var diff = Math.abs(PDF_ZOOM_STEPS[i] - scale);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = i;
+        }
+      }
+      return closest;
+    }
+
+    /* ---- 应用缩放/平移/旋转到 canvas ---- */
+    function applyPdfTransform() {
+      var container = document.getElementById('ocrPanelContent');
+      var canvas = container.querySelector('canvas');
+      if (!canvas) return;
+      var z = pdfZoom;
+      canvas.style.transformOrigin = '0 0';
+      canvas.style.transform = 'rotate(' + z.rotation + 'deg) scale(' + z.scale + ') translate(' + z.panX + 'px,' + z.panY + 'px)';
+      canvas.style.transition = 'transform 0.15s ease';
+      document.getElementById('pdfZoomLevel').textContent = Math.round(z.scale * 100) + '%';
+      // 旋转 90/270 度时，容器需要允许更大空间
+      if (z.rotation === 90 || z.rotation === 270) {
+        container.style.justifyContent = 'center';
+      }
+    }
+
+    /* ---- 缩放控制 ---- */
+    function pdfZoomIn() {
+      var idx = findZoomIndex(pdfZoom.scale) + 1;
+      if (idx >= PDF_ZOOM_STEPS.length) return;
+      pdfZoom.scale = PDF_ZOOM_STEPS[idx];
+      applyPdfTransform();
+    }
+
+    function pdfZoomOut() {
+      var idx = findZoomIndex(pdfZoom.scale) - 1;
+      if (idx < 0) return;
+      pdfZoom.scale = PDF_ZOOM_STEPS[idx];
+      applyPdfTransform();
+    }
+
+    function pdfZoomFit() {
+      pdfZoom.scale = 1.0;
+      pdfZoom.panX = 0;
+      pdfZoom.panY = 0;
+      pdfZoom.rotation = 0;
+      applyPdfTransform();
+    }
+
+    function pdfRotateLeft() {
+      pdfZoom.rotation = (pdfZoom.rotation - 90 + 360) % 360;
+      applyPdfTransform();
+    }
+
+    function pdfRotateRight() {
+      pdfZoom.rotation = (pdfZoom.rotation + 90) % 360;
+      applyPdfTransform();
+    }
+
+    /* ---- 鼠标滚轮缩放 ---- */
+    function setupPdfWheelZoom() {
+      var container = document.getElementById('ocrPanelContent');
+      container.addEventListener('wheel', function (e) {
+        if (!ocrState.pdfPreviewMode) return;
+        e.preventDefault();
+        var delta = -e.deltaY;
+        if (delta > 0) {
+          pdfZoomIn();
+        } else {
+          pdfZoomOut();
+        }
+      }, { passive: false });
+
+      // 拖拽平移
+      container.addEventListener('mousedown', function (e) {
+        if (!ocrState.pdfPreviewMode || pdfZoom.scale <= 0.75) return;
+        pdfZoom.isDragging = true;
+        pdfZoom.dragStartX = e.clientX;
+        pdfZoom.dragStartY = e.clientY;
+        pdfZoom.dragPanStartX = pdfZoom.panX;
+        pdfZoom.dragPanStartY = pdfZoom.panY;
+        var canvas = container.querySelector('canvas');
+        if (canvas) canvas.style.transition = 'none';
+        container.style.cursor = 'grabbing';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', function (e) {
+        if (!pdfZoom.isDragging) return;
+        pdfZoom.panX = pdfZoom.dragPanStartX + (e.clientX - pdfZoom.dragStartX);
+        pdfZoom.panY = pdfZoom.dragPanStartY + (e.clientY - pdfZoom.dragStartY);
+        var canvas = container.querySelector('canvas');
+        if (canvas) {
+          canvas.style.transformOrigin = '0 0';
+          canvas.style.transform = 'rotate(' + pdfZoom.rotation + 'deg) scale(' + pdfZoom.scale + ') translate(' + pdfZoom.panX + 'px,' + pdfZoom.panY + 'px)';
+        }
+      });
+
+      document.addEventListener('mouseup', function () {
+        if (!pdfZoom.isDragging) return;
+        pdfZoom.isDragging = false;
+        var container2 = document.getElementById('ocrPanelContent');
+        container2.style.cursor = '';
+        var canvas = container2.querySelector('canvas');
+        if (canvas) canvas.style.transition = 'transform 0.15s ease';
+      });
+    }
+
+    /* ---- 在 OCR 弹窗中渲染 PDF（左侧面板） ---- */
+    function renderPdfInModal(pdfBuffer, filename) {
+      var container = document.getElementById('ocrPanelContent');
+      var origImg = document.getElementById('ocrOriginalImage');
+      origImg.style.display = 'none';
+
+      // 启用 PDF 预览模式样式
+      container.classList.add('pdf-preview-active');
+
+      // 清除旧占位
+      var oldPlaceholder = container.querySelector('.ocr-file-placeholder, .batch-ocr-placeholder');
+      if (oldPlaceholder) oldPlaceholder.remove();
+
+      updateOCRProgress(0, '正在加载 PDF...');
+
+      waitForPdfjsLib().then(function (pdfjs) {
+        pdfjs.getDocument({ data: pdfBuffer.slice() }).promise.then(function (pdf) {
+          ocrState.pdfDoc = pdf;
+          ocrState.pdfTotal = pdf.numPages;
+          ocrState.pdfPage = 1;
+          ocrState.pdfPreviewMode = true;
+
+          // 重置缩放状态
+          pdfZoom.scale = 1.0;
+          pdfZoom.panX = 0;
+          pdfZoom.panY = 0;
+          pdfZoom.rotation = 0;
+
+          // 显示缩放控制条
+          document.getElementById('pdfZoomControls').classList.add('visible');
+
+          // 多页时显示翻页导航
+          if (pdf.numPages > 1) {
+            document.getElementById('ocrPageNav').classList.add('visible');
+          }
+
+          // 渲染第 1 页
+          renderPdfPreviewPage(1);
+        });
+      }).catch(function (err) {
+        console.error('[renderPdfInModal] PDF 加载失败:', err);
+        // 加载失败时回退到占位图标
+        origImg.style.display = 'none';
+        var placeholder = container.querySelector('.ocr-file-placeholder');
+        if (!placeholder) {
+          placeholder = document.createElement('div');
+          placeholder.className = 'ocr-file-placeholder';
+          placeholder.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:#94a3b8;';
+          container.appendChild(placeholder);
+        }
+        placeholder.innerHTML =
+          '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+          '<p style="margin-top:12px;font-size:14px;font-weight:600;color:#475569;">' + escapeHtml(filename) + '</p>' +
+          '<p style="margin-top:4px;font-size:12px;color:#ef4444;">PDF 加载失败: ' + escapeHtml(err.message) + '</p>';
+      });
+    }
+
+    /* ---- 渲染 PDF 预览的指定页到左侧面板 ---- */
+    function renderPdfPreviewPage(pageNum) {
+      var pdf = ocrState.pdfDoc;
+      if (!pdf) return;
+
+      ocrState.pdfPage = pageNum;
+      var container = document.getElementById('ocrPanelContent');
+
+      // 清除旧 Canvas
+      var oldCanvas = container.querySelector('canvas');
+      if (oldCanvas) oldCanvas.remove();
+
+      pdf.getPage(pageNum).then(function (page) {
+        var canvas = document.createElement('canvas');
+        container.appendChild(canvas);
+        var ctx = canvas.getContext('2d');
+        var viewport = page.getViewport({ scale: 1.5 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function () {
+          // 更新页码信息
+          document.getElementById('ocrPageInfo').textContent = pageNum + ' / ' + pdf.numPages;
+          // 应用当前缩放/平移/旋转
+          applyPdfTransform();
+        });
+      });
+    }
+
     /* ---- OCR Markdown 弹窗 ---- */
     function showOCRMdModal(filename, fileObj, result, slotName) {
       var overlay = document.getElementById('ocrModalOverlay');
@@ -3879,7 +4259,7 @@
       var imgH = result.img_height || 0;
       var engine = result.engine || '';
 
-      // 左侧：显示原始图片（如果有）
+      // 左侧：显示原始文件预览
       var container = document.getElementById('ocrPanelContent');
       var oldCanvas = container.querySelector('canvas');
       if (oldCanvas) oldCanvas.remove();
@@ -3887,12 +4267,23 @@
       if (oldPlaceholder) oldPlaceholder.remove();
 
       var origImg = document.getElementById('ocrOriginalImage');
-      if (fileObj && (fileObj.type && fileObj.type.startsWith('image'))) {
+
+      // ── 1. PDF 文件：渲染 PDF 原文 ──
+      if (fileObj && fileObj._pdfBuffer) {
+        renderPdfInModal(fileObj._pdfBuffer, filename);
+      }
+      // ── 2. 图片文件：直接显示 ──
+      else if (fileObj && (fileObj.type && fileObj.type.startsWith('image'))) {
         origImg.src = URL.createObjectURL(fileObj);
         origImg.style.display = 'block';
-      } else if (fileObj) {
-        // PDF/DOC 等非图片文件，显示占位
+        var existingPh = container.querySelector('.ocr-file-placeholder');
+        if (existingPh) existingPh.remove();
+        document.getElementById('ocrPageNav').classList.remove('visible');
+      }
+      // ── 3. 其他文件 / 旧记录无原文：显示占位图标 ──
+      else {
         origImg.style.display = 'none';
+        document.getElementById('ocrPageNav').classList.remove('visible');
         var placeholder = container.querySelector('.ocr-file-placeholder');
         if (!placeholder) {
           placeholder = document.createElement('div');
@@ -3900,10 +4291,20 @@
           placeholder.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:#94a3b8;';
           container.appendChild(placeholder);
         }
+        var ext = (filename || '').split('.').pop().toLowerCase();
+        var typeBadge = '';
+        if (['jpg','jpeg','png','bmp','webp','gif'].includes(ext)) typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:3px;background:#d1fae5;color:#059669;font-size:11px;font-weight:600;margin-top:6px;">IMG</span>';
+        else if (ext === 'pdf') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:3px;background:#fee2e2;color:#dc2626;font-size:11px;font-weight:600;margin-top:6px;">PDF</span>';
+        else if (['doc','docx'].includes(ext)) typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:3px;background:#dbeafe;color:#2563eb;font-size:11px;font-weight:600;margin-top:6px;">WORD</span>';
+        else if (ext === 'xml') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:3px;background:#fef3c7;color:#d97706;font-size:11px;font-weight:600;margin-top:6px;">XML</span>';
+        var extraNote = !fileObj && ['jpg','jpeg','png','bmp','webp','gif'].includes(ext)
+          ? '<p style="font-size:11px;margin-top:10px;color:#ef4444;font-weight:500;">⚠️ 原始图片未保存（旧记录）</p>'
+          : '';
         placeholder.innerHTML =
           '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
           '<p style="margin-top:12px;font-size:14px;font-weight:600;color:#475569;">' + escapeHtml(filename) + '</p>' +
-          (slotName ? '<p style="font-size:12px;margin-top:4px;color:#7c3aed;">' + escapeHtml(slotName) + '</p>' : '');
+          (slotName ? '<p style="font-size:12px;margin-top:4px;color:#7c3aed;">' + escapeHtml(slotName) + '</p>' : '') +
+          typeBadge + extraNote;
       }
 
       // 右侧：渲染 OCR 结果
@@ -3928,23 +4329,17 @@
         wrapper.innerHTML = renderHtml;
         textContent.appendChild(wrapper);
 
-      // ── 降级：纯文本渲染 ──
+      // ── 降级：纯文本渲染（保留原始换行） ──
       } else if (markdown.trim()) {
-        var lines = result.ocr_lines || markdown.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
-        var docDiv = document.createElement('div');
-        docDiv.className = 'ocr-document';
-        for (var i = 0; i < lines.length; i++) {
-          var p = document.createElement('p');
-          p.textContent = lines[i];
-          docDiv.appendChild(p);
-        }
-        textContent.appendChild(docDiv);
+        var preEl = document.createElement('pre');
+        preEl.className = 'ocr-document-pre';
+        preEl.textContent = markdown.trim();
+        textContent.appendChild(preEl);
       } else {
         textContent.textContent = '未提取到文字内容。';
       }
 
-      // 隐藏 PDF 导航和页签
-      document.getElementById('ocrPageNav').classList.remove('visible');
+      // 隐藏结果页签（PDF 导航由 renderPdfInModal 控制，非 PDF 时已在上方隐藏）
       document.getElementById('ocrResultTabs').classList.remove('visible');
 
       // 保存文本用于复制
@@ -4070,15 +4465,10 @@
             wrapper.innerHTML = renderHtml;
             textContent.appendChild(wrapper);
           } else if ((rec.markdown || '').trim()) {
-            var lines = rec.ocr_lines || rec.markdown.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
-            var docDiv = document.createElement('div');
-            docDiv.className = 'ocr-document';
-            for (var j = 0; j < lines.length; j++) {
-              var p = document.createElement('p');
-              p.textContent = lines[j];
-              docDiv.appendChild(p);
-            }
-            textContent.appendChild(docDiv);
+            var preEl = document.createElement('pre');
+            preEl.className = 'ocr-document-pre';
+            preEl.textContent = rec.markdown.trim();
+            textContent.appendChild(preEl);
           } else {
             textContent.textContent = rec.error || '未提取到文字内容。';
           }
@@ -4093,9 +4483,9 @@
       textContent.className = 'ocr-text-content' + ((first.markdown || '').trim() ? '' : ' empty');
       textContent.innerHTML = '';
       if ((first.markdown || '').trim()) {
-        var pre = document.createElement('div');
-        pre.style.whiteSpace = 'pre-wrap';
-        pre.textContent = first.markdown;
+        var pre = document.createElement('pre');
+        pre.className = 'ocr-document-pre';
+        pre.textContent = first.markdown.trim();
         textContent.appendChild(pre);
       } else {
         textContent.textContent = first.error || '未提取到文字内容。';
@@ -4189,16 +4579,86 @@
     async function viewOCRRecord(recordId) {
       try {
         var resp = await fetch('/api/ocr/records/' + recordId, { headers: authHeaders() });
+        if (!resp.ok) {
+          var errText = await resp.text();
+          throw new Error('HTTP ' + resp.status + ': ' + errText);
+        }
         var record = await resp.json();
-        showOCRMdModal(record.original_filename, null, {
-          markdown: record.markdown || '',
-          ocr_blocks: record.ocr_blocks || [],
-          ocr_lines: record.ocr_lines || [],
-          img_width: record.img_width || 0,
-          img_height: record.img_height || 0,
-          engine: record.engine || '',
-        }, record.slot_name);
+        console.log('[viewOCRRecord] API response:', record);
+
+        // 安全提取字段
+        var markdown = record.markdown || '';
+        var ocrBlocks = Array.isArray(record.ocr_blocks) ? record.ocr_blocks : [];
+        var ocrLines = Array.isArray(record.ocr_lines) ? record.ocr_lines : [];
+        var imgW = record.img_width || 0;
+        var imgH = record.img_height || 0;
+        var engine = record.engine || '';
+        var filePath = record.original_file_path || '';
+
+        console.log('[viewOCRRecord] parsed:', {
+          id: record.id, filename: record.original_filename, status: record.status,
+          markdownLen: markdown.length, blocksCount: ocrBlocks.length,
+          linesCount: ocrLines.length, imgW: imgW, imgH: imgH,
+          engine: engine, filePath: filePath
+        });
+
+        // 尝试加载原始文件（图片 / PDF）
+        var fileObj = null;
+        if (filePath) {
+          var ext = (record.original_filename || '').split('.').pop().toLowerCase();
+          if (['jpg','jpeg','png','bmp','webp','gif'].includes(ext)) {
+            try {
+              var imgResp = await fetch('/api/ocr/record-file/' + recordId);
+              if (imgResp.ok) {
+                var imgBlob = await imgResp.blob();
+                fileObj = new File([imgBlob], record.original_filename, { type: 'image/' + ext });
+                console.log('[viewOCRRecord] ✅ loaded original image:', imgBlob.size, 'bytes');
+              } else {
+                console.warn('[viewOCRRecord] ❌ image fetch failed:', imgResp.status, await imgResp.text());
+              }
+            } catch(e) {
+              console.warn('[viewOCRRecord] ❌ image fetch error:', e);
+            }
+          } else if (ext === 'pdf') {
+            // PDF 文件：获取并保存为 _pdfBuffer 供弹窗渲染
+            try {
+              var pdfResp = await fetch('/api/ocr/record-file/' + recordId);
+              if (pdfResp.ok) {
+                var pdfBlob = await pdfResp.blob();
+                var pdfArrayBuffer = await pdfBlob.arrayBuffer();
+                fileObj = {
+                  name: record.original_filename,
+                  type: 'application/pdf',
+                  _pdfBuffer: new Uint8Array(pdfArrayBuffer)
+                };
+                console.log('[viewOCRRecord] ✅ loaded original PDF:', pdfBlob.size, 'bytes');
+              } else {
+                console.warn('[viewOCRRecord] ❌ PDF fetch failed:', pdfResp.status, await pdfResp.text());
+              }
+            } catch(e) {
+              console.warn('[viewOCRRecord] ❌ PDF fetch error:', e);
+            }
+          }
+        } else {
+          console.log('[viewOCRRecord] ℹ️ no file path stored for this record');
+        }
+
+        // 渲染弹窗（加 try-catch 防止渲染阶段崩溃）
+        try {
+          showOCRMdModal(record.original_filename || '未知文件', fileObj, {
+            markdown: markdown,
+            ocr_blocks: ocrBlocks,
+            ocr_lines: ocrLines,
+            img_width: imgW,
+            img_height: imgH,
+            engine: engine,
+          }, record.slot_name || '');
+        } catch(renderErr) {
+          console.error('[viewOCRRecord] render crashed:', renderErr);
+          alert('渲染结果时出错: ' + renderErr.message);
+        }
       } catch (err) {
+        console.error('[viewOCRRecord] ❌ error:', err);
         alert('加载记录失败: ' + err.message);
       }
     }

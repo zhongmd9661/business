@@ -19,6 +19,9 @@ router = APIRouter()
 
 _ocr_semaphore = asyncio.Semaphore(3)
 _temp_dir = PROJECT_ROOT / "data" / "ocr_temp"
+# 持久化存储：保存原始上传文件，供历史回查
+_files_dir = PROJECT_ROOT / "data" / "ocr_files"
+_files_dir.mkdir(parents=True, exist_ok=True)
 
 
 # ==================== RapidOCR 引擎（PaddleOCR，GPU 加速） ====================
@@ -108,6 +111,23 @@ def _ocr_image_file(file_path: Path, device: str = "auto") -> dict:
 
 # ---------- 辅助函数 ----------
 
+def _save_original_file(file_content: bytes, original_filename: str) -> str:
+    """将原始上传文件保存到持久化目录，返回相对路径（相对于 _files_dir）"""
+    import hashlib
+    ext = Path(original_filename or "").suffix.lower()
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # 用 hash + 时间戳避免冲突
+    content_hash = hashlib.md5(file_content[:1024]).hexdigest()[:8]
+    stored_name = f"{ts}_{content_hash}{ext}"
+    # 按日期分目录
+    date_dir = _files_dir / datetime.now().strftime("%Y/%m")
+    date_dir.mkdir(parents=True, exist_ok=True)
+    saved_path = date_dir / stored_name
+    saved_path.write_bytes(file_content)
+    # 返回相对路径
+    return str(saved_path.relative_to(_files_dir))
+
+
 def _save_record(
     db: Session,
     username: str,
@@ -124,6 +144,7 @@ def _save_record(
     img_width: int = 0,
     img_height: int = 0,
     engine: str = "",
+    original_file_path: str = "",
 ) -> int:
     """保存 OCR 记录到数据库，返回 record_id"""
     record = OCRRecord(
@@ -141,6 +162,7 @@ def _save_record(
         img_width=img_width,
         img_height=img_height,
         engine=engine,
+        original_file_path=original_file_path,
     )
     db.add(record)
     db.commit()
@@ -193,6 +215,13 @@ async def ocr_recognize(
 
     file_type = _detect_file_type(file.filename)
 
+    # 保存原始文件到持久化存储
+    stored_rel_path = ""
+    try:
+        stored_rel_path = _save_original_file(content, file.filename or "unknown")
+    except Exception as e:
+        logger.warning(f"Failed to save original file: {e}")
+
     async with _ocr_semaphore:
         # Save to temp dir
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -228,11 +257,13 @@ async def ocr_recognize(
                 img_width=result.get("img_width", 0) or 0,
                 img_height=result.get("img_height", 0) or 0,
                 engine=result.get("engine", "") or "",
+                original_file_path=stored_rel_path,
             )
         except Exception as e:
             logger.error(f"Failed to save OCR record: {e}")
 
     result["record_id"] = record_id
+    result["original_file_path"] = stored_rel_path
     return result
 
 
@@ -266,6 +297,13 @@ async def ocr_batch_recognize(
 
         content = await file.read()
         file_type = _detect_file_type(file.filename)
+
+        # 保存原始文件到持久化存储
+        stored_rel_path = ""
+        try:
+            stored_rel_path = _save_original_file(content, file.filename or f"file_{idx}")
+        except Exception as e:
+            logger.warning(f"Failed to save original file for {file.filename}: {e}")
 
         async with _ocr_semaphore:
             ts = datetime.now().strftime("%Y%m%d_%H%M%S_") + str(idx)
@@ -301,6 +339,7 @@ async def ocr_batch_recognize(
                     img_width=result.get("img_width", 0) or 0,
                     img_height=result.get("img_height", 0) or 0,
                     engine=result.get("engine", "") or "",
+                    original_file_path=stored_rel_path,
                 )
             except Exception as e:
                 logger.error(f"Failed to save OCR record for {file.filename}: {e}")
@@ -363,7 +402,48 @@ async def get_ocr_record(record_id: int, db: Session = Depends(get_db)):
         "img_width": record.img_width or 0,
         "img_height": record.img_height or 0,
         "engine": record.engine or "",
+        "original_file_path": record.original_file_path or "",
     }
+
+
+@router.get("/ocr/record-file/{record_id}")
+async def get_ocr_record_file(record_id: int, db: Session = Depends(get_db)):
+    """返回 OCR 记录关联的原始文件"""
+    from fastapi.responses import FileResponse
+
+    record = db.query(OCRRecord).filter(OCRRecord.id == record_id).first()
+    if not record:
+        raise HTTPException(404, "记录未找到")
+
+    if not record.original_file_path:
+        raise HTTPException(404, "该记录没有关联的原始文件")
+
+    file_full_path = _files_dir / record.original_file_path
+    if not file_full_path.exists():
+        raise HTTPException(404, "原始文件已不存在")
+
+    # 根据文件类型设置 content-type
+    ext = file_full_path.suffix.lower()
+    content_type_map = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".bmp": "image/bmp",
+        ".webp": "image/webp",
+        ".gif": "image/gif",
+        ".pdf": "application/pdf",
+        ".doc": "application/msword",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".xml": "text/xml",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
+    content_type = content_type_map.get(ext, "application/octet-stream")
+
+    return FileResponse(
+        str(file_full_path),
+        media_type=content_type,
+        filename=record.original_filename or file_full_path.name,
+    )
 
 
 # ---------- 内部 OCR 执行 ----------

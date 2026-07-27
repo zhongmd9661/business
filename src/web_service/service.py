@@ -3,12 +3,44 @@ import json
 import os
 import re
 import shutil
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 from loguru import logger
+
+
+def _fix_fasttext_chinese_path():
+    """Workaround: FastText C++ library cannot open files on paths with non-ASCII (Chinese) characters.
+
+    Copy the fast_langdetect model to a temp ASCII-only location and patch the module to use it.
+    """
+    try:
+        import fast_langdetect.ft_detect.infer as infer_mod
+
+        src = infer_mod.LOCAL_SMALL_MODEL_PATH
+        if not src.exists():
+            return
+        # Only needed if path contains non-ASCII
+        try:
+            str(src).encode("ascii")
+            return  # Already ASCII path, no fix needed
+        except UnicodeEncodeError:
+            pass
+
+        # Copy model to temp dir with ASCII path
+        tmp_dir = tempfile.mkdtemp(prefix="ft_fix_")
+        dst = Path(tmp_dir) / src.name
+        shutil.copy2(str(src), str(dst))
+        infer_mod.LOCAL_SMALL_MODEL_PATH = dst
+        # Also patch model cache key so it reloads
+        infer_mod._model_cache._models.clear()
+        logger.info(f"Patched fast_langdetect model path: {dst}")
+    except Exception as e:
+        logger.warning(f"Failed to patch fasttext Chinese path workaround: {e}")
+
 
 # Pipeline imports
 from ..batch_processing.collector import FileCollector
@@ -283,6 +315,9 @@ def _load_rules_from_db() -> list[dict]:
 
 async def start_engine():
     global _engine, _pipeline
+    # Fix FastText Chinese path issue BEFORE importing MinerU (which triggers fast_langdetect)
+    _fix_fasttext_chinese_path()
+
     use_llm = os.environ.get("USE_LLM_EXTRACTOR", "").lower() in ("1", "true", "yes")
     _engine = MinerUEngine(ParseOptions())
     await _engine.start()

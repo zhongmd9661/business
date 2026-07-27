@@ -1,6 +1,9 @@
 """SQLAlchemy 数据模型"""
 import json
+import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import (
     Boolean,
@@ -208,9 +211,40 @@ SessionLocal = sessionmaker(bind=engine)
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    _migrate_add_columns()
     _seed_default_rules()
     _ensure_standards_seeded()
     _ensure_templates_seeded()
+
+
+def _migrate_add_columns():
+    """增量迁移：为已有表补加缺失列（SQLite 不自动 ALTER）"""
+    import sqlite3
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    conn = sqlite3.connect(db_path)
+    try:
+        cur = conn.cursor()
+        # 获取所有表的列
+        tables_to_check = {
+            "ocr_records": [
+                ("original_file_path", "TEXT"),
+            ],
+        }
+        for table, columns in tables_to_check.items():
+            cur.execute(f"PRAGMA table_info({table})")
+            existing = {row[1] for row in cur.fetchall()}
+            for col_name, col_type in columns:
+                if col_name not in existing:
+                    try:
+                        cur.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}")
+                        logger.info(f"Migrated: added column {col_name} to {table}")
+                    except sqlite3.OperationalError:
+                        pass  # 忽略已存在的列
+        conn.commit()
+    except Exception as e:
+        logger.warning(f"Migration skipped or failed: {e}")
+    finally:
+        conn.close()
 
 
 def _ensure_standards_seeded():
@@ -345,6 +379,9 @@ class OCRRecord(Base):
     img_width = Column(Integer, default=0)                      # 原始图片宽度
     img_height = Column(Integer, default=0)                     # 原始图片高度
     engine = Column(String)                                     # 识别引擎: rapidocr-gpu / rapidocr-cpu / mineru
+
+    # 原始文件存储
+    original_file_path = Column(String)                         # 持久化文件路径（相对于 data/ocr_files/）
 
 
 def get_db():
