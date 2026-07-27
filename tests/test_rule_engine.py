@@ -1,6 +1,6 @@
 """测试规则引擎"""
 import sys
-sys.path.insert(0, "D:\\02_ocr")
+sys.path.insert(0, "D:\\00_项目\\招待费智能体")
 
 from src.expense_review_comprehensive.rule_engine import DynamicRule, evaluate_rule
 from src.expense_review_comprehensive.models import ExtractedFields, RuleCategory

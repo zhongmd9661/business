@@ -23,6 +23,7 @@ logs/*
 .cache/
 .huggingface/
 .modelscope/
+models/
 
 # Notes
 .obsidian/

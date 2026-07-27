@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, str(__file__).replace("\\web_service\\app.py", "").replace("/web_service/app.py", ""))
@@ -62,13 +62,26 @@ async def ui_index():
     return "<h1>UI 目录未找到</h1>"
 
 
+def _html_response(content: str) -> Response:
+    """返回带 no-cache 头的 HTML 响应"""
+    return Response(
+        content=content,
+        media_type="text/html; charset=utf-8",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
 @app.get("/upload", response_class=HTMLResponse)
 async def ui_upload():
     """文件上传页"""
     upload_file = ui_dir / "upload.html" if ui_dir.exists() else None
     if upload_file and upload_file.exists():
-        return upload_file.read_text(encoding="utf-8")
-    return "<h1>上传页未找到</h1>"
+        return _html_response(upload_file.read_text(encoding="utf-8"))
+    return _html_response("<h1>上传页未找到</h1>")
 
 
 @app.get("/audit", response_class=HTMLResponse)
@@ -76,8 +89,8 @@ async def ui_audit():
     """智能审核页"""
     audit_file = ui_dir / "audit.html" if ui_dir.exists() else None
     if audit_file and audit_file.exists():
-        return audit_file.read_text(encoding="utf-8")
-    return "<h1>审核页未找到</h1>"
+        return _html_response(audit_file.read_text(encoding="utf-8"))
+    return _html_response("<h1>审核页未找到</h1>")
 
 
 @app.get("/records", response_class=HTMLResponse)
@@ -85,8 +98,8 @@ async def ui_records():
     """提交记录页"""
     records_file = ui_dir / "records.html" if ui_dir.exists() else None
     if records_file and records_file.exists():
-        return records_file.read_text(encoding="utf-8")
-    return "<h1>记录页未找到</h1>"
+        return _html_response(records_file.read_text(encoding="utf-8"))
+    return _html_response("<h1>记录页未找到</h1>")
 
 
 @app.get("/reference", response_class=HTMLResponse)
@@ -94,8 +107,8 @@ async def ui_reference():
     """参考资料页"""
     ref_file = ui_dir / "reference.html" if ui_dir.exists() else None
     if ref_file and ref_file.exists():
-        return ref_file.read_text(encoding="utf-8")
-    return "<h1>资料页未找到</h1>"
+        return _html_response(ref_file.read_text(encoding="utf-8"))
+    return _html_response("<h1>资料页未找到</h1>")
 
 # Sync scanner task handle
 _sync_task: asyncio.Task | None = None
@@ -116,7 +129,7 @@ async def on_startup():
     init_app_settings()
 
     # 4. Load routers (lazy to avoid circular imports)
-    from . import router, router_rule, router_standards, router_standards_admin, router_application_form, router_reception_records, router_qichacha
+    from . import router, router_rule, router_standards, router_standards_admin, router_application_form, router_reception_records, router_qichacha, router_ocr
 
     app.include_router(router.settings_router, prefix="/api", tags=["settings"])
     app.include_router(router.task_router, prefix="/api", tags=["tasks"])
@@ -126,6 +139,7 @@ async def on_startup():
     app.include_router(router_standards_admin.router, prefix="/api", tags=["admin-standards"])
     app.include_router(router_reception_records.router, prefix="/api", tags=["reception-records"])
     app.include_router(router_qichacha.router, prefix="/api", tags=["qichacha"])
+    app.include_router(router_ocr.router, prefix="/api", tags=["ocr"])
     # 申请单生成页面不需要 /api 前缀，直接挂载
     app.include_router(router_application_form.router, tags=["application-form"])
 

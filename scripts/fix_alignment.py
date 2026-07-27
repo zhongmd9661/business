@@ -16,7 +16,7 @@ def visual_width(s):
     return w
 
 def main():
-    filepath = r"D:\02_ocr\README.md"
+    filepath = r"D:\00_项目\招待费智能体\README.md"
 
     with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()

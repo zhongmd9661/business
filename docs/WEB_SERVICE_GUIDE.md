@@ -21,10 +21,10 @@
 
 ```powershell
 # 1. 进入项目目录
-cd "D:\02_ocr"
+cd "D:\00_项目\招待费智能体"
 
 # 2. 设置环境变量
-$env:PYTHONPATH = "D:\02_ocr"
+$env:PYTHONPATH = "D:\00_项目\招待费智能体"
 
 # 3. 启动服务
 & .venv\Scripts\python.exe -m uvicorn src.web_service.app:app --host 0.0.0.0 --port 8006
@@ -78,16 +78,16 @@ $env:USE_LLM_EXTRACTOR = "true"
 ### 方式一：命令行启动
 
 ```powershell
-cd "D:\02_ocr"
-$env:PYTHONPATH = "D:\02_ocr"
+cd "D:\00_项目\招待费智能体"
+$env:PYTHONPATH = "D:\00_项目\招待费智能体"
 & .venv\Scripts\python.exe -m uvicorn src.web_service.app:app --host 0.0.0.0 --port 8006
 ```
 
 ### 方式二：带配置启动
 
 ```powershell
-cd "D:\02_ocr"
-$env:PYTHONPATH = "D:\02_ocr"
+cd "D:\00_项目\招待费智能体"
+$env:PYTHONPATH = "D:\00_项目\招待费智能体"
 $env:RULE_SYNC_INTERVAL_MIN = "5"
 $env:MAX_CONCURRENT_OCR = "3"
 & .venv\Scripts\python.exe -m uvicorn src.web_service.app:app --host 0.0.0.0 --port 8006
@@ -221,10 +221,10 @@ TOKEN = "YOUR_TOKEN_HERE"
 headers = {"Authorization": f"Bearer {TOKEN}"}
 
 files_to_upload = [
-    "D:/02_ocr/01业务招待费材料案例/案例3/【发票】26442000002098662676.pdf",
-    "D:/02_ocr/01业务招待费材料案例/案例3/业务审批单.jpg",
-    "D:/02_ocr/01业务招待费材料案例/案例3/业务接待报账单.pdf",
-    "D:/02_ocr/01业务招待费材料案例/案例3/支付凭证.jpg",
+    "D:/00_项目/招待费智能体/01业务招待费材料案例/案例3/【发票】26442000002098662676.pdf",
+    "D:/00_项目/招待费智能体/01业务招待费材料案例/案例3/业务审批单.jpg",
+    "D:/00_项目/招待费智能体/01业务招待费材料案例/案例3/业务接待报账单.pdf",
+    "D:/00_项目/招待费智能体/01业务招待费材料案例/案例3/支付凭证.jpg",
 ]
 
 file_data = []
@@ -492,8 +492,8 @@ $env:DATABASE_URL = "postgresql://user:password@localhost:5432/expense_review"
 # ============================================
 
 # 1. 启动服务（在另一个终端窗口运行）
-# cd "D:\02_ocr"
-# $env:PYTHONPATH = "D:\02_ocr"
+# cd "D:\00_项目\招待费智能体"
+# $env:PYTHONPATH = "D:\00_项目\招待费智能体"
 # & .venv\Scripts\python.exe -m uvicorn src.web_service.app:app --host 0.0.0.0 --port 8006
 
 # 2. 注册并登录

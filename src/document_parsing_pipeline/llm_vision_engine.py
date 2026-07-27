@@ -9,7 +9,7 @@ import pathlib
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any
 
-from anthropic import Anthropic
+from ..llm_client import LlmClient, LlmClientError, extract_text_from_response
 
 @dataclass
 class VisionFragment:
@@ -27,12 +27,15 @@ class LlmVisionEngine:
         self.base_url = base_url or os.environ.get("ANTHROPIC_BASE_URL", "http://192.168.231.1:1235")
         self.api_key = api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "lmstudio")
         self.model = model or os.environ.get("LLM_MODEL", "Qwen/Qwen3.6-27B")
-        self._client: Optional[Anthropic] = None
+        self._client: Optional[LlmClient] = None
 
     def start(self):
-        self._client = Anthropic(base_url=self.base_url, api_key=self.api_key)
+        self._client = LlmClient(base_url=self.base_url, api_key=self.api_key, model=self.model)
+        self._client.start()
 
     def stop(self):
+        if self._client is not None:
+            self._client.stop()
         self._client = None
 
     def _encode_image(self, image_path: pathlib.Path) -> str:
@@ -57,7 +60,7 @@ class LlmVisionEngine:
             "\n5. **输出格式**：必须返回纯JSON，包含 'headers', 'rows' (每项含列名:值), 和 'fingerprints' 列表。"
         )
 
-        response = self._client.messages.create(
+        response = self._client.messages_create(
             model=self.model,
             max_tokens=4096,
             system=system_prompt,
@@ -69,7 +72,7 @@ class LlmVisionEngine:
                             "type": "image",
                             "source": {
                                 "type": "base64",
-                                "media_type": "image/jpeg", # 简化处理，实际应根据后缀判断
+                                "media_type": "image/jpeg",  # 简化处理，实际应根据后缀判断
                                 "data": image_base64,
                             },
                         },

@@ -2,12 +2,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     if (api.isAuthenticated()) {
         showAppPage();
+        preloadRuleDocuments();
     } else {
         showAuthPage();
     }
 
     setupDragAndDrop();
-    preloadRuleDocuments();
 });
 
 // 缓存制度文件列表
@@ -92,7 +92,8 @@ async function handleLogin(e) {
         const user = await api.post('/api/auth/login', { username, password });
         api.setUser(user, user.access_token);
         errorDiv.textContent = '';
-        showAppPage();
+        // 登录成功后跳转到招待费管理主页
+        window.location.href = '/ui-index';
     } catch (error) {
         errorDiv.textContent = error.message;
     }
@@ -831,6 +832,98 @@ function closeModal(modalId) {
 window.onclick = function(event) {
     if (event.target.classList.contains('modal') && event.target === event.currentTarget) {
         event.target.classList.remove('active');
+    }
+}
+
+// ===== 系统设置 =====
+async function openSettingsModal() {
+    try {
+        const settings = await fetch('/api/settings/llm').then(r => r.json());
+        document.getElementById('setting-base-url').value = settings.anthropic_base_url || '';
+        document.getElementById('setting-api-key').value = settings.anthropic_auth_token || '';
+        document.getElementById('setting-model').value = settings.llm_model || '';
+    } catch {
+        // 首次访问，留空让用户填
+    }
+    document.getElementById('settings-message').textContent = '';
+    document.getElementById('settings-message').className = 'settings-message';
+    document.getElementById('settings-modal').classList.add('active');
+}
+
+function closeSettingsModal() {
+    document.getElementById('settings-modal').classList.remove('active');
+}
+
+async function testLLMConnection() {
+    const btn = document.getElementById('settings-test-btn');
+    const msg = document.getElementById('settings-message');
+    btn.disabled = true;
+    btn.textContent = '⏳ 测试中...';
+    msg.textContent = '';
+    msg.className = 'settings-message';
+
+    try {
+        const data = {
+            anthropic_base_url: document.getElementById('setting-base-url').value.trim(),
+            anthropic_auth_token: document.getElementById('setting-api-key').value.trim(),
+            llm_model: document.getElementById('setting-model').value.trim(),
+        };
+
+        const res = await fetch('/api/settings/llm/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+
+        const result = await res.json();
+
+        if (result.ok) {
+            msg.textContent = result.message;
+            msg.className = 'settings-message success';
+        } else {
+            msg.textContent = '❌ ' + result.error;
+            msg.className = 'settings-message error';
+        }
+    } catch (err) {
+        msg.textContent = '❌ 网络请求失败：' + err.message;
+        msg.className = 'settings-message error';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔌 测试连接';
+    }
+}
+
+async function saveSettings() {
+    const btn = document.getElementById('settings-save-btn');
+    const msg = document.getElementById('settings-message');
+    btn.disabled = true;
+    btn.textContent = '⏳ 保存中...';
+
+    try {
+        const data = {
+            anthropic_base_url: document.getElementById('setting-base-url').value.trim(),
+            anthropic_auth_token: document.getElementById('setting-api-key').value.trim(),
+            llm_model: document.getElementById('setting-model').value.trim(),
+        };
+
+        const res = await fetch('/api/settings/llm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+
+        if (!res.ok) {
+            throw new Error(`保存失败 (HTTP ${res.status})`);
+        }
+
+        msg.textContent = '✅ 设置已保存，立即生效';
+        msg.className = 'settings-message success';
+    } catch (err) {
+        msg.textContent = '❌ ' + err.message;
+        msg.className = 'settings-message error';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 保存设置';
     }
 }
 

@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>招待费智能审核</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <style>
     * {
       margin: 0;
@@ -320,6 +323,193 @@
     .record-selector select:disabled {
       background: #f1f5f9;
       cursor: not-allowed;
+    }
+
+    /* ---- 提交记录概览卡片 ---- */
+    .records-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(6px, 1.2vmin, 14px);
+      margin-bottom: clamp(8px, 1.8vmin, 20px);
+    }
+
+    .summary-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: clamp(6px, 1vmin, 10px);
+      padding: clamp(6px, 1.2vmin, 14px) clamp(8px, 1.5vmin, 16px);
+      text-align: center;
+    }
+
+    .summary-card-label {
+      font-size: clamp(10px, 1.2vmin, 12px);
+      color: #64748b;
+      margin-bottom: clamp(2px, 0.5vmin, 4px);
+    }
+
+    .summary-card-value {
+      font-size: clamp(16px, 2.5vw, 22px);
+      font-weight: 700;
+    }
+
+    .summary-card-value.total { color: #dc2626; }
+    .summary-card-value.pending { color: #d97706; }
+    .summary-card-value.approved { color: #059669; }
+    .summary-card-value.records { color: #1e40af; }
+
+    /* ---- 提交记录列表表格 ---- */
+    .records-list-wrapper {
+      margin-bottom: clamp(8px, 1.8vmin, 20px);
+      border: 1px solid #e2e8f0;
+      border-radius: clamp(8px, 1vmin, 12px);
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .records-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: clamp(6px, 1.2vmin, 14px) clamp(10px, 2vmin, 20px);
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .records-list-title {
+      font-size: clamp(13px, 1.8vw, 16px);
+      font-weight: 600;
+      color: #1e3a5f;
+      display: flex;
+      align-items: center;
+      gap: clamp(4px, 0.8vmin, 8px);
+    }
+
+    .records-list-title svg {
+      width: clamp(14px, 2vmin, 18px);
+      height: clamp(14px, 2vmin, 18px);
+      stroke: #1e40af;
+      stroke-width: 1.8;
+      fill: none;
+    }
+
+    .records-list-refresh {
+      padding: clamp(2px, 0.5vmin, 6px) clamp(8px, 1.5vmin, 14px);
+      font-size: clamp(10px, 1.3vmin, 13px);
+      font-weight: 600;
+      color: #1e40af;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: clamp(4px, 0.8vmin, 8px);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .records-list-refresh:hover {
+      background: #1e40af;
+      color: #ffffff;
+      border-color: #1e40af;
+    }
+
+    .records-list-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: clamp(11px, 1.4vmin, 13px);
+    }
+
+    .records-list-table th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: #475569;
+      font-size: clamp(10px, 1.2vmin, 12px);
+      padding: clamp(4px, 0.8vmin, 10px) clamp(8px, 1.5vmin, 14px);
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+    }
+
+    .records-list-table td {
+      padding: clamp(4px, 0.8vmin, 10px) clamp(8px, 1.5vmin, 14px);
+      border-bottom: 1px solid #f1f5f9;
+      color: #64748b;
+    }
+
+    .records-list-table tbody tr:hover td {
+      background: #eff6ff;
+    }
+
+    .records-list-table .serial-cell {
+      font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+      font-size: clamp(9px, 1.1vmin, 11px);
+      font-weight: 600;
+      color: #1e40af;
+      background: #eff6ff;
+      padding: clamp(1px, 0.3vmin, 3px) clamp(4px, 0.8vmin, 8px);
+      border-radius: 3px;
+      display: inline-block;
+      letter-spacing: 0.3px;
+    }
+
+    .records-list-table .scenario-cell {
+      font-size: clamp(9px, 1.1vmin, 11px);
+      font-weight: 600;
+      color: #1e40af;
+      background: #eff6ff;
+      padding: clamp(1px, 0.3vmin, 3px) clamp(4px, 0.8vmin, 8px);
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .records-list-table .amount-cell {
+      font-weight: 600;
+      color: #1e3a5f;
+    }
+
+    /* Status badge for table */
+    .records-status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: clamp(1px, 0.3vmin, 3px) clamp(4px, 0.8vmin, 8px);
+      border-radius: 3px;
+      font-size: clamp(9px, 1.1vmin, 11px);
+      font-weight: 600;
+    }
+
+    .records-status-badge.pending {
+      background: #fffbeb;
+      color: #d97706;
+    }
+
+    .records-status-badge.approved {
+      background: #ecfdf5;
+      color: #059669;
+    }
+
+    .records-status-badge.rejected {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .records-list-empty {
+      text-align: center;
+      padding: clamp(12px, 2.5vmin, 32px);
+      color: #94a3b8;
+    }
+
+    .records-list-loading {
+      text-align: center;
+      padding: clamp(12px, 2.5vmin, 32px);
+    }
+
+    .records-list-loading .mini-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e2e8f0;
+      border-top-color: #1e40af;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto clamp(4px, 1vmin, 8px);
     }
 
     /* 记录详情卡片 */
@@ -1184,6 +1374,61 @@
         </div>
       </div>
 
+      <!-- 提交记录概览卡片 -->
+      <div class="records-summary" id="records-summary">
+        <div class="summary-card">
+          <div class="summary-card-label">总记录数</div>
+          <div class="summary-card-value records" id="summary-total">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">总金额</div>
+          <div class="summary-card-value total" id="summary-amount">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">待审核</div>
+          <div class="summary-card-value pending" id="summary-pending">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">已通过</div>
+          <div class="summary-card-value approved" id="summary-approved">—</div>
+        </div>
+      </div>
+
+      <!-- 提交记录列表 -->
+      <div class="records-list-wrapper">
+        <div class="records-list-header">
+          <div class="records-list-title">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span id="records-list-title-text">我的提交记录</span>
+          </div>
+          <button class="records-list-refresh" onclick="loadRecords()">🔄 刷新</button>
+        </div>
+        <table class="records-list-table">
+          <thead>
+            <tr>
+              <th>流水号</th>
+              <th>场景</th>
+              <th>日期</th>
+              <th>地点</th>
+              <th>招待对象</th>
+              <th>人数</th>
+              <th>总金额</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody id="records-list-body">
+            <tr><td colspan="8" class="records-list-loading">
+              <div class="mini-spinner"></div><div>加载中...</div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- 进度条 -->
       <div class="progress-bar">
         <span class="progress-text" id="progressText">已上传 0 / 9</span>
@@ -1564,7 +1809,6 @@
       // 也立即执行一次（DOMContentLoaded 后）
       requestScale();
       // 当审核结果区域显示时重新计算
-      var origAdd = Element.prototype.classList.add;
       var observer = new MutationObserver(function () {
         requestScale();
       });
@@ -1597,6 +1841,37 @@
       window.location.href = '/';
     }
 
+    /* ---- 状态工具函数 ---- */
+    var STATUS_MAP = {
+      'pending': '待审核',
+      'approved': '已通过',
+      'rejected': '已驳回'
+    };
+    var STATUS_CLASS_MAP = {
+      'pending': 'pending',
+      'approved': 'approved',
+      'rejected': 'rejected',
+      '待审核': 'pending',
+      '已通过': 'approved',
+      '已驳回': 'rejected'
+    };
+
+    function getStatusChinese(status) {
+      return STATUS_MAP[status] || status || '—';
+    }
+
+    function getStatusClass(status) {
+      return STATUS_CLASS_MAP[status] || '';
+    }
+
+    function isPending(status) {
+      return status === 'pending' || status === '待审核';
+    }
+
+    function isApproved(status) {
+      return status === 'approved' || status === '已通过';
+    }
+
     /* ---- 加载提交记录列表 ---- */
     async function loadRecords() {
       try {
@@ -1608,14 +1883,78 @@
         if (currentUser && currentUser.role !== 'admin') {
           url += '&username=' + encodeURIComponent(currentUser.username);
         }
-        const response = await fetch(url, { headers });
+        var response = await fetch(url, { headers });
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
         allRecords = await response.json();
         populateRecordSelect(allRecords);
+        renderRecordsList(allRecords);
+        updateRecordsSummary(allRecords);
+        updateRecordsListTitle();
       } catch (err) {
         console.error('加载提交记录失败:', err);
         var select = document.getElementById('recordSelect');
         select.innerHTML = '<option value="">加载记录失败，请刷新页面</option>';
+        document.getElementById('records-list-body').innerHTML =
+          '<tr><td colspan="8" class="records-list-empty">⚠️ 加载失败：' + escapeHtml(err.message) + '</td></tr>';
       }
+    }
+
+    /* ---- 更新提交记录列表标题 ---- */
+    function updateRecordsListTitle() {
+      var titleEl = document.getElementById('records-list-title-text');
+      if (currentUser) {
+        if (currentUser.role === 'admin') {
+          titleEl.textContent = '全部提交记录';
+        } else {
+          titleEl.textContent = currentUser.username + ' 的提交记录';
+        }
+      }
+    }
+
+    /* ---- 渲染提交记录列表 ---- */
+    function renderRecordsList(records) {
+      var tbody = document.getElementById('records-list-body');
+
+      if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="records-list-empty">📭 暂无提交记录</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = records.map(function(r) {
+        var sc = getStatusClass(r.status);
+        var statusText = getStatusChinese(r.status);
+        return '<tr>' +
+          '<td><span class="serial-cell">' + escapeHtml(r.serial_number || '—') + '</span></td>' +
+          '<td><span class="scenario-cell">' + escapeHtml(r.scenario_name || '—') + '</span></td>' +
+          '<td>' + escapeHtml(r.date || '—') + '</td>' +
+          '<td>' + escapeHtml(r.location || '—') + '</td>' +
+          '<td>' + escapeHtml(r.org || '—') + '</td>' +
+          '<td>' + (r.guests || 0) + ' 人</td>' +
+          '<td class="amount-cell">¥' + (r.total_amount || 0).toFixed(2) + '</td>' +
+          '<td><span class="records-status-badge ' + sc + '">' + statusText + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    /* ---- 更新提交记录概览 ---- */
+    function updateRecordsSummary(records) {
+      var total = records ? records.length : 0;
+      var totalAmount = records ? records.reduce(function(sum, r) { return sum + (r.total_amount || 0); }, 0) : 0;
+      var pending = records ? records.filter(function(r) { return isPending(r.status); }).length : 0;
+      var approved = records ? records.filter(function(r) { return isApproved(r.status); }).length : 0;
+
+      document.getElementById('summary-total').textContent = total;
+      document.getElementById('summary-amount').textContent = '¥' + totalAmount.toFixed(2);
+      document.getElementById('summary-pending').textContent = pending;
+      document.getElementById('summary-approved').textContent = approved;
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
     }
 
     function populateRecordSelect(records) {
@@ -1664,7 +2003,7 @@
       document.getElementById('rd-guests').textContent = (record.guests || 0) + ' 人';
       document.getElementById('rd-percapita').textContent = '¥' + (record.per_capita || 0).toFixed(2);
       document.getElementById('rd-total').textContent = '¥' + (record.total_amount || 0).toFixed(2);
-      document.getElementById('rd-status').textContent = record.status || '—';
+      document.getElementById('rd-status').textContent = getStatusChinese(record.status);
       details.classList.add('visible');
 
       // 启用上传槽位
@@ -1881,8 +2220,14 @@
     }
 
     /* ---- OCR / 文件预览功能 ---- */
-    // 设置 PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.js';
+    // 设置 PDF.js worker（等 CDN 加载完成后设置）
+    (function initPDFWorker() {
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.js';
+      } else {
+        setTimeout(initPDFWorker, 100);
+      }
+    })();
 
     var ocrState = {
       fileType: '',       // 'image' | 'pdf' | 'doc' | 'xml'

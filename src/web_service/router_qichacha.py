@@ -1,12 +1,13 @@
-"""企查查截图分析 API — 通过视觉模型识别企业经营状态"""
+"""企查查截图分析 API — 支持 RapidOCR（默认）和 VLM 两种识别方式"""
 import base64
 import io
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Request, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from loguru import logger
 from PIL import Image
 
@@ -14,9 +15,15 @@ router = APIRouter()
 
 
 @router.post("/qichacha/analyze")
-async def analyze_qichacha(file: UploadFile = File(...)):
+async def analyze_qichacha(
+    file: UploadFile = File(...),
+    method: str = Form("ocr"),  # "ocr" (default) or "vlm"
+    device: str = Form("auto"),  # "auto", "cpu", "gpu"
+):
     """
     上传企查查截图，分析企业经营状态。
+    method: "ocr" = RapidOCR（默认，快）; "vlm" = 视觉大模型（慢，准确）
+    device: "auto" = 自动检测（默认）; "cpu" = 强制 CPU; "gpu" = 强制 GPU
     返回：公司名称、经营状态、风险提示、是否允许提交
     """
     # Validate file type
@@ -33,27 +40,30 @@ async def analyze_qichacha(file: UploadFile = File(...)):
     except Exception:
         raise HTTPException(400, "图片文件损坏，请重新上传")
 
-    # Encode to base64
-    img_bytes = io.BytesIO()
-    img = Image.open(io.BytesIO(content))
-    img.save(img_bytes, format="PNG")
-    b64_data = base64.b64encode(img_bytes.getvalue()).decode("utf-8")
-
-    # Call LLM Vision Engine
-    result = _analyze_with_vision(b64_data, "png")
+    # Route to appropriate engine
+    if method == "vlm":
+        # VLM: encode to base64
+        img_bytes = io.BytesIO()
+        img = Image.open(io.BytesIO(content))
+        img.save(img_bytes, format="PNG")
+        b64_data = base64.b64encode(img_bytes.getvalue()).decode("utf-8")
+        result = _analyze_with_vision(b64_data, "png")
+    else:
+        # RapidOCR (default)
+        img_reopened = Image.open(io.BytesIO(content))
+        result = _analyze_with_ocr(img_reopened, device=device)
 
     return {
         "success": True,
         "analyzed_at": datetime.now().isoformat(),
-        **result
+        "_method": method,
+        **result,
     }
 
 
 def _analyze_with_vision(image_b64: str, image_format: str = "png") -> dict:
     """使用视觉大模型分析企查查截图"""
     import os
-    from anthropic import Anthropic
-
     base_url = os.environ.get("ANTHROPIC_BASE_URL", "http://192.168.231.1:1235")
     api_key = os.environ.get("ANTHROPIC_AUTH_TOKEN", "lmstudio")
     model = os.environ.get("LLM_MODEL", "Qwen/Qwen3.6-27B")
@@ -81,13 +91,17 @@ def _analyze_with_vision(image_b64: str, image_format: str = "png") -> dict:
 {"company_name":"xxx","business_status":"xxx","risk_count":0,"risk_summary":"xxx","is_abnormal":false,"recommendation":"xxx","markdown_text":"# 企业名称\\n\\n基本信息\\n- 统一社会信用代码：xxx\\n..."}"""
 
     try:
-        client = Anthropic(base_url=base_url, api_key=api_key)
-
-        response = client.messages.create(
-            model=model,
-            max_tokens=2048,
-            system=system_prompt,
-            messages=[
+        import httpx
+        url = f"{base_url.rstrip('/')}/v1/messages"
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": api_key,
+        }
+        body = {
+            "model": model,
+            "max_tokens": 2048,
+            "system": system_prompt,
+            "messages": [
                 {
                     "role": "user",
                     "content": [
@@ -103,10 +117,21 @@ def _analyze_with_vision(image_b64: str, image_format: str = "png") -> dict:
                     ],
                 }
             ],
-            temperature=0.1,
-        )
+            "temperature": 0.1,
+        }
+        with httpx.Client(timeout=120.0) as client:
+            response = client.post(url, json=body, headers=headers)
 
-        content = response.content[0].text
+        if response.status_code != 200:
+            raise RuntimeError(f"LLM API 返回错误 (HTTP {response.status_code}): {response.text[:500]}")
+
+        data_resp = response.json()
+        content_blocks = data_resp.get("content", [])
+        content = ""
+        for block in content_blocks:
+            if block.get("type") == "text":
+                content = block.get("text", "")
+                break
 
         # Clean up markdown code blocks
         if "```json" in content:
@@ -137,5 +162,263 @@ def _analyze_with_vision(image_b64: str, image_format: str = "png") -> dict:
             "is_abnormal": False,
             "recommendation": "分析服务暂时不可用，暂不限制提交。建议人工核对企业经营状态。",
             "markdown_text": "",
+            "ocr_lines": [],
+            "ocr_blocks": [],
+            "img_width": 0,
+            "img_height": 0,
+            "_error": str(e)
+        }
+
+
+# ==================== OCR 识别引擎（RapidOCR / PaddleOCR） ====================
+
+# 异常状态关键词
+ABNORMAL_STATUSES = {
+    "注销", "吊销", "经营异常", "严重违法", "停业", "歇业",
+    "迁出", "撤销", "被执行人", "失信被执行人", "异常经营",
+    "列入经营异常名录", "严重违法失信企业名单",
+}
+NORMAL_STATUSES = {"存续", "在业", "开业"}
+
+# OCR 全局缓存（避免每次请求重新初始化）
+_ocr_instance = None
+_ocr_device = None  # 记录当前使用的 device
+
+
+def _get_ocr(device: str = "auto") -> "RapidOCR":
+    """获取 OCR 单例（延迟加载），支持 device 切换"""
+    global _ocr_instance, _ocr_device
+    if _ocr_instance is None or _ocr_device != device:
+        from rapidocr_onnxruntime import RapidOCR
+
+        # 映射 device 参数
+        if device == "gpu":
+            use_gpu = True
+        elif device == "cpu":
+            use_gpu = False
+        else:  # auto
+            # 自动检测：尝试看是否有 CUDA 可用的 ONNX 提供器
+            try:
+                import onnxruntime as ort
+                use_gpu = "CUDAExecutionProvider" in ort.get_available_providers()
+            except Exception:
+                use_gpu = False
+
+        _ocr_instance = RapidOCR(use_gpu=use_gpu, cls=True)
+        _ocr_device = "gpu" if use_gpu else "cpu"
+    return _ocr_instance
+
+
+def _ocr_image(img: "Image.Image", device: str = "auto") -> str:
+    """使用 RapidOCR 识别图片，返回拼接后的纯文本"""
+    import numpy as np
+
+    ocr = _get_ocr(device=device)
+    result, _ = ocr(np.asarray(img))
+
+    if not result:
+        return ""
+
+    # 按 y 坐标排序
+    result_sorted = sorted(result, key=lambda x: x[0][0][1])
+
+    lines = []
+    for word_info in result_sorted:
+        text = word_info[1]
+        lines.append(text)
+    return "\n".join(lines)
+
+
+def _ocr_image_with_boxes(img: "Image.Image", device: str = "auto") -> list:
+    """使用 RapidOCR 识别图片，返回带坐标信息的文字块列表
+    返回: [{"text": str, "x": int, "y": int, "w": int, "h": int, "score": float}, ...]
+    """
+    import numpy as np
+
+    ocr = _get_ocr(device=device)
+    result, _ = ocr(np.asarray(img))
+
+    if not result:
+        return []
+
+    blocks = []
+    for word_info in result:
+        box_points = word_info[0]  # [[x1,y1],[x2,y2],[x3,y3],[x4,y4]]
+        text_and_score = word_info[1]
+        score = word_info[2] if len(word_info) > 2 else 1.0
+
+        # 计算包围盒
+        xs = [p[0] for p in box_points]
+        ys = [p[1] for p in box_points]
+        x = int(min(xs))
+        y = int(min(ys))
+        w = int(max(xs)) - x
+        h = int(max(ys)) - y
+
+        blocks.append({
+            "text": text_and_score,
+            "x": x,
+            "y": y,
+            "w": max(w, 1),
+            "h": max(h, 1),
+            "score": float(score) if score else 1.0,
+        })
+
+    return blocks
+
+
+def _analyze_with_ocr(img: "Image.Image", device: str = "auto") -> dict:
+    """使用 RapidOCR + 规则匹配分析企查查截图"""
+    import numpy as np
+
+    try:
+        # 0. 获取图片尺寸（用于前端缩放定位）
+        img_w, img_h = img.size
+
+        # 1. OCR 提取全部文字
+        text = _ocr_image(img, device=device)
+
+        # 1b. 获取带坐标的 OCR 块
+        ocr_blocks = _ocr_image_with_boxes(img, device=device)
+
+        # 2. 按行拆分
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+        full_text = "\n".join(lines)
+
+        # 3. 提取企业名称
+        company_name = ""
+        # 企查查截图通常第一行或前几行就是企业名称
+        for line in lines[:10]:
+            # 匹配 "有限公司" / "股份有限公司" / "集团" / "中心" / "局" / "委员会" 等
+            if re.search(r"(有限|集团|股份|中心|局|委员会|办事处|分公司|事务所|学校|医院|协会|商会|公司|厂|所)", line):
+                # 去掉可能的编号/前缀
+                cleaned = re.sub(r"^[\s\d、①②③④⑤⑥⑦⑧⑨⑩\-•·]*", "", line)
+                company_name = cleaned
+                break
+
+        # 4. 提取经营状态
+        business_status = "无法识别"
+        for line in lines:
+            # 匹配 "经营状态：存续" 或 "状态  存续" 等模式
+            match = re.search(r"经营(?:状态|情况)\s*[：:]\s*(.+)", line)
+            if match:
+                business_status = match.group(1).strip()
+                break
+        # 如果上面没匹配到，尝试关键词搜索
+        if business_status == "无法识别":
+            for line in lines:
+                for status in ABNORMAL_STATUSES | NORMAL_STATUSES:
+                    if status in line:
+                        business_status = status
+                        break
+                if business_status != "无法识别":
+                    break
+
+        # 5. 判断是否异常
+        is_abnormal = False
+        if business_status != "无法识别":
+            for ab in ABNORMAL_STATUSES:
+                if ab in business_status:
+                    is_abnormal = True
+                    break
+        # 额外检查全文是否有失信/被执行人标签
+        if not is_abnormal:
+            if "失信被执行人" in full_text or "被执行人" in full_text:
+                is_abnormal = True
+                if business_status == "无法识别":
+                    business_status = "被执行人"
+
+        # 如果完全识别不到，安全优先视为异常
+        if business_status == "无法识别":
+            is_abnormal = True
+
+        # 6. 提取风险数量
+        risk_count = 0
+        risk_match = re.search(r"自身风险\s*[：:]\s*(\d+)", full_text)
+        if risk_match:
+            risk_count = int(risk_match.group(1))
+        # 也试试 "涉及风险" / "提示信息"
+        if risk_count == 0:
+            risk_match2 = re.search(r"(?:涉及|提示)风险\s*[：:]\s*(\d+)", full_text)
+            if risk_match2:
+                risk_count = int(risk_match2.group(1))
+
+        # 7. 生成风险摘要
+        risk_summary = ""
+        risk_keywords = ["风险", "异常", "处罚", "冻结", "失信", "被执行人",
+                         "严重违法", "警告", "告警", "诉讼", "仲裁"]
+        risk_lines = [l for l in lines if any(kw in l for kw in risk_keywords)]
+        if risk_lines:
+            risk_summary = "；".join(risk_lines[:5])
+        elif risk_count > 0:
+            risk_summary = f"发现 {risk_count} 条风险信息"
+        else:
+            risk_summary = "未发现明显风险"
+
+        # 8. 生成处理建议
+        if is_abnormal:
+            recommendation = (
+                f"⚠️ 该企业经营状态为「{business_status}」，属于异常状态。"
+                "建议不提交此接待记录，或请人工进一步核实。"
+            )
+        else:
+            recommendation = (
+                f"✅ 该企业经营状态为「{business_status}」，经营状态正常，"
+                "可以提交此接待记录。"
+            )
+
+        # 9. 生成 Markdown 文字（OCR 结果按行整理）— 保留兼容
+        markdown_text = f"# {company_name or '企查查截图'}\n\n"
+        markdown_text += "## 识别结果\n\n"
+        markdown_text += f"- **企业名称**：{company_name or '未识别'}\n"
+        markdown_text += f"- **经营状态**：{business_status}\n"
+        markdown_text += f"- **风险数量**：{risk_count}\n"
+        markdown_text += f"- **风险提示**：{risk_summary}\n"
+        markdown_text += f"\n---\n\n## 原始文字\n\n"
+        markdown_text += "\n".join(f"{line}" for line in lines)
+
+        return {
+            "company_name": company_name,
+            "business_status": business_status,
+            "risk_count": risk_count,
+            "risk_summary": risk_summary,
+            "is_abnormal": is_abnormal,
+            "recommendation": recommendation,
+            "markdown_text": markdown_text,
+            "ocr_lines": lines,  # 原始 OCR 逐行文字，兼容旧前端
+            "ocr_blocks": ocr_blocks,  # 带坐标的 OCR 块，用于前端绝对定位渲染
+            "img_width": img_w,
+            "img_height": img_h,
+        }
+
+    except ImportError:
+        return {
+            "company_name": "",
+            "business_status": "无法识别",
+            "risk_count": 0,
+            "risk_summary": "OCR 引擎未安装。请运行: pip install rapidocr-onnxruntime",
+            "is_abnormal": False,
+            "recommendation": "OCR 引擎未安装，请安装后重试或切换到 VLM 识别。",
+            "markdown_text": "",
+            "ocr_lines": [],
+            "ocr_blocks": [],
+            "img_width": 0,
+            "img_height": 0,
+            "_error": "rapidocr-onnxruntime not installed"
+        }
+    except Exception as e:
+        import traceback
+        logger.error(f"OCR 识别失败: {e}\n{traceback.format_exc()}")
+        return {
+            "company_name": "",
+            "business_status": "无法识别",
+            "risk_count": 0,
+            "risk_summary": f"OCR 识别失败: {str(e)}",
+            "is_abnormal": False,
+            "recommendation": "OCR 识别失败，请尝试切换到 VLM 识别或重新上传截图。",
+            "markdown_text": "",
+            "ocr_blocks": [],
+            "img_width": img_w if 'img_w' in dir() else 0,
+            "img_height": img_h if 'img_h' in dir() else 0,
             "_error": str(e)
         }

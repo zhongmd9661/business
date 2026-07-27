@@ -21,6 +21,98 @@ from .config import (
 )
 from .models_db import Task, TaskFile, User, get_db
 
+# --- Settings Router (public — no auth required) ---
+
+settings_router = APIRouter()
+
+
+@settings_router.get("/settings/llm")
+def get_llm_settings():
+    """Get current LLM configuration (base_url, api_key, model)."""
+    from .config import get_app_settings
+    return get_app_settings()
+
+
+@settings_router.post("/settings/llm")
+def set_llm_settings(data: dict):
+    """Save LLM configuration and apply immediately."""
+    from .config import get_app_settings, save_app_settings
+    current = get_app_settings()
+    allowed_keys = {"anthropic_base_url", "anthropic_auth_token", "llm_model"}
+    updates = {k: v for k, v in data.items() if k in allowed_keys and v is not None}
+    if updates:
+        merged = {**current, **updates}
+        save_app_settings(merged)
+    return {"detail": "设置已保存并立即生效", "settings": get_app_settings()}
+
+
+@settings_router.post("/settings/llm/test")
+async def test_llm_connection(data: dict):
+    """Test LLM connection — 直接用 HTTP 请求，不依赖 anthropic 库。"""
+    import os
+    base_url = (data.get("anthropic_base_url") or os.environ.get("ANTHROPIC_BASE_URL")).rstrip("/")
+    api_key = (data.get("anthropic_auth_token") or os.environ.get("ANTHROPIC_AUTH_TOKEN", "lmstudio"))
+    model = (data.get("llm_model") or os.environ.get("LLM_MODEL", "Qwen/Qwen3.6-27B"))
+
+    if not base_url:
+        return {"ok": False, "error": "未填写 API 地址"}
+
+    try:
+        import httpx
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
+        # 尝试 OpenAI 兼容格式（LM Studio / Ollama 等本地模型常用）
+        url_openai = f"{base_url}/v1/chat/completions"
+        body_openai = {
+            "model": model,
+            "messages": [{"role": "user", "content": "Reply OK"}],
+            "max_tokens": 16,
+            "temperature": 0,
+        }
+
+        async with httpx.AsyncClient(timeout=15) as client:
+            try:
+                resp = await client.post(url_openai, json=body_openai, headers=headers)
+                if resp.status_code == 200:
+                    result = resp.json()
+                    reply = (result.get("choices") or [{}])[0].get("message", {}).get("content", "") or ""
+                    return {
+                        "ok": True,
+                        "message": f"✅ 连接成功！模型 {model} 响应：{reply.strip()}",
+                        "model": model,
+                        "base_url": base_url,
+                    }
+            except Exception:
+                pass
+
+            # 如果 OpenAI 格式失败，尝试 Anthropic 兼容格式
+            url_anthropic = f"{base_url}/v1/messages"
+            body_anthropic = {
+                "model": model,
+                "messages": [{"role": "user", "content": "Reply OK"}],
+                "max_tokens": 16,
+                "temperature": 0,
+            }
+            resp = await client.post(url_anthropic, json=body_anthropic, headers=headers)
+            if resp.status_code == 200:
+                result = resp.json()
+                reply = (result.get("content") or [{}])[0].get("text", "") or ""
+                return {
+                    "ok": True,
+                    "message": f"✅ 连接成功！模型 {model} 响应：{reply.strip()}",
+                    "model": model,
+                    "base_url": base_url,
+                }
+
+        # 都失败，返回错误信息
+        err_detail = f"HTTP {resp.status_code}: {resp.text[:200]}"
+        return {"ok": False, "error": f"连接失败：{err_detail}"}
+    except Exception as e:
+        return {"ok": False, "error": f"网络错误：{str(e)}"}
+
+
 # --- Auth Router ---
 
 auth_router = APIRouter()
@@ -48,7 +140,7 @@ def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(req.password, user.hashed_password):
         raise HTTPException(401, "用户名或密码错误")
     token = create_token(user)
-    return schemas.TokenResponse(access_token=token, role=user.role)
+    return schemas.TokenResponse(access_token=token, role=user.role, username=user.username)
 
 
 # --- Task Router ---

@@ -209,6 +209,7 @@
     .action-btn.primary:hover { background: #2563eb; }
     .action-btn.success { background: var(--color-success); color: #fff; border-color: var(--color-success); }
     .action-btn.success:hover { background: #059669; }
+    #logout-btn:hover { background: var(--color-error-bg); color: var(--color-error); border-color: var(--color-error); }
 
     /* Toast */
     .save-toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 24px; background: var(--color-success); color: #fff; border-radius: var(--radius-md); font-size: var(--font-size-sm); box-shadow: var(--shadow-card-hover); opacity: 0; transform: translateY(10px); transition: all 300ms ease; pointer-events: none; z-index: 999; }
@@ -464,10 +465,16 @@
 </head>
 <body>
   <div class="page-wrapper">
-    <a href="/ui-index" class="back-link">
-      <svg viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      返回录入首页
-    </a>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--spacing-sm);">
+      <a href="/ui-index" class="back-link">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        返回录入首页
+      </a>
+      <div id="user-info-bar" style="display:flex; align-items:center; gap:10px;">
+        <span id="user-display" style="font-size:13px; color:var(--color-text-secondary);"></span>
+        <button id="logout-btn" onclick="handleLogout()" style="padding:4px 12px; font-size:12px; border:1px solid var(--color-border); border-radius:6px; background:var(--color-bg-primary); cursor:pointer; color:var(--color-text-secondary); font-family:var(--font-family); transition:all var(--transition);">退出登录</button>
+      </div>
+    </div>
 
     <!-- 企查查截图上传区 -->
     <div class="qichacha-section">
@@ -500,7 +507,7 @@
             <div id="qichachaDeviceSelector" style="display:flex; align-items:center; gap:6px; margin-top:var(--spacing-xs); font-size:var(--font-size-xs); color:var(--color-text-secondary);">
               <span>设备：</span>
               <label style="display:inline-flex; align-items:center; gap:3px; cursor:pointer;">
-                <input type="radio" name="qichacha-device" value="auto" checked style="accent-color:var(--color-accent);">
+                <input type="radio" name="qichacha-device" value="auto" style="accent-color:var(--color-accent);">
                 <span>自动</span>
               </label>
               <label style="display:inline-flex; align-items:center; gap:3px; cursor:pointer;">
@@ -508,7 +515,7 @@
                 <span>CPU</span>
               </label>
               <label style="display:inline-flex; align-items:center; gap:3px; cursor:pointer;">
-                <input type="radio" name="qichacha-device" value="gpu" style="accent-color:var(--color-accent);">
+                <input type="radio" name="qichacha-device" value="gpu" checked style="accent-color:var(--color-accent);">
                 <span>GPU</span>
               </label>
             </div>
@@ -2767,12 +2774,16 @@ async function submitRecord() {
 
       // 添加场景名称和提交人
       data.scenario_name = SCENARIO_NAMES[scenario] || '未知场景';
-      data.submitter = localStorage.getItem('fill-submitter-name') || '匿名';
+      data.submitter = currentUser?.username || localStorage.getItem('fill-submitter-name') || '匿名';
 
       try {
+        const token = localStorage.getItem('auth_token');
         const response = await fetch('/api/reception-records', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
+          },
           body: JSON.stringify(data),
         });
         const result = await response.json();
@@ -3307,6 +3318,30 @@ async function submitRecord() {
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+    }
+
+    // ===== 登录校验 + 用户信息 =====
+    let currentUser = null;
+    (function checkAuth() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (!user || !localStorage.getItem('auth_token')) {
+        window.location.href = '/';
+        return;
+      }
+      currentUser = user;
+      // 显示用户信息
+      const userDisplay = document.getElementById('user-display');
+      if (userDisplay) {
+        userDisplay.textContent = '👤 ' + user.username;
+      }
+      // 自动填充提交人
+      localStorage.setItem('fill-submitter-name', user.username);
+    })();
+
+    function handleLogout() {
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      window.location.href = '/';
     }
   </script>
 </body>

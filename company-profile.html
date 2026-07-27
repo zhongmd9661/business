@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>清远市源河房地产开发有限公司 - 企业信用报告</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: #f5f5f5; color: #333; font-size: 14px; }
+  .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px 24px; }
+
+  /* Header */
+  .header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+  .logo { width: 60px; height: 60px; background: linear-gradient(135deg, #d4a2d4, #b07cc6); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 600; flex-shrink: 0; line-height: 1.2; text-align: center; padding: 6px; }
+  .header-info { flex: 1; }
+  .company-name-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .company-name { font-size: 24px; font-weight: 700; color: #1a1a1a; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 13px; }
+  .badge-green { background: #e8f8f0; color: #27ae60; border: 1px solid #a9dfbf; }
+  .badge-red { background: #fdecea; color: #e74c3c; border: 1px solid #f5b7b1; }
+  .header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .score-box { display: flex; align-items: center; gap: 6px; background: #f0f7ff; border: 1px solid #d6eaf8; border-radius: 4px; padding: 4px 12px; font-size: 14px; }
+  .score-box .score { color: #e74c3c; font-weight: 700; font-size: 16px; }
+  .score-trend { font-size: 12px; color: #e67e22; }
+  .action-btns { display: flex; gap: 8px; }
+  .btn { padding: 8px 18px; border-radius: 4px; font-size: 14px; cursor: pointer; border: 1px solid #ddd; background: #fff; color: #555; display: flex; align-items: center; gap: 4px; }
+  .btn:hover { background: #f5f5f5; }
+  .btn-primary { background: #2d8cf0; color: #fff; border-color: #2d8cf0; }
+  .btn-primary:hover { background: #1a7de0; }
+  .meta-row { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #999; margin-top: 4px; }
+  .meta-row span { display: flex; align-items: center; gap: 4px; }
+  .update-time { color: #666; }
+
+  /* Info Grid */
+  .info-grid { background: #f9fbfc; border-radius: 6px; padding: 16px 20px; margin-bottom: 20px; position: relative; }
+  .copy-btn { position: absolute; top: 12px; right: 16px; color: #2d8cf0; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px; }
+  .info-grid table { width: 100%; border-collapse: collapse; }
+  .info-grid td { padding: 6px 12px; vertical-align: top; }
+  .info-grid td:first-child { color: #888; width: 160px; }
+  .info-label { color: #666; }
+  .info-value { color: #333; }
+  .link { color: #e67e22; cursor: pointer; }
+  .link-blue { color: #2d8cf0; cursor: pointer; }
+  .more-btn { display: inline-block; background: #f0f0f0; border-radius: 3px; padding: 1px 8px; font-size: 12px; color: #666; cursor: pointer; margin-left: 8px; }
+  .row-tag { font-size: 11px; background: #fff3e0; color: #e67e22; padding: 1px 6px; border-radius: 2px; margin-left: 6px; }
+  .desc-row td { padding-top: 12px; }
+  .desc-text { color: #555; line-height: 1.6; }
+  .expand-link { color: #2d8cf0; cursor: pointer; margin-left: 4px; }
+
+  /* Right sidebar info */
+  .info-grid .right-info td { text-align: right; }
+  .info-grid .right-info td span { display: block; margin-bottom: 6px; }
+  .indicators { display: flex; gap: 10px; margin-bottom: 20px; }
+  .indicator-card { flex: 1; background: #f9fbfc; border-radius: 6px; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+  .indicator-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .indicator-icon svg { width: 24px; height: 24px; fill: #2d8cf0; }
+  .indicator-text { line-height: 1.4; }
+  .indicator-text .title { font-weight: 600; color: #333; }
+  .indicator-text .sub { font-size: 12px; color: #999; margin-top: 2px; }
+  .indicator-text .highlight { color: #e74c3c; }
+
+  /* Dynamic Section */
+  .section { margin-bottom: 20px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .section-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .section-title .icon { color: #2d8cf0; }
+  .dynamic-item { font-size: 14px; color: #555; }
+  .dynamic-item .date { color: #888; }
+  .action-links { display: flex; gap: 16px; font-size: 13px; color: #2d8cf0; }
+  .action-links span { cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .action-links svg { width: 16px; height: 16px; fill: #2d8cf0; }
+
+  /* Risk Section */
+  .risk-section { background: #fff; border-radius: 6px; padding: 16px; border: 1px solid #eee; }
+  .risk-header { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+  .risk-title { display: flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 700; color: #e74c3c; }
+  .risk-tabs { display: flex; gap: 4px; flex: 1; }
+  .risk-tab { padding: 8px 20px; border-radius: 4px; cursor: pointer; text-align: center; background: #fef5f5; }
+  .risk-tab.active { background: #fde8e8; }
+  .risk-tab .label { color: #666; font-size: 13px; }
+  .risk-tab .count { color: #e74c3c; font-weight: 600; font-size: 15px; }
+  .risk-tab .count-import { margin-left: 4px; font-size: 12px; color: #e74c3c; }
+  .risk-analysis { display: flex; gap: 20px; align-items: center; }
+  .analysis-title { font-size: 18px; font-weight: 700; color: #2d8cf0; display: flex; align-items: center; gap: 4px; }
+  .analysis-item { text-align: center; padding: 4px 16px; }
+  .analysis-item .label { font-size: 13px; color: #666; }
+  .analysis-item .count { font-size: 16px; font-weight: 600; color: #2d8cf0; margin-top: 2px; }
+  .analysis-item .lock { font-size: 11px; color: #999; display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">源河<br/>地产</div>
+    <div class="header-info">
+      <div class="company-name-row">
+        <span class="company-name">清远市源河房地产开发有限公司</span>
+        <span class="badge badge-green">存续</span>
+      </div>
+      <span class="badge badge-red">被执行人</span>
+    </div>
+    <div class="header-actions">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="score-box">
+          企查分：<span class="score">373分</span>
+          <span class="score-trend">📈 L-2</span>
+        </div>
+        <div class="action-btns">
+          <button class="btn">📄 报告</button>
+          <button class="btn">✏️ 笔记</button>
+          <button class="btn btn-primary">⭐ 关注</button>
+        </div>
+      </div>
+      <div class="meta-row">
+        <span>👥 2万+</span>
+        <span>|</span>
+        <span class="update-time">🔄 2026-07-04 更新</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Grid -->
+  <div class="info-grid">
+    <div class="copy-btn">📋 复制</div>
+    <table>
+      <tr>
+        <td><span class="info-label">统一社会信用代码：</span></td>
+        <td colspan="3"><span class="info-value">91441802789419289U</span></td>
+      </tr>
+      <tr>
+        <td><span class="info-label">法定代表人：</span></td>
+        <td>
+          <span class="info-value link">鲁爱勤</span>
+          <span class="row-tag">👥 关联企业 4</span>
+        </td>
+        <td>
+          <span class="info-label">电话：</span><span class="info-value">0763-3916666</span>
+          <span class="more-btn">更多 2</span>
+        </td>
+        <td class="right-info">
+          <span><span class="info-label">企查查行业：</span><span class="info-value">商品房开发</span> <small style="color:#999">▼</small></span>
+          <span><span class="info-label">企业规模：</span><span class="info-value" style="background:#e8f0fe;padding:1px 6px;border-radius:2px;font-size:12px;">M</span> <span class="info-value">中型</span></span>
+          <span><span class="info-label">员工人数：</span><span class="info-value">13</span> <small style="color:#999">(2025年) ▼</small></span>
+        </td>
+      </tr>
+      <tr>
+        <td><span class="info-label">注册资本：</span></td>
+        <td><span class="info-value">5000万元</span></td>
+        <td>
+          <span class="info-label">邮箱：</span><span class="info-value">570564456@qq.com</span>
+          <span class="more-btn">更多 1</span>
+        </td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><span class="info-label">成立日期：</span></td>
+        <td><span class="info-value">2006-05-30</span></td>
+        <td>
+          <span class="info-label">官网：</span><span class="info-value">-</span>
+        </td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><span class="info-label">地址：</span></td>
+        <td colspan="3">
+          <span class="info-value">清远市清城区连江路五十五号城市花园开发商用地一26#楼二层商铺02</span>
+          <span class="more-btn">附近企业</span>
+        </td>
+      </tr>
+      <tr class="desc-row">
+        <td><span class="info-label">简介 ⓘ</span></td>
+        <td colspan="3">
+          <span class="desc-text">清远市源河房地产开发有限公司成立于2006-05-30，法定代表人为鲁爱勤，注册资本为5000万元，统一社会信用代码为91441802789419289U，企业注册地址位于清远...</span>
+          <span class="expand-link">展开</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Indicators -->
+  <div class="indicators">
+    <div class="indicator-card">
+      <div class="indicator-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm15-2a2 2 0 110 4 2 2 0 010-4z" fill="#2d8cf0"/></svg>
+      </div>
+      <div class="indicator-text">
+        <div class="title">企业族群：清远航空石油</div>
+        <div class="sub">成员企业 <span class="link-blue">3</span> &nbsp; 重要风险 <span class="highlight">5</span></div>
+      </div>
+    </div>
+    <div class="indicator-card">
+      <div class="indicator-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#2d8cf0" stroke-width="2"/><path d="M12 7v5l3 3" fill="none" stroke="#2d8cf0" stroke-width="2"/></svg>
+      </div>
+      <div class="indicator-text">
+        <div class="title">招投标</div>
+        <div class="sub">中标 <span class="link-blue">1</span> &nbsp; 投标 <span class="link-blue">1</span></div>
+      </div>
+    </div>
+    <div class="indicator-card">
+      <div class="indicator-icon">
+        <svg viewBox="0 0 24 24"><path d="M7 7a3 3 0 013-3h0a3 3 0 010 6h0a3 3 0 01-3-3zm10 0a3 3 0 013-3h0a3 3 0 010 6h0a3 3 0 01-3-3zM7 20a3 3 0 013-3h0a3 3 0 010 6h0a3 3 0 01-3-3zm6-5a3 3 0 013-3h0a3 3 0 010 6h0a3 3 0 01-3-3z" fill="#2d8cf0"/></svg>
+      </div>
+      <div class="indicator-text">
+        <div class="title">财产线索</div>
+        <div class="sub">线索 <span class="link-blue">999+</span> 预估价值 <span class="highlight">139 亿元</span></div>
+      </div>
+    </div>
+    <div class="indicator-card">
+      <div class="indicator-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v7h-7zM4 15h7v5H4zm9 2h7v3h-7z" fill="#2d8cf0"/></svg>
+      </div>
+      <div class="indicator-text">
+        <div class="title">股权穿透图</div>
+        <div class="sub">挖掘深层股权结构</div>
+      </div>
+    </div>
+    <div class="indicator-card">
+      <div class="indicator-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" fill="#2d8cf0"/><rect x="14" y="3" width="7" height="7" rx="1" fill="#2d8cf0"/><rect x="3" y="14" width="7" height="7" rx="1" fill="#2d8cf0"/><rect x="14" y="14" width="7" height="7" rx="1" fill="#2d8cf0"/></svg>
+      </div>
+      <div class="indicator-text">
+        <div class="title">企业图谱</div>
+        <div class="sub">企业信息一图掌控</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic Section -->
+  <div class="section">
+    <div class="section-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="section-title"><span class="icon">📢</span> 动态</div>
+        <div class="dynamic-item">
+          <span class="date">2025-11-08</span> 新增裁判文书，案由：租赁合同纠纷 &nbsp; <span class="link-blue">全部动态</span>
+        </div>
+      </div>
+      <div class="action-links">
+        <span>⭐ 认领企业</span>
+        <span>🏆 企业PK</span>
+        <span>📄 发票抬头</span>
+        <span>⚠️ 数据纠错</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk Section -->
+  <div class="risk-section">
+    <div class="risk-header">
+      <div class="risk-title">⚡ 风险扫描</div>
+      <div class="risk-tabs">
+        <div class="risk-tab active">
+          <div class="label">自身风险</div>
+          <div><span class="count">10</span><span class="count-import">| 重要5</span></div>
+        </div>
+        <div class="risk-tab">
+          <div class="label">关联风险</div>
+          <div><span class="count">41</span></div>
+        </div>
+        <div class="risk-tab">
+          <div class="label">历史信息</div>
+          <div><span class="count">86</span></div>
+        </div>
+        <div class="risk-tab">
+          <div class="label">提示信息</div>
+          <div><span class="count">1561</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="risk-analysis">
+      <div class="analysis-title">📊 分析</div>
+      <div class="analysis-item">
+        <div class="label">深度风险分析</div>
+        <div class="count">156</div>
+      </div>
+      <div class="analysis-item">
+        <div class="label">债务/债权</div>
+        <div class="count">40</div>
+      </div>
+      <div class="analysis-item">
+        <div class="label">风险关系</div>
+        <div class="count">50</div>
+      </div>
+      <div class="analysis-item">
+        <div class="label">合同违约</div>
+        <div class="count" style="color:#ccc;">🔒 SVIP</div>
+      </div>
+      <div class="analysis-item">
+        <div class="label">竞争风险</div>
+        <div class="count">1</div>
+      </div>
+      <div class="analysis-item">
+        <div class="label">合作风险</div>
+        <div class="count">0</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

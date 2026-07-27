@@ -18,5 +18,5 @@
 
 ### Phase 4: Integration & End-to-End Validation
 - [ ] **Task 4.1**: 修改 `scripts/batch_parse.py`，将流程更新为：$\text{Vision Extract} \rightarrow \text{Splicing} \rightarrow \text{Excel Export}$。
-- [ ] **Task 4.2**: 使用 "D:\02_ocr\掌经" 的实际图片集进行完整重建测试。
+- [ ] **Task 4.2**: 使用 "D:\00_项目\招待费智能体\掌经" 的实际图片集进行完整重建测试。
 - [ ] **Task 4.3**: 验证超大报表在 Excel 中的左右上下滚动体验及数据元整性。

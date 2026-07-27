@@ -149,7 +149,7 @@ app.include_router(router_reception_records.router, prefix="/api", tags=["recept
 
 ```powershell
 # 1. 进入项目目录
-cd "D:\00_项目\02_ocr"
+cd "D:\00_项目\招待费智能体"
 
 # 2. 启动服务（PowerShell）
 & "$PWD\.venv\Scripts\python.exe" -m uvicorn src.web_service.app:app --host 0.0.0.0 --port 8006

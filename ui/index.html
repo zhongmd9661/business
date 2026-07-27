@@ -235,7 +235,13 @@
 
     .btn:active {
       transform: translateY(0);
-      box-shadow: 0 2px 8px rgba(30, 64, 175, 0.2);
+      box-shadow:  0 2px 8px rgba(30, 64, 175, 0.2);
+    }
+
+    #logout-btn:hover {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #dc2626;
     }
 
     /* ---- 模态框 ---- */
@@ -615,6 +621,10 @@
     <div class="page-header">
       <h1 class="page-title">招待费管理</h1>
       <p class="page-subtitle">智能审核 · 精准管控 · 高效便捷</p>
+      <div id="user-bar" style="margin-top:12px; display:none; align-items:center; justify-content:center; gap:12px;">
+        <span id="user-greeting" style="font-size:14px; color:#5a7ba8;"></span>
+        <button id="logout-btn" onclick="handleLogout()" style="padding:6px 16px; font-size:13px; border:1px solid #e2e8f0; border-radius:6px; background:#fff; cursor:pointer; color:#64748b; font-family:inherit; transition:all 0.2s;">退出登录</button>
+      </div>
     </div>
 
     <div class="cards">
@@ -937,6 +947,26 @@
         closeModal();
       }
     });
+
+    // ===== 登录校验 + 用户信息 =====
+    (function checkAuth() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (!user || !localStorage.getItem('auth_token')) {
+        window.location.href = '/';
+        return;
+      }
+      // 显示用户信息
+      const userBar = document.getElementById('user-bar');
+      const greeting = document.getElementById('user-greeting');
+      userBar.style.display = 'flex';
+      greeting.textContent = '👋 欢迎，' + user.username;
+    })();
+
+    function handleLogout() {
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      window.location.href = '/';
+    }
   </script>
 </body>
 </html>

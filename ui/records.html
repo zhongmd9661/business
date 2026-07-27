@@ -47,6 +47,13 @@
     .back-link:hover { color: #2563eb; }
     .back-link svg { width: 16px; height: 16px; }
 
+    /* User info bar */
+    .user-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .user-name { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+    .logout-btn { padding: 4px 12px; font-size: var(--font-size-xs); border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg-primary); cursor: pointer; color: var(--color-text-secondary); font-family: var(--font-family); transition: all var(--transition); }
+    .logout-btn:hover { background: var(--color-error-bg); color: var(--color-error); border-color: var(--color-error); }
+
     .page-header { margin-bottom: var(--spacing-xl); }
     .page-title { font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); margin-bottom: var(--spacing-xs); }
     .page-subtitle { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
@@ -118,14 +125,20 @@
 </head>
 <body>
   <div class="page-wrapper">
-    <a href="/ui-index" class="back-link">
-      <svg viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      返回首页
-    </a>
+    <div class="user-bar">
+      <a href="/ui-index" class="back-link">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        返回首页
+      </a>
+      <div class="user-info">
+        <span class="user-name" id="user-display"></span>
+        <button class="logout-btn" onclick="handleLogout()">退出登录</button>
+      </div>
+    </div>
 
     <div class="page-header">
       <h1 class="page-title">📋 提交记录</h1>
-      <p class="page-subtitle">查看所有招待费提交记录</p>
+      <p class="page-subtitle" id="page-subtitle"></p>
     </div>
 
     <!-- Filter bar -->
@@ -200,6 +213,26 @@
 
   <script>
     const API_BASE = window.location.origin;
+    let currentUser = null;
+
+    // 登录校验
+    (function checkAuth() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (!user || !localStorage.getItem('auth_token')) {
+        window.location.href = '/';
+        return;
+      }
+      currentUser = user;
+      // 显示用户信息
+      const userDisplay = document.getElementById('user-display');
+      const subtitle = document.getElementById('page-subtitle');
+      if (userDisplay) userDisplay.textContent = '👤 ' + user.username;
+      if (subtitle) {
+        subtitle.textContent = user.role === 'admin'
+          ? '查看所有招待费提交记录'
+          : '查看 ' + user.username + ' 的招待费提交记录';
+      }
+    })();
 
     async function loadRecords() {
       const tbody = document.getElementById('records-body');
@@ -211,9 +244,16 @@
       let url = `${API_BASE}/api/reception-records?limit=500`;
       if (scenario) url += `&scenario=${scenario}`;
       if (status) url += `&status=${status}`;
+      // 非 admin 用户只查看自己的记录
+      if (currentUser && currentUser.role !== 'admin') {
+        url += `&username=${encodeURIComponent(currentUser.username)}`;
+      }
 
       try {
-        const response = await fetch(url);
+        const token = localStorage.getItem('auth_token');
+        const headers = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const response = await fetch(url, { headers });
         const records = await response.json();
         renderRecords(records);
         updateSummary(records);
@@ -241,7 +281,7 @@
           <td>${r.guests} 人</td>
           <td>¥${(r.per_capita || 0).toFixed(2)}</td>
           <td class="amount">¥${(r.total_amount || 0).toFixed(2)}</td>
-          <td><span class="status-badge ${statusClass(r.status)}">${r.status}</span></td>
+          <td><span class="status-badge ${statusClass(r.status)}">${getStatusText(r.status)}</span></td>
           <td>${formatDateTime(r.created_at)}</td>
           <td><button class="delete-btn" onclick="deleteRecord(${r.id})">删除</button></td>
         </tr>
@@ -251,8 +291,8 @@
     function updateSummary(records) {
       const total = records.length;
       const totalAmount = records.reduce((sum, r) => sum + (r.total_amount || 0), 0);
-      const pending = records.filter(r => r.status === '待审核').length;
-      const approved = records.filter(r => r.status === '已通过').length;
+      const pending = records.filter(r => r.status === 'pending' || r.status === '待审核').length;
+      const approved = records.filter(r => r.status === 'approved' || r.status === '已通过').length;
 
       document.getElementById('summary-total').textContent = total;
       document.getElementById('summary-amount').textContent = '¥' + totalAmount.toFixed(2);
@@ -264,23 +304,31 @@
       if (!confirm('确认删除这条记录？')) return;
 
       try {
-        const response = await fetch(`${API_BASE}/api/reception-records/${id}`, { method: 'DELETE' });
+        const token = localStorage.getItem('auth_token');
+        const headers = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const response = await fetch(`${API_BASE}/api/reception-records/${id}`, { method: 'DELETE', headers });
         if (response.ok) {
           showToast('✅ 记录已删除');
           loadRecords();
         } else {
-          showToast('❌ 删除失败');
+          const err = await response.json();
+          showToast('❌ ' + (err.detail || '删除失败'));
         }
       } catch (err) {
         showToast('❌ 网络错误：' + err.message);
       }
     }
 
+    var STATUS_MAP = { 'pending': '待审核', 'approved': '已通过', 'rejected': '已驳回' };
     function statusClass(status) {
-      if (status === '待审核') return 'pending';
-      if (status === '已通过') return 'approved';
-      if (status === '已驳回') return 'rejected';
+      if (status === 'pending' || status === '待审核') return 'pending';
+      if (status === 'approved' || status === '已通过') return 'approved';
+      if (status === 'rejected' || status === '已驳回') return 'rejected';
       return '';
+    }
+    function getStatusText(status) {
+      return STATUS_MAP[status] || status || '—';
     }
 
     function formatDate(dateStr) {
@@ -314,6 +362,12 @@
       toast.style.background = msg.includes('✅') ? 'var(--color-success)' : (msg.includes('❌') ? 'var(--color-error)' : 'var(--color-warning)');
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      window.location.href = '/';
     }
 
     // Load records on page load

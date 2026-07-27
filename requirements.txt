@@ -18,5 +18,35 @@ onnxruntime==1.26.0
 lmdeploy==0.11.1
 pydantic==2.13.4
 tqdm==4.67.3
+pyyaml>=6.0
+
+# Additional runtime dependencies (transitive deps that may need explicit pinning)
+pywin32>=306
+typing_extensions>=4.12
+six>=1.16
+python_dateutil>=2.8
+python_dotenv>=1.0
+python_jose>=3.3
+python_docx>=1.0
+protobuf>=4.25
+pyzmq>=25.0
+beautifulsoup4>=4.12
+pycryptodome>=3.19
+markdown_it_py>=3.0
+ujson>=5.10
+rpds_py>=0.18
+ruamel_yaml>=0.17
+bce_python_sdk>=0.9
+pypptx_with_oxml>=1.0
+python_bidi>=0.4
+py_cpuinfo>=9.0
+fasttext_predict>=0.9
+opencv_contrib_python>=4.10
+mmengine_lite>=0.10
+brotli>=1.1
+apache_tvm_ffi>=0.1
+paddlex>=3.0
+huggingface_hub>=0.24
+pydantic>=2.0
 
 # Full locked versions in requirements-full.txt

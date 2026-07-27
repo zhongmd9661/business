@@ -5,7 +5,7 @@ import json
 import os
 from typing import Optional
 
-from anthropic import Anthropic
+from ..llm_client import LlmClient, LlmClientError, extract_text_from_response
 
 
 SYSTEM_PROMPT = """\
@@ -81,12 +81,15 @@ class LlmRuleParser:
         self.base_url = base_url or os.environ.get("ANTHROPIC_BASE_URL", "http://192.168.231.1:1235")
         self.api_key = api_key or os.environ.get("ANTHROPIC_AUTH_TOKEN", "lmstudio")
         self.model = model or os.environ.get("LLM_MODEL", "qwen/qwen3.6-27b")
-        self._client: Optional[Anthropic] = None
+        self._client: Optional[LlmClient] = None
 
     def start(self):
-        self._client = Anthropic(base_url=self.base_url, api_key=self.api_key)
+        self._client = LlmClient(base_url=self.base_url, api_key=self.api_key, model=self.model)
+        self._client.start()
 
     def stop(self):
+        if self._client is not None:
+            self._client.stop()
         self._client = None
 
     def parse_clauses(self, clauses: list[tuple[str, str]]) -> list[dict]:
@@ -109,7 +112,7 @@ class LlmRuleParser:
 
         prompt = f"请解析以下 {len(clauses)} 条制度条款：\n\n" + "\n\n".join(parts)
 
-        response = self._client.messages.create(
+        response = self._client.messages_create(
             model=self.model,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],

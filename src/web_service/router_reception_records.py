@@ -2,11 +2,54 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from jose import JWTError, jwt
+from pydantic import BaseModel
 
-from .models_db import ReceptionRecord, SessionLocal
+from .auth import get_admin_user, get_current_user
+from .config import JWT_ALGORITHM, JWT_SECRET_KEY
+from .models_db import ReceptionRecord, SessionLocal, User
 
 router = APIRouter()
+
+
+class CurrentUserOrAnonymous:
+    """Optional auth — returns User if valid token, otherwise None"""
+    def __init__(
+        self,
+        token: Optional[str] = Query(None, alias="token"),
+    ):
+        self.user: Optional[User] = None
+        if token:
+            try:
+                payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+                user_id = int(payload["sub"])
+                db = SessionLocal()
+                try:
+                    self.user = db.query(User).filter(User.id == user_id).first()
+                finally:
+                    db.close()
+            except (JWTError, ValueError):
+                pass
+
+
+def get_optional_user(request: Request) -> Optional[User]:
+    """Read token from Authorization header; return User or None."""
+    auth = request.headers.get("authorization", "")
+    if auth.startswith("Bearer "):
+        token = auth[7:]
+    else:
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        user_id = int(payload["sub"])
+        db = SessionLocal()
+        try:
+            return db.query(User).filter(User.id == user_id).first()
+        finally:
+            db.close()
+    except (JWTError, ValueError):
+        return None
 
 
 def _camel_to_snake(d):
@@ -39,6 +82,12 @@ async def create_record(request: Request):
     except UnicodeDecodeError:
         payload = __import__("json").loads(body_bytes.decode("gbk"))
     payload = _camel_to_snake(payload)
+
+    # Auto-fill submitter from JWT token if not provided
+    current_user = get_optional_user(request)
+    if not payload.get("submitter") and current_user:
+        payload["submitter"] = current_user.username
+
     session = SessionLocal()
     try:
         # 生成流水号: ZDF-YYYYMMDD-NNNN
@@ -106,13 +155,32 @@ async def create_record(request: Request):
         session.close()
 
 
+# 状态码映射（英文 → 中文）
+STATUS_LABEL = {
+    "pending": "待审核",
+    "approved": "已通过",
+    "rejected": "已驳回",
+}
+
+
+def _status_label(status):
+    """返回中文状态标签，兼容中英文输入"""
+    if not status:
+        return "待审核"
+    if status in STATUS_LABEL:
+        return STATUS_LABEL[status]
+    # 已经是中文直接返回
+    return status
+
+
 @router.get("/reception-records")
 def list_records(
     scenario: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    username: Optional[str] = Query(None, description="过滤指定提交人的记录"),
     limit: int = Query(500, ge=1, le=5000),
 ):
-    """查询提交记录列表"""
+    """查询提交记录列表，支持按 username 过滤"""
     session = SessionLocal()
     try:
         q = session.query(ReceptionRecord)
@@ -120,6 +188,8 @@ def list_records(
             q = q.filter(ReceptionRecord.scenario == scenario)
         if status:
             q = q.filter(ReceptionRecord.status == status)
+        if username:
+            q = q.filter(ReceptionRecord.submitter == username)
         records = q.order_by(ReceptionRecord.id.desc()).limit(limit).all()
 
         return [
@@ -145,7 +215,7 @@ def list_records(
                 "reason": r.reason or "",
                 "nationality": r.nationality or "",
                 "fee": r.fee or "",
-                "status": r.status or "pending",
+                "status": _status_label(r.status),
                 "created_at": r.created_at or "",
                 "updated_at": r.updated_at or "",
             }
@@ -156,13 +226,20 @@ def list_records(
 
 
 @router.delete("/reception-records/{record_id}")
-def delete_record(record_id: int):
-    """删除一条提交记录"""
+def delete_record(record_id: int, request: Request):
+    """删除一条提交记录（非管理员只能删除自己的记录）"""
+    current_user = get_optional_user(request)
     session = SessionLocal()
     try:
         record = session.query(ReceptionRecord).filter(ReceptionRecord.id == record_id).first()
         if not record:
             raise HTTPException(status_code=404, detail="记录不存在")
+
+        # 权限校验：已登录非 admin 用户只能删除自己的记录
+        if current_user and current_user.role != "admin":
+            if record.submitter != current_user.username:
+                raise HTTPException(status_code=403, detail="无权删除他人记录")
+
         session.delete(record)
         session.commit()
         return {"message": "记录已删除"}

@@ -212,7 +212,7 @@ Copy-Item "01业务招待费材料案例\某批次" "data\input\" -Recurse
 ## 目录结构
 
 ```
-D:\02_ocr\
+D:\00_项目\招待费智能体\
 ├── src/                              # 核心源码
 │   ├── batch_processing/             # 批次处理
 │   │   ├── collector.py              # 文件收集、ZIP 解压、序号分配

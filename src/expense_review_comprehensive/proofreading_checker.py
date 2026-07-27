@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 from typing import Optional
 
-from anthropic import Anthropic
+from ..llm_client import LlmClient, extract_text_from_response, llm_messages_create_async
 
 from .models import (
     ExtractedFields,
@@ -285,7 +285,7 @@ class _ProofreadingFields:
 def _extract_proofreading_fields(
     text: str,
     doc_type: str,
-    client: Optional[Anthropic] = None,
+    client: Optional[LlmClient] = None,
     model: str = "qwen/qwen3.6-27b",
 ) -> _ProofreadingFields:
     """LLM + 正则双引擎提取校对字段。
@@ -299,7 +299,7 @@ def _extract_proofreading_fields(
     if client and text:
         truncated = text[:15000] if len(text) > 15000 else text
         try:
-            response = client.messages.create(
+            response = client.messages_create(
                 model=model,
                 system=PROOFREADING_SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": truncated}],
@@ -414,14 +414,14 @@ class ProofreadingChecker:
 
     def __init__(
         self,
-        client: Anthropic = None,
+        client: LlmClient = None,
         base_url: str = None,
         api_key: str = None,
         model: str = None,
     ):
         """
         Args:
-            client: 共享的 Anthropic 客户端（推荐，避免重复建连）
+            client: 共享的 LlmClient 客户端（推荐，避免重复建连）
             base_url: 不传 client 时的 API 地址
             api_key: 不传 client 时的 API 密钥
             model: 模型名称
@@ -436,11 +436,13 @@ class ProofreadingChecker:
     def start(self):
         """如果没有传入外部客户端，则自建一个"""
         if self._external_client is None:
-            self._client = Anthropic(base_url=self._base_url, api_key=self._api_key)
+            self._client = LlmClient(base_url=self._base_url, api_key=self._api_key, model=self._model)
+            self._client.start()
 
     def stop(self):
         """关闭自建的客户端（不关闭外部传入的）"""
-        if self._external_client is None:
+        if self._external_client is None and self._client is not None:
+            self._client.stop()
             self._client = None
 
     def check(self, documents: list[tuple[str, ExtractedFields]]) -> tuple[list[BatchFinding], list[tuple[str, str, ExtractedFields, _ProofreadingFields]]]:
