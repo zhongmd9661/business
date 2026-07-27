@@ -182,3 +182,50 @@ def list_qichacha_templates():
         if f.is_file() and f.suffix.lower() in img_exts:
             files.append({"name": f.name, "path": f"/ui/ui资源/{f.name}"})
     return files
+
+
+# ---- 审核模板文件 ----
+# 9 个上传槽位对应的模板文件映射
+_AUDIT_TEMPLATE_DIR = base_dir / "审核标准" / "参考案例" / "案例标准测试材料"
+_AUDIT_TEMPLATE_MAP = [
+    "业务招待审批单.jpg",            # 0: 审批单
+    "业务招待申请单.pdf",             # 1: 申请单
+    "业务招待费报账单.pdf",           # 2: 报账单
+    "【发票】_XML格式.xml",           # 3: 发票（XML格式）
+    "【电子发票】_PDF格式.pdf",       # 4: 电子发票（PDF格式）
+    "招待单位经营状态.PNG",           # 5: 招待单位经营状态
+    "支付凭证.jpg",                   # 6: 支付凭证
+    "支付流水证明.pdf",               # 7: 支付流水证明
+    "活动函件.pdf",                   # 8: 活动函件
+]
+
+
+@app.get("/api/audit-templates")
+def list_audit_templates():
+    """列出审核页可用的模板文件映射"""
+    result = []
+    for idx, fname in enumerate(_AUDIT_TEMPLATE_MAP):
+        fpath = _AUDIT_TEMPLATE_DIR / fname
+        if fpath.exists():
+            result.append({
+                "index": idx,
+                "name": fname,
+                "url": f"/审核标准/参考案例/案例标准测试材料/{fname}",
+            })
+    return result
+
+
+@app.get("/api/audit-template/{index:int}")
+def get_audit_template(index: int):
+    """根据上传槽位 index 返回模板文件 URL"""
+    if 0 <= index < len(_AUDIT_TEMPLATE_MAP):
+        fname = _AUDIT_TEMPLATE_MAP[index]
+        fpath = _AUDIT_TEMPLATE_DIR / fname
+        if fpath.exists():
+            return {
+                "index": index,
+                "name": fname,
+                "url": f"/审核标准/参考案例/案例标准测试材料/{fname}",
+                "ext": fpath.suffix.lower(),
+            }
+    return {"error": "模板文件未找到"}

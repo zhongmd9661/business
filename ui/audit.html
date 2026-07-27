@@ -600,6 +600,158 @@
       line-height: 1.3;
     }
 
+    /* ---- 模板查看按钮 ---- */
+    .template-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 1px 6px;
+      font-size: clamp(9px, 1.1vmin, 12px);
+      font-weight: 500;
+      color: #6366f1;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 3px;
+      font-family: inherit;
+    }
+
+    .template-btn:hover {
+      background: #e0e7ff;
+      border-color: #a5b4fc;
+      color: #4338ca;
+    }
+
+    .template-btn svg {
+      width: 11px;
+      height: 11px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    /* ---- 模板查看弹窗 ---- */
+    .tmpl-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .tmpl-modal-overlay.visible {
+      display: flex;
+    }
+
+    .tmpl-modal {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 90vw;
+      max-width: 1000px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      animation: modalIn 0.3s ease;
+    }
+
+    .tmpl-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+      background: #f8fafc;
+    }
+
+    .tmpl-modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e3a5f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tmpl-modal-title svg {
+      width: 20px;
+      height: 20px;
+      stroke: #6366f1;
+      stroke-width: 1.8;
+      fill: none;
+    }
+
+    .tmpl-modal-body {
+      flex: 1;
+      overflow: hidden;
+      background: #f1f5f9;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 0;
+      min-height: 0;
+    }
+
+    .tmpl-modal-body iframe {
+      width: 100%;
+      height: calc(90vh - 65px);
+      border: none;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .tmpl-modal-body img.tmpl-img {
+      max-width: 100%;
+      max-height: 85vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    .tmpl-modal-body pre.tmpl-xml {
+      width: 100%;
+      max-height: 85vh;
+      overflow: auto;
+      padding: 20px;
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.6;
+      font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+      background: #1e293b;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .tmpl-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: #94a3b8;
+    }
+
+    .tmpl-loading .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+
     .upload-item input[type="file"] {
       display: none;
     }
@@ -1451,6 +1603,17 @@
             </svg>
           </div>
           <div class="upload-item-name">审批单</div>
+          <button class="template-btn" onclick="event.stopPropagation(); openTemplateModal(this)">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M2 3h12v14a3 3 0 0 0-3-3H2z"/>
+              <circle cx="19" cy="6" r="2"/>
+              <path d="M22 18v3"/>
+              <path d="M16 18v3"/>
+              <path d="M19 15v6"/>
+            </svg>
+            查看模板
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1478,6 +1641,17 @@
             </svg>
           </div>
           <div class="upload-item-name">申请单</div>
+          <button class="template-btn" onclick="event.stopPropagation(); openTemplateModal(this)">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M2 3h12v14a3 3 0 0 0-3-3H2z"/>
+              <circle cx="19" cy="6" r="2"/>
+              <path d="M22 18v3"/>
+              <path d="M16 18v3"/>
+              <path d="M19 15v6"/>
+            </svg>
+            查看模板
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1505,6 +1679,17 @@
             </svg>
           </div>
           <div class="upload-item-name">报账单</div>
+          <button class="template-btn" onclick="event.stopPropagation(); openTemplateModal(this)">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M2 3h12v14a3 3 0 0 0-3-3H2z"/>
+              <circle cx="19" cy="6" r="2"/>
+              <path d="M22 18v3"/>
+              <path d="M16 18v3"/>
+              <path d="M19 15v6"/>
+            </svg>
+            查看模板
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1532,6 +1717,17 @@
             </svg>
           </div>
           <div class="upload-item-name">发票（XML格式）</div>
+          <button class="template-btn" onclick="event.stopPropagation(); openTemplateModal(this)">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M2 3h12v14a3 3 0 0 0-3-3H2z"/>
+              <circle cx="19" cy="6" r="2"/>
+              <path d="M22 18v3"/>
+              <path d="M16 18v3"/>
+              <path d="M19 15v6"/>
+            </svg>
+            查看模板
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1559,6 +1755,17 @@
             </svg>
           </div>
           <div class="upload-item-name">电子发票（PDF格式）</div>
+          <button class="template-btn" onclick="event.stopPropagation(); openTemplateModal(this)">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M2 3h12v14a3 3 0 0 0-3-3H2z"/>
+              <circle cx="19" cy="6" r="2"/>
+              <path d="M22 18v3"/>
+              <path d="M16 18v3"/>
+              <path d="M19 15v6"/>
+            </svg>
+            查看模板
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1585,6 +1792,17 @@
             </svg>
           </div>
           <div class="upload-item-name">招待单位经营状态</div>
+          <button class="template-btn" onclick="event.stopPropagation(); openTemplateModal(this)">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M2 3h12v14a3 3 0 0 0-3-3H2z"/>
+              <circle cx="19" cy="6" r="2"/>
+              <path d="M22 18v3"/>
+              <path d="M16 18v3"/>
+              <path d="M19 15v6"/>
+            </svg>
+            查看模板
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1610,6 +1828,17 @@
             </svg>
           </div>
           <div class="upload-item-name">支付凭证</div>
+          <button class="template-btn" onclick="event.stopPropagation(); openTemplateModal(this)">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M2 3h12v14a3 3 0 0 0-3-3H2z"/>
+              <circle cx="19" cy="6" r="2"/>
+              <path d="M22 18v3"/>
+              <path d="M16 18v3"/>
+              <path d="M19 15v6"/>
+            </svg>
+            查看模板
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1637,6 +1866,17 @@
             </svg>
           </div>
           <div class="upload-item-name">支付流水证明</div>
+          <button class="template-btn" onclick="event.stopPropagation(); openTemplateModal(this)">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M2 3h12v14a3 3 0 0 0-3-3H2z"/>
+              <circle cx="19" cy="6" r="2"/>
+              <path d="M22 18v3"/>
+              <path d="M16 18v3"/>
+              <path d="M19 15v6"/>
+            </svg>
+            查看模板
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1662,6 +1902,17 @@
             </svg>
           </div>
           <div class="upload-item-name">活动函件</div>
+          <button class="template-btn" onclick="event.stopPropagation(); openTemplateModal(this)">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M2 3h12v14a3 3 0 0 0-3-3H2z"/>
+              <circle cx="19" cy="6" r="2"/>
+              <path d="M22 18v3"/>
+              <path d="M16 18v3"/>
+              <path d="M19 15v6"/>
+            </svg>
+            查看模板
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1773,6 +2024,28 @@
               <div class="ocr-progress-text" id="ocrProgressText">正在初始化...</div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模板查看弹窗 -->
+  <div class="tmpl-modal-overlay" id="tmplModalOverlay" onclick="closeTemplateModal(event)">
+    <div class="tmpl-modal" onclick="event.stopPropagation()">
+      <div class="tmpl-modal-header">
+        <div class="tmpl-modal-title">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span id="tmplModalFileName">模板文件</span>
+        </div>
+        <button class="ocr-modal-close" onclick="closeTemplateModal()" title="关闭">×</button>
+      </div>
+      <div class="tmpl-modal-body" id="tmplModalBody">
+        <div class="tmpl-loading">
+          <div class="spinner"></div>
+          <div>正在加载模板...</div>
         </div>
       </div>
     </div>
@@ -2637,6 +2910,120 @@
 
     /* ---- 页面加载时拉取提交记录 ---- */
     document.addEventListener('DOMContentLoaded', loadRecords);
+
+    /* ==================== 模板查看功能 ==================== */
+    // 上传槽位 index → 模板文件名的映射（与后端一致）
+    var templateFileMap = [
+      '业务招待审批单.jpg',
+      '业务招待申请单.pdf',
+      '业务招待费报账单.pdf',
+      '【发票】_XML格式.xml',
+      '【电子发票】_PDF格式.pdf',
+      '招待单位经营状态.PNG',
+      '支付凭证.jpg',
+      '支付流水证明.pdf',
+      '活动函件.pdf',
+    ];
+
+    function openTemplateModal(btn) {
+      var item = btn.closest('.upload-item');
+      var index = parseInt(item.getAttribute('data-index'));
+      if (isNaN(index) || index < 0 || index >= templateFileMap.length) {
+        alert('模板文件未找到');
+        return;
+      }
+
+      var fileName = templateFileMap[index];
+      var ext = fileName.split('.').pop().toLowerCase();
+      var templateUrl = '/审核标准/参考案例/案例标准测试材料/' + encodeURIComponent(fileName);
+
+      // 显示弹窗
+      var overlay = document.getElementById('tmplModalOverlay');
+      overlay.classList.add('visible');
+      document.getElementById('tmplModalFileName').textContent = fileName;
+
+      var body = document.getElementById('tmplModalBody');
+      body.innerHTML = '<div class="tmpl-loading"><div class="spinner"></div><div>正在加载模板...</div></div>';
+
+      if (ext === 'pdf') {
+        // PDF: 直接 iframe 嵌入
+        body.innerHTML = '<iframe src="' + templateUrl + '?t=' + Date.now() + '" frameborder="0"></iframe>';
+      } else if (['jpg', 'jpeg', 'png', 'bmp', 'webp', 'gif'].includes(ext)) {
+        // 图片: 直接显示
+        body.innerHTML = '<img class="tmpl-img" src="' + templateUrl + '?t=' + Date.now() + '" alt="' + escapeHtml(fileName) + '" />';
+      } else if (ext === 'xml') {
+        // XML: 获取文本并格式化显示
+        fetch(templateUrl)
+          .then(function(res) { return res.text(); })
+          .then(function(text) {
+            // 尝试格式化 XML
+            var formatted = formatXml(text);
+            body.innerHTML = '<pre class="tmpl-xml">' + escapeHtml(formatted) + '</pre>';
+          })
+          .catch(function(err) {
+            body.innerHTML = '<div class="tmpl-loading"><div style="color:#dc2626;">⚠️ 加载失败: ' + escapeHtml(err.message) + '</div></div>';
+          });
+      } else {
+        // 其他类型: 尝试 iframe
+        body.innerHTML = '<iframe src="' + templateUrl + '?t=' + Date.now() + '" frameborder="0"></iframe>';
+      }
+    }
+
+    function closeTemplateModal(e) {
+      if (e && e.target !== document.getElementById('tmplModalOverlay')) return;
+      document.getElementById('tmplModalOverlay').classList.remove('visible');
+      document.getElementById('tmplModalBody').innerHTML = '';
+    }
+
+    // 也支持点击弹窗内部关闭按钮
+    document.addEventListener('DOMContentLoaded', function() {
+      var tmplOverlay = document.getElementById('tmplModalOverlay');
+      if (tmplOverlay) {
+        tmplOverlay.addEventListener('click', function(e) {
+          if (e.target === this) {
+            this.classList.remove('visible');
+            document.getElementById('tmplModalBody').innerHTML = '';
+          }
+        });
+      }
+    });
+
+    // XML 简单格式化函数
+    function formatXml(xml) {
+      var formatted = '';
+      var reg = /(>)(<)(\/*)/g;
+      xml = xml.replace(reg, '$1\r\n$2$3');
+      var pad = 0;
+      var lines = xml.split('\r\n');
+      var indentStr = '  '; // 2 spaces
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var indent = 0;
+
+        if (line.match(/.+<\/\w[^>]*>$/)) {
+          // 单行闭合标签，保持当前缩进
+          indent = pad;
+        } else if (line.match(/^<\/\w/)) {
+          // 闭合标签，减少缩进
+          if (pad > 0) pad -= 1;
+          indent = pad;
+        } else if (line.match(/^<\w[^>]*[^\/]>.*$/)) {
+          // 开始标签，增加缩进
+          indent = pad;
+          pad += 1;
+        } else {
+          indent = pad;
+        }
+
+        var padding = '';
+        for (var j = 0; j < indent; j++) {
+          padding += indentStr;
+        }
+        formatted += padding + line + '\n';
+      }
+      return formatted.trim();
+    }
 
   </script>
 </body>
