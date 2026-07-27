@@ -1249,16 +1249,18 @@
     .ocr-modal-body {
       display: flex;
       flex: 1;
+      flex-direction: column;
       overflow: hidden;
       min-height: 0;
     }
 
-    /* 左侧：原图 */
+    /* 上方：原图 */
     .ocr-panel {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-height: 0;
     }
 
     .ocr-panel-header {
@@ -1304,15 +1306,80 @@
 
     /* 中间分隔线 */
     .ocr-divider {
-      width: 1px;
+      height: 1px;
       background: #e2e8f0;
       flex-shrink: 0;
+      width: 100%;
     }
 
-    /* 右侧：OCR 结果 */
+    /* 下方：OCR 结果 */
     .ocr-text-content {
       flex: 1;
       overflow: auto;
+      /* coordinate-based rendering */
+      position: relative;
+    }
+
+    .ocr-text-content .ocr-canvas {
+      position: relative;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background: #ffffff;
+      margin: 0;
+      overflow: visible;
+      min-width: fit-content;
+    }
+
+    .ocr-text-content .ocr-block {
+      position: absolute;
+      white-space: nowrap;
+      color: #1a1a2e;
+      overflow: visible;
+      display: inline-block;
+    }
+
+    .ocr-text-content .ocr-low-conf {
+      background: rgba(251, 191, 36, 0.2);
+      border-radius: 2px;
+      padding: 0 2px;
+    }
+
+    .ocr-text-content .ocr-document {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      padding: 16px 20px;
+      color: #1a1a2e;
+      line-height: 1.8;
+    }
+
+    .ocr-text-content .ocr-document p {
+      margin: 0 0 4px 0;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .ocr-text-content .ocr-engine-badge {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #f0fdf4;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      font-weight: 600;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .ocr-text-content .ocr-engine-badge.mineru {
+      background: #fef3c7;
+      color: #d97706;
+      border-color: #fcd34d;
+    }
+
+    .ocr-text-content .ocr-progress {
+      flex: 1;
       padding: 16px;
       font-size: 14px;
       line-height: 1.8;
@@ -1385,6 +1452,250 @@
       stroke: currentColor;
       stroke-width: 2;
       fill: none;
+    }
+
+    /* ---- 批量 OCR 按钮 ---- */
+    .btn--ocr {
+      background: linear-gradient(135deg, #7c3aed, #6366f1);
+    }
+
+    .btn--ocr:hover {
+      background: linear-gradient(135deg, #6d28d9, #4f46e5);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn--ocr:disabled {
+      background: #94a3b8;
+    }
+
+    /* ---- OCR 设置行（识别方式/设备选择） ---- */
+    .ocr-settings-row {
+      display: flex;
+      align-items: center;
+      gap: clamp(12px, 2vmin, 24px);
+      padding: clamp(8px, 1.5vmin, 16px) clamp(12px, 2vmin, 20px);
+      margin-bottom: clamp(6px, 1.2vmin, 14px);
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: clamp(8px, 1vmin, 12px);
+      flex-wrap: wrap;
+    }
+
+    .ocr-setting-group {
+      display: flex;
+      align-items: center;
+      gap: clamp(4px, 0.8vmin, 10px);
+    }
+
+    .ocr-setting-label {
+      font-size: clamp(12px, 1.5vmin, 14px);
+      font-weight: 600;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .ocr-radio-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: clamp(11px, 1.4vmin, 13px);
+      color: #64748b;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1.5px solid #e2e8f0;
+      background: #ffffff;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .ocr-radio-label:hover {
+      border-color: #a78bfa;
+      color: #7c3aed;
+    }
+
+    .ocr-radio-label input[type="radio"] {
+      display: none;
+    }
+
+    .ocr-radio-label input[type="radio"]:checked + .ocr-radio-custom {
+      border-color: #7c3aed;
+      background: #7c3aed;
+    }
+
+    .ocr-radio-label input[type="radio"]:checked + .ocr-radio-custom::after {
+      transform: scale(1);
+    }
+
+    .ocr-radio-label input[type="radio"]:checked ~ span {
+      color: #7c3aed;
+      font-weight: 600;
+    }
+
+    .ocr-radio-custom {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      display: inline-block;
+      position: relative;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .ocr-radio-custom::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      background: #ffffff;
+      border-radius: 50%;
+      transform: scale(0);
+      transition: transform 0.2s ease;
+      margin-top: -3px;
+      margin-left: -3px;
+    }
+
+    /* ---- OCR 记录查询面板 ---- */
+    .ocr-records-section {
+      margin-bottom: clamp(8px, 1.8vmin, 20px);
+      border: 1px solid #e2e8f0;
+      border-radius: clamp(8px, 1vmin, 12px);
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .ocr-records-header {
+      display: flex;
+      align-items: center;
+      gap: clamp(4px, 0.8vmin, 8px);
+      padding: clamp(6px, 1.2vmin, 14px) clamp(10px, 2vmin, 20px);
+      background: #faf5ff;
+      border-bottom: 1px solid #e9d5ff;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .ocr-records-header:hover {
+      background: #f3e8ff;
+    }
+
+    .ocr-records-header svg {
+      width: clamp(14px, 2vmin, 18px);
+      height: clamp(14px, 2vmin, 18px);
+      stroke: #7c3aed;
+      stroke-width: 1.8;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .ocr-records-header span {
+      font-size: clamp(13px, 1.8vw, 16px);
+      font-weight: 600;
+      color: #1e3a5f;
+    }
+
+    .ocr-records-count {
+      margin-left: auto;
+      font-size: clamp(10px, 1.2vmin, 12px);
+      font-weight: 600;
+      color: #7c3aed;
+      background: #eef2ff;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .ocr-records-body {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .ocr-records-list {
+      padding: 4px 0;
+    }
+
+    .ocr-record-item {
+      display: flex;
+      align-items: center;
+      gap: clamp(6px, 1vmin, 12px);
+      padding: clamp(6px, 1vmin, 10px) clamp(10px, 2vmin, 20px);
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: clamp(10px, 1.3vmin, 13px);
+    }
+
+    .ocr-record-item:hover {
+      background: #eff6ff;
+    }
+
+    .ocr-record-item:last-child {
+      border-bottom: none;
+    }
+
+    .ocr-record-slot {
+      font-weight: 600;
+      color: #7c3aed;
+      background: #f3e8ff;
+      padding: 2px 8px;
+      border-radius: 3px;
+      white-space: nowrap;
+      font-size: clamp(9px, 1.1vmin, 12px);
+    }
+
+    .ocr-record-file {
+      flex: 1;
+      color: #475569;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ocr-record-status {
+      font-size: 12px;
+    }
+
+    .ocr-record-status.success {
+      color: #059669;
+    }
+
+    .ocr-record-status.error {
+      color: #dc2626;
+    }
+
+    .ocr-record-time {
+      color: #94a3b8;
+      font-size: clamp(9px, 1.1vmin, 11px);
+      font-family: "Cascadia Code", "Fira Code", monospace;
+    }
+
+    .ocr-record-date {
+      color: #94a3b8;
+      font-size: clamp(9px, 1.1vmin, 11px);
+      white-space: nowrap;
+    }
+
+    .ocr-refresh-btn {
+      padding: clamp(2px, 0.5vmin, 6px) clamp(8px, 1.5vmin, 14px);
+      font-size: clamp(10px, 1.3vmin, 13px);
+      font-weight: 600;
+      color: #7c3aed;
+      background: #ffffff;
+      border: 1px solid #e9d5ff;
+      border-radius: clamp(4px, 0.8vmin, 8px);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      margin-left: auto;
+    }
+
+    .ocr-refresh-btn:hover {
+      background: #7c3aed;
+      color: #ffffff;
+      border-color: #7c3aed;
     }
 
     /* ---- 响应式 ---- */
@@ -1581,6 +1892,26 @@
         </table>
       </div>
 
+      <!-- OCR 识别记录查询 -->
+      <div class="ocr-records-section">
+        <div class="ocr-records-header" onclick="toggleOCRRecords()">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <span>OCR 识别记录</span>
+          <button class="ocr-refresh-btn" onclick="event.stopPropagation(); loadOCRRecords()">🔄 刷新</button>
+          <span class="ocr-records-count" id="ocrRecordsCount">—</span>
+        </div>
+        <div class="ocr-records-body" id="ocrRecordsBody" style="display:none;">
+          <div class="ocr-records-list" id="ocrRecordsList">
+            <div class="records-list-empty">请先选择提交记录</div>
+          </div>
+        </div>
+      </div>
+
       <!-- 进度条 -->
       <div class="progress-bar">
         <span class="progress-text" id="progressText">已上传 0 / 9</span>
@@ -1613,6 +1944,15 @@
               <path d="M19 15v6"/>
             </svg>
             查看模板
+          </button>
+          <button class="template-btn ocr-single-btn" onclick="event.stopPropagation(); runSingleOCR(this)" style="display:none; color:#7c3aed; background:#faf5ff; border-color:#e9d5ff;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 1h6v6H1z"/>
+              <path d="M1 21h6v-6H1z"/>
+              <path d="M21 1h-6v6h6z"/>
+              <path d="M21 21h-6v-6h6z"/>
+            </svg>
+            OCR 识别
           </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
@@ -1652,6 +1992,15 @@
             </svg>
             查看模板
           </button>
+          <button class="template-btn ocr-single-btn" onclick="event.stopPropagation(); runSingleOCR(this)" style="display:none; color:#7c3aed; background:#faf5ff; border-color:#e9d5ff;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 1h6v6H1z"/>
+              <path d="M1 21h6v-6H1z"/>
+              <path d="M21 1h-6v6h6z"/>
+              <path d="M21 21h-6v-6h6z"/>
+            </svg>
+            OCR 识别
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1689,6 +2038,15 @@
               <path d="M19 15v6"/>
             </svg>
             查看模板
+          </button>
+          <button class="template-btn ocr-single-btn" onclick="event.stopPropagation(); runSingleOCR(this)" style="display:none; color:#7c3aed; background:#faf5ff; border-color:#e9d5ff;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 1h6v6H1z"/>
+              <path d="M1 21h6v-6H1z"/>
+              <path d="M21 1h-6v6h6z"/>
+              <path d="M21 21h-6v-6h6z"/>
+            </svg>
+            OCR 识别
           </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
@@ -1728,6 +2086,15 @@
             </svg>
             查看模板
           </button>
+          <button class="template-btn ocr-single-btn" onclick="event.stopPropagation(); runSingleOCR(this)" style="display:none; color:#7c3aed; background:#faf5ff; border-color:#e9d5ff;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 1h6v6H1z"/>
+              <path d="M1 21h6v-6H1z"/>
+              <path d="M21 1h-6v6h6z"/>
+              <path d="M21 21h-6v-6h6z"/>
+            </svg>
+            OCR 识别
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1766,6 +2133,15 @@
             </svg>
             查看模板
           </button>
+          <button class="template-btn ocr-single-btn" onclick="event.stopPropagation(); runSingleOCR(this)" style="display:none; color:#7c3aed; background:#faf5ff; border-color:#e9d5ff;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 1h6v6H1z"/>
+              <path d="M1 21h6v-6H1z"/>
+              <path d="M21 1h-6v6h6z"/>
+              <path d="M21 21h-6v-6h6z"/>
+            </svg>
+            OCR 识别
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1803,6 +2179,15 @@
             </svg>
             查看模板
           </button>
+          <button class="template-btn ocr-single-btn" onclick="event.stopPropagation(); runSingleOCR(this)" style="display:none; color:#7c3aed; background:#faf5ff; border-color:#e9d5ff;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 1h6v6H1z"/>
+              <path d="M1 21h6v-6H1z"/>
+              <path d="M21 1h-6v6h6z"/>
+              <path d="M21 21h-6v-6h6z"/>
+            </svg>
+            OCR 识别
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1838,6 +2223,15 @@
               <path d="M19 15v6"/>
             </svg>
             查看模板
+          </button>
+          <button class="template-btn ocr-single-btn" onclick="event.stopPropagation(); runSingleOCR(this)" style="display:none; color:#7c3aed; background:#faf5ff; border-color:#e9d5ff;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 1h6v6H1z"/>
+              <path d="M1 21h6v-6H1z"/>
+              <path d="M21 1h-6v6h6z"/>
+              <path d="M21 21h-6v-6h6z"/>
+            </svg>
+            OCR 识别
           </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
@@ -1877,6 +2271,15 @@
             </svg>
             查看模板
           </button>
+          <button class="template-btn ocr-single-btn" onclick="event.stopPropagation(); runSingleOCR(this)" style="display:none; color:#7c3aed; background:#faf5ff; border-color:#e9d5ff;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 1h6v6H1z"/>
+              <path d="M1 21h6v-6H1z"/>
+              <path d="M21 1h-6v6h6z"/>
+              <path d="M21 21h-6v-6h6z"/>
+            </svg>
+            OCR 识别
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1913,6 +2316,15 @@
             </svg>
             查看模板
           </button>
+          <button class="template-btn ocr-single-btn" onclick="event.stopPropagation(); runSingleOCR(this)" style="display:none; color:#7c3aed; background:#faf5ff; border-color:#e9d5ff;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 1h6v6H1z"/>
+              <path d="M1 21h6v-6H1z"/>
+              <path d="M21 1h-6v6h6z"/>
+              <path d="M21 21h-6v-6h6z"/>
+            </svg>
+            OCR 识别
+          </button>
           <div class="file-name"></div>
           <span class="file-type-badge"></span>
           <img class="image-preview-thumb" alt="preview" />
@@ -1930,6 +2342,40 @@
       </div>
 
       <!-- 操作按钮 -->
+      <!-- OCR 设置行 -->
+      <div class="ocr-settings-row">
+        <div class="ocr-setting-group">
+          <span class="ocr-setting-label">识别方式：</span>
+          <label class="ocr-radio-label">
+            <input type="radio" name="ocr-method" value="ocr" checked onchange="toggleOcrDeviceSelector()">
+            <span class="ocr-radio-custom"></span>
+            OCR（快）
+          </label>
+          <label class="ocr-radio-label">
+            <input type="radio" name="ocr-method" value="mineru" onchange="toggleOcrDeviceSelector()">
+            <span class="ocr-radio-custom"></span>
+            MinerU（通用）
+          </label>
+        </div>
+        <div class="ocr-setting-group" id="ocrDeviceSelector">
+          <span class="ocr-setting-label">设备：</span>
+          <label class="ocr-radio-label">
+            <input type="radio" name="ocr-device" value="auto">
+            <span class="ocr-radio-custom"></span>
+            自动
+          </label>
+          <label class="ocr-radio-label">
+            <input type="radio" name="ocr-device" value="cpu">
+            <span class="ocr-radio-custom"></span>
+            CPU
+          </label>
+          <label class="ocr-radio-label">
+            <input type="radio" name="ocr-device" value="gpu" checked>
+            <span class="ocr-radio-custom"></span>
+            GPU
+          </label>
+        </div>
+      </div>
       <div class="btn-row">
         <button class="btn btn--secondary" onclick="resetAll()">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -1937,6 +2383,15 @@
             <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
           </svg>
           重置
+        </button>
+        <button class="btn btn--ocr" id="batchOcrBtn" onclick="runBatchOCR()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 1h6v6H1z"/>
+            <path d="M1 21h6v-6H1z"/>
+            <path d="M21 1h-6v6h6z"/>
+            <path d="M21 21h-6v-6h6z"/>
+          </svg>
+          批量 OCR
         </button>
         <button class="btn" id="submitBtn" onclick="startAudit()" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -2303,11 +2758,15 @@
         item.querySelector('.image-preview-thumb').src = '';
         item.querySelector('.image-preview-thumb').style.display = '';
         item.querySelector('.file-type-badge').textContent = '';
+        var ocrSingleBtn = item.querySelector('.ocr-single-btn');
+        if (ocrSingleBtn) ocrSingleBtn.style.display = 'none';
         delete item.dataset.imageSrc;
         delete item.dataset.fileType;
         delete item.dataset.pdfBuffer;
         delete item._pdfBuffer;
         delete item._fileBuffer;
+        delete item.dataset.ocrResult;
+        delete item.dataset.ocrRecordId;
       });
       uploadedCount = 0;
       updateProgress();
@@ -2318,6 +2777,8 @@
       document.getElementById('progressFill').style.width = pct + '%';
       document.getElementById('progressText').textContent = `已上传 ${uploadedCount} / ${totalFiles}`;
       document.getElementById('submitBtn').disabled = uploadedCount < totalFiles;
+      // 批量 OCR 按钮：至少有一个文件即可
+      document.getElementById('batchOcrBtn').disabled = uploadedCount < 1;
     }
 
     function getFileType(file) {
@@ -2420,11 +2881,15 @@
       item.querySelector('.image-preview-thumb').src = '';
       item.querySelector('.image-preview-thumb').style.display = '';
       item.querySelector('.file-type-badge').textContent = '';
+      var ocrSingleBtn = item.querySelector('.ocr-single-btn');
+      if (ocrSingleBtn) ocrSingleBtn.style.display = 'none';
       delete item.dataset.imageSrc;
       delete item.dataset.fileType;
       delete item.dataset.pdfBuffer;
       delete item._pdfBuffer;
       delete item._fileBuffer;
+      delete item.dataset.ocrResult;
+      delete item.dataset.ocrRecordId;
       uploadedCount--;
       updateProgress();
     }
@@ -2437,11 +2902,15 @@
         item.querySelector('.image-preview-thumb').src = '';
         item.querySelector('.image-preview-thumb').style.display = '';
         item.querySelector('.file-type-badge').textContent = '';
+        var ocrSingleBtn = item.querySelector('.ocr-single-btn');
+        if (ocrSingleBtn) ocrSingleBtn.style.display = 'none';
         delete item.dataset.imageSrc;
         delete item.dataset.fileType;
         delete item.dataset.pdfBuffer;
         delete item._pdfBuffer;
         delete item._fileBuffer;
+        delete item.dataset.ocrResult;
+        delete item.dataset.ocrRecordId;
       });
       uploadedCount = 0;
       updateProgress();
@@ -2451,6 +2920,10 @@
       document.getElementById('recordSelect').value = '';
       document.getElementById('recordDetails').classList.remove('visible');
       disableUploadSlots();
+      // 清空 OCR 记录面板
+      document.getElementById('ocrRecordsList').innerHTML = '<div class="records-list-empty">请先选择提交记录</div>';
+      document.getElementById('ocrRecordsCount').textContent = '—';
+      document.getElementById('ocrRecordsBody').style.display = 'none';
       // 重新计算缩放
       requestAnimationFrame(function () {
         var wrapper = document.getElementById('scaleWrapper');
@@ -2515,8 +2988,15 @@
 
     function runOCR(btn) {
       var item = btn.closest('.upload-item');
-      var fileName = item.querySelector('.file-name').textContent || '文件';
-      var fileType = item.dataset.fileType || 'other';
+      var input = item.querySelector('input[type="file"]');
+      var file = input.files[0];
+      if (!file) {
+        alert('请先上传文件');
+        return;
+      }
+
+      var slotIndex = parseInt(item.getAttribute('data-index'));
+      var slotName = slotNameMap[slotIndex] || ('slot-' + slotIndex);
 
       if (ocrState.isProcessing) {
         alert('上一个文件正在处理中，请稍候...');
@@ -2526,34 +3006,53 @@
       // 显示弹窗
       var overlay = document.getElementById('ocrModalOverlay');
       overlay.classList.add('visible');
-      document.getElementById('ocrModalFileName').textContent = fileName;
+      document.getElementById('ocrModalFileName').textContent = file.name + ' — ' + (slotName || '');
 
       // 重置状态
-      ocrState = { fileType: fileType, fileName: fileName, textResult: '',
+      ocrState = { fileType: '', fileName: file.name, textResult: '',
         pdfDoc: null, pdfPage: 1, pdfTotal: 0, pdfPageTexts: {}, isProcessing: true };
 
-      // 隐藏 PDF 页码导航
+      // 隐藏 PDF 页码导航和页签
       document.getElementById('ocrPageNav').classList.remove('visible');
       document.getElementById('ocrResultTabs').classList.remove('visible');
 
-      // 根据文件类型分发处理
-      if (fileType === 'image') {
-        processImageOCR(item, btn);
-      } else if (fileType === 'pdf') {
-        processPDFOCR(item, btn);
-      } else if (fileType === 'doc') {
-        processWordOCR(item, btn);
-      } else if (fileType === 'xml') {
-        processXMLFile(item, btn);
-      } else {
-        showResultError('不支持的文件类型');
-        btn.disabled = false;
-        restoreOCRBtn(btn);
-        ocrState.isProcessing = false;
-      }
+      // 显示进度
+      showProgress('正在识别中...');
+
+      var formData = new FormData();
+      formData.append('file', file);
+      formData.append('serial_number', selectedRecord ? selectedRecord.serial_number : '');
+      formData.append('slot_name', slotName);
+      formData.append('username', currentUser ? currentUser.username : '');
+      formData.append('method', getSelectedOcrMethod());
+      formData.append('device', getSelectedOcrDevice());
+
+      btn.disabled = true;
+      btn.textContent = '⏳ 识别中...';
+
+      fetch('/api/ocr/recognize', { method: 'POST', body: formData })
+        .then(function(resp) { return resp.json(); })
+        .then(function(result) {
+          if (result.status === 'success') {
+            item.dataset.ocrResult = result.markdown;
+            item.dataset.ocrRecordId = result.record_id || '';
+            showOCRMdModal(file.name, file, result, slotName);
+          } else {
+            showResultError('OCR 识别失败: ' + (result.error || '未知错误'));
+          }
+          btn.disabled = false;
+          restoreOCRBtn(btn);
+          ocrState.isProcessing = false;
+        })
+        .catch(function(err) {
+          showResultError('OCR 请求失败: ' + err.message);
+          btn.disabled = false;
+          restoreOCRBtn(btn);
+          ocrState.isProcessing = false;
+        });
     }
 
-    // ========== 图片 OCR ==========
+    // ========== 图片 OCR (保留，已被 runOCR 替代) ==========
     function processImageOCR(item, btn) {
       var imageSrc = item.dataset.imageSrc;
       if (!imageSrc) {
@@ -2566,7 +3065,7 @@
 
       document.getElementById('ocrOriginalImage').src = imageSrc;
       document.getElementById('ocrPanelContent').querySelector('canvas')
-        ? null : null; // 确保没有遗留 canvas
+        ? null : null;
       document.getElementById('ocrResultTitle').textContent = 'OCR 识别结果';
       showProgress('正在初始化 OCR 引擎...');
 
@@ -2868,6 +3367,15 @@
       if (wp) wp.remove();
       var xp = container.querySelector('.xml-placeholder');
       if (xp) xp.remove();
+      var fp = container.querySelector('.ocr-file-placeholder');
+      if (fp) fp.remove();
+      var bp = container.querySelector('.batch-ocr-placeholder');
+      if (bp) bp.remove();
+      // 恢复原图显示
+      var origImg = container.querySelector('#ocrOriginalImage');
+      if (origImg) origImg.style.display = '';
+      // 隐藏页签
+      document.getElementById('ocrResultTabs').classList.remove('visible');
     }
 
     document.getElementById('ocrModalOverlay').addEventListener('click', function (e) {
@@ -2987,6 +3495,478 @@
         });
       }
     });
+
+    /* ==================== OCR 功能 ==================== */
+    var slotNameMap = [
+      '审批单', '申请单', '报账单', '发票(XML)', '电子发票(PDF)',
+      '招待单位经营状态', '支付凭证', '支付流水证明', '活动函件'
+    ];
+
+    /* ---- OCR 方法/设备选择器 ---- */
+    function getSelectedOcrMethod() {
+      var el = document.querySelector('input[name="ocr-method"]:checked');
+      return el ? el.value : 'ocr';
+    }
+
+    function getSelectedOcrDevice() {
+      var el = document.querySelector('input[name="ocr-device"]:checked');
+      return el ? el.value : 'gpu';
+    }
+
+    function toggleOcrDeviceSelector() {
+      var method = getSelectedOcrMethod();
+      var deviceSelector = document.getElementById('ocrDeviceSelector');
+      if (deviceSelector) {
+        deviceSelector.style.display = (method === 'ocr') ? 'flex' : 'none';
+      }
+    }
+
+    function authHeaders() {
+      var h = {};
+      var token = localStorage.getItem('auth_token');
+      if (token) h['Authorization'] = 'Bearer ' + token;
+      return h;
+    }
+
+    /* ---- 单文件 OCR 识别 ---- */
+    async function runSingleOCR(btn) {
+      var item = btn.closest('.upload-item');
+      var input = item.querySelector('input[type="file"]');
+      var file = input.files[0];
+      if (!file) return;
+
+      var slotIndex = parseInt(item.getAttribute('data-index'));
+      var slotName = slotNameMap[slotIndex] || ('slot-' + slotIndex);
+
+      var formData = new FormData();
+      formData.append('file', file);
+      formData.append('serial_number', selectedRecord ? selectedRecord.serial_number : '');
+      formData.append('slot_name', slotName);
+      formData.append('username', currentUser ? currentUser.username : '');
+      formData.append('method', getSelectedOcrMethod());
+      formData.append('device', getSelectedOcrDevice());
+
+      btn.disabled = true;
+      btn.innerHTML = '⏳ 识别中...';
+
+      try {
+        var resp = await fetch('/api/ocr/recognize', { method: 'POST', body: formData });
+        var result = await resp.json();
+
+        if (result.status === 'success') {
+          item.dataset.ocrResult = result.markdown;
+          item.dataset.ocrRecordId = result.record_id || '';
+          showOCRMdModal(file.name, file, result, slotName);
+        } else {
+          alert('OCR 识别失败: ' + (result.error || '未知错误'));
+        }
+      } catch (err) {
+        alert('OCR 请求失败: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1h6v6H1z"/><path d="M1 21h6v-6H1z"/><path d="M21 1h-6v6h6z"/><path d="M21 21h-6v-6h6z"/></svg> OCR 识别';
+      }
+    }
+
+    /* ---- 批量 OCR ---- */
+    async function runBatchOCR() {
+      if (!selectedRecord) { alert('请先选择提交记录'); return; }
+
+      var items = document.querySelectorAll('.upload-item.uploaded');
+      if (items.length === 0) { alert('请先上传文件'); return; }
+
+      var formData = new FormData();
+      var slotNameList = [];
+
+      items.forEach(function(item) {
+        var input = item.querySelector('input[type="file"]');
+        if (input.files[0]) {
+          formData.append('files', input.files[0]);
+          var idx = parseInt(item.getAttribute('data-index'));
+          slotNameList.push(slotNameMap[idx] || 'slot-' + idx);
+        }
+      });
+
+      formData.append('serial_number', selectedRecord.serial_number);
+      formData.append('slot_names', slotNameList.join(','));
+      formData.append('username', currentUser ? currentUser.username : '');
+      formData.append('method', getSelectedOcrMethod());
+      formData.append('device', getSelectedOcrDevice());
+
+      var btn = document.getElementById('batchOcrBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1h6v6H1z"/><path d="M1 21h6v-6H1z"/><path d="M21 1h-6v6h6z"/><path d="M21 21h-6v-6h6z"/></svg> 识别中...';
+
+      try {
+        var resp = await fetch('/api/ocr/batch-recognize', { method: 'POST', body: formData });
+        var result = await resp.json();
+
+        // 更新各 slot 的 OCR 结果
+        if (result.records) {
+          result.records.forEach(function(rec, i) {
+            if (items[i]) {
+              items[i].dataset.ocrResult = rec.markdown || '';
+              items[i].dataset.ocrRecordId = rec.record_id || '';
+            }
+          });
+        }
+
+        // 显示批量结果
+        showBatchOCRModal(result);
+
+        // 重新加载 OCR 记录
+        loadOCRRecords();
+      } catch (err) {
+        alert('批量 OCR 失败: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1h6v6H1z"/><path d="M1 21h6v-6H1z"/><path d="M21 1h-6v6h6z"/><path d="M21 21h-6v-6h6z"/></svg> 批量 OCR';
+      }
+    }
+
+    /* ---- OCR Markdown 弹窗 ---- */
+    function showOCRMdModal(filename, fileObj, result, slotName) {
+      var overlay = document.getElementById('ocrModalOverlay');
+      overlay.classList.add('visible');
+      document.getElementById('ocrModalFileName').textContent = filename + ' — ' + (slotName || '');
+      document.getElementById('ocrResultTitle').textContent = 'OCR 识别结果';
+
+      var markdown = result.markdown || '';
+      var blocks = result.ocr_blocks || [];
+      var imgW = result.img_width || 0;
+      var imgH = result.img_height || 0;
+      var engine = result.engine || '';
+
+      // 左侧：显示原始图片（如果有）
+      var container = document.getElementById('ocrPanelContent');
+      var oldCanvas = container.querySelector('canvas');
+      if (oldCanvas) oldCanvas.remove();
+      var oldPlaceholder = container.querySelector('.ocr-file-placeholder, .batch-ocr-placeholder');
+      if (oldPlaceholder) oldPlaceholder.remove();
+
+      var origImg = document.getElementById('ocrOriginalImage');
+      if (fileObj && (fileObj.type && fileObj.type.startsWith('image'))) {
+        origImg.src = URL.createObjectURL(fileObj);
+        origImg.style.display = 'block';
+      } else if (fileObj) {
+        // PDF/DOC 等非图片文件，显示占位
+        origImg.style.display = 'none';
+        var placeholder = container.querySelector('.ocr-file-placeholder');
+        if (!placeholder) {
+          placeholder = document.createElement('div');
+          placeholder.className = 'ocr-file-placeholder';
+          placeholder.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:#94a3b8;';
+          container.appendChild(placeholder);
+        }
+        placeholder.innerHTML =
+          '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
+          '<p style="margin-top:12px;font-size:14px;font-weight:600;color:#475569;">' + escapeHtml(filename) + '</p>' +
+          (slotName ? '<p style="font-size:12px;margin-top:4px;color:#7c3aed;">' + escapeHtml(slotName) + '</p>' : '');
+      }
+
+      // 右侧：渲染 OCR 结果
+      var textContent = document.getElementById('ocrTextContent');
+      textContent.className = 'ocr-text-content' + (markdown.trim() ? '' : ' empty');
+      textContent.innerHTML = '';
+
+      // 引擎标识
+      if (engine) {
+        var badge = document.createElement('div');
+        badge.className = 'ocr-engine-badge' + (engine.indexOf('mineru') >= 0 ? ' mineru' : '');
+        badge.textContent = engine.toUpperCase();
+        textContent.appendChild(badge);
+      }
+
+      // ── 优先使用坐标定位渲染 (ocr_blocks) ──
+      if (blocks.length > 0 && imgW > 0) {
+        // 使用原始图片尺寸渲染，通过容器 overflow 滚动，避免文字重叠
+        var renderHtml = renderOcrAsCoordinateLayout(blocks, imgW, imgH, imgW);
+        var wrapper = document.createElement('div');
+        wrapper.style.cssText = 'overflow:auto; max-height:500px; width:100%;';
+        wrapper.innerHTML = renderHtml;
+        textContent.appendChild(wrapper);
+
+      // ── 降级：纯文本渲染 ──
+      } else if (markdown.trim()) {
+        var lines = result.ocr_lines || markdown.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+        var docDiv = document.createElement('div');
+        docDiv.className = 'ocr-document';
+        for (var i = 0; i < lines.length; i++) {
+          var p = document.createElement('p');
+          p.textContent = lines[i];
+          docDiv.appendChild(p);
+        }
+        textContent.appendChild(docDiv);
+      } else {
+        textContent.textContent = '未提取到文字内容。';
+      }
+
+      // 隐藏 PDF 导航和页签
+      document.getElementById('ocrPageNav').classList.remove('visible');
+      document.getElementById('ocrResultTabs').classList.remove('visible');
+
+      // 保存文本用于复制
+      ocrState.textResult = markdown;
+    }
+
+    /* ---- 坐标定位渲染 (与 card7-fill.html 一致的渲染效果) ---- */
+    function renderOcrAsCoordinateLayout(blocks, imgW, imgH, containerW) {
+      if (!blocks.length || !imgW) return '';
+      var containerH = Math.round(containerW * imgH / imgW);
+      var scale = containerW / imgW;
+      var html = '<div class="ocr-canvas" style="width:' + containerW + 'px;height:' + containerH + 'px;">';
+
+      // 按 Y 排序分组行
+      var sorted = blocks.slice().sort(function(a, b) {
+        if (Math.abs(a.y - b.y) > 3) return a.y - b.y;
+        return a.x - b.x;
+      });
+      var rowThreshold = 8;
+      var rows = [], currentRow = [sorted[0]];
+      for (var i = 1; i < sorted.length; i++) {
+        if (Math.abs(sorted[i].y - currentRow[0].y) <= rowThreshold) {
+          currentRow.push(sorted[i]);
+        } else {
+          rows.push(currentRow);
+          currentRow = [sorted[i]];
+        }
+      }
+      rows.push(currentRow);
+
+      for (var r = 0; r < rows.length; r++) {
+        rows[r].sort(function(a, b) { return a.x - b.x; });
+        for (var i = 0; i < rows[r].length; i++) {
+          var blk = rows[r][i];
+          var left = Math.round(blk.x * scale);
+          var top = Math.round(blk.y * scale);
+          var text = escapeHtml(blk.text);
+          var rawH = Math.max(Math.round(blk.h * scale), 2);
+          var fs = Math.max(Math.round(rawH * 0.85), 12);
+          var h = Math.max(rawH, fs + 4);
+          var pt = Math.max((h - fs) / 2, 1);
+          var rawRight = blk.x + blk.w;
+          if (i + 1 < rows[r].length) {
+            rawRight = Math.max(rawRight, (blk.x + rows[r][i + 1].x) / 2);
+          }
+          var right = Math.round(rawRight * scale);
+          var w = Math.max(right - left, 2);
+          var cls = 'ocr-block';
+          if (blk.score !== undefined && blk.score < 0.5) cls += ' ocr-low-conf';
+          html += '<span class="' + cls + '" style="left:' + left + 'px;top:' + top + 'px;width:' + w + 'px;height:' + h + 'px;font-size:' + fs + 'px;line-height:' + h + 'px;">' + text + '</span>';
+        }
+      }
+      html += '</div>';
+      return html;
+    }
+
+    /* ---- 批量 OCR 结果弹窗 ---- */
+    function showBatchOCRModal(result) {
+      var records = result.records;
+      if (!records || records.length === 0) {
+        alert('未识别到任何文件');
+        return;
+      }
+
+      // 使用现有 OCR 弹窗，显示标签页
+      var overlay = document.getElementById('ocrModalOverlay');
+      overlay.classList.add('visible');
+      document.getElementById('ocrModalFileName').textContent = '批量 OCR 结果 (' + records.length + ' 个文件)';
+      document.getElementById('ocrResultTitle').textContent = '识别结果';
+
+      // 左侧占位
+      var container = document.getElementById('ocrPanelContent');
+      var oldCanvas = container.querySelector('canvas');
+      if (oldCanvas) oldCanvas.remove();
+      var oldImg = container.querySelector('#ocrOriginalImage');
+      if (oldImg) oldImg.style.display = 'none';
+
+      var placeholder = container.querySelector('.batch-ocr-placeholder');
+      if (!placeholder) {
+        placeholder = document.createElement('div');
+        placeholder.className = 'batch-ocr-placeholder';
+        placeholder.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:#94a3b8;';
+        placeholder.innerHTML =
+          '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+          '<p style="margin-top:12px;font-size:14px;">批量 OCR 完成</p>' +
+          '<p style="font-size:12px;margin-top:4px;">共 ' + records.length + ' 个文件</p>';
+        container.appendChild(placeholder);
+      }
+
+      // 右侧显示页签
+      var tabsContainer = document.getElementById('ocrResultTabs');
+      tabsContainer.innerHTML = '';
+      tabsContainer.classList.add('visible');
+
+      records.forEach(function(rec, i) {
+        var tab = document.createElement('button');
+        tab.className = 'ocr-result-tab' + (i === 0 ? ' active' : '');
+        var name = rec.slot_name || rec.filename || ('文件' + (i + 1));
+        tab.textContent = (rec.status === 'success' ? '✅ ' : '❌ ') + name;
+        tab.onclick = function() {
+          tabsContainer.querySelectorAll('.ocr-result-tab').forEach(function(t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+          var textContent = document.getElementById('ocrTextContent');
+          textContent.className = 'ocr-text-content' + ((rec.markdown || '').trim() ? '' : ' empty');
+          textContent.innerHTML = '';
+
+          var engine = rec.engine || '';
+          if (engine) {
+            var badge = document.createElement('div');
+            badge.className = 'ocr-engine-badge' + (engine.indexOf('mineru') >= 0 ? ' mineru' : '');
+            badge.textContent = engine.toUpperCase();
+            textContent.appendChild(badge);
+          }
+
+          // 优先坐标定位渲染（使用原始图片尺寸，通过容器滚动）
+          var blocks = rec.ocr_blocks || [];
+          var imgW = rec.img_width || 0;
+          var imgH = rec.img_height || 1;
+          if (blocks.length > 0 && imgW > 0) {
+            var renderHtml = renderOcrAsCoordinateLayout(blocks, imgW, imgH, imgW);
+            var wrapper = document.createElement('div');
+            wrapper.style.cssText = 'overflow:auto; max-height:500px; width:100%;';
+            wrapper.innerHTML = renderHtml;
+            textContent.appendChild(wrapper);
+          } else if ((rec.markdown || '').trim()) {
+            var lines = rec.ocr_lines || rec.markdown.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+            var docDiv = document.createElement('div');
+            docDiv.className = 'ocr-document';
+            for (var j = 0; j < lines.length; j++) {
+              var p = document.createElement('p');
+              p.textContent = lines[j];
+              docDiv.appendChild(p);
+            }
+            textContent.appendChild(docDiv);
+          } else {
+            textContent.textContent = rec.error || '未提取到文字内容。';
+          }
+          ocrState.textResult = rec.markdown || '';
+        };
+        tabsContainer.appendChild(tab);
+      });
+
+      // 默认显示第一个
+      var first = records[0];
+      var textContent = document.getElementById('ocrTextContent');
+      textContent.className = 'ocr-text-content' + ((first.markdown || '').trim() ? '' : ' empty');
+      textContent.innerHTML = '';
+      if ((first.markdown || '').trim()) {
+        var pre = document.createElement('div');
+        pre.style.whiteSpace = 'pre-wrap';
+        pre.textContent = first.markdown;
+        textContent.appendChild(pre);
+      } else {
+        textContent.textContent = first.error || '未提取到文字内容。';
+      }
+      ocrState.textResult = first.markdown || '';
+
+      // 隐藏 PDF 导航
+      document.getElementById('ocrPageNav').classList.remove('visible');
+    }
+
+    /* ---- OCR 记录查询 ---- */
+    async function loadOCRRecords() {
+      if (!selectedRecord) {
+        document.getElementById('ocrRecordsList').innerHTML =
+          '<div class="records-list-empty">请先选择提交记录</div>';
+        document.getElementById('ocrRecordsCount').textContent = '—';
+        return;
+      }
+
+      var url = '/api/ocr/records?serial_number=' + encodeURIComponent(selectedRecord.serial_number)
+        + '&username=' + encodeURIComponent(currentUser ? currentUser.username : '');
+
+      document.getElementById('ocrRecordsList').innerHTML =
+        '<div class="records-list-loading"><div class="mini-spinner"></div><div>加载中...</div></div>';
+
+      try {
+        var resp = await fetch(url, { headers: authHeaders() });
+        var records = await resp.json();
+
+        document.getElementById('ocrRecordsCount').textContent = records.length + ' 条';
+
+        if (records.length === 0) {
+          document.getElementById('ocrRecordsList').innerHTML =
+            '<div class="records-list-empty">暂无 OCR 记录，请先上传文件并点击 OCR 识别</div>';
+          return;
+        }
+
+        document.getElementById('ocrRecordsList').innerHTML = records.map(function(r) {
+          var statusCls = r.status === 'success' ? 'success' : 'error';
+          var statusIcon = r.status === 'success' ? '✅' : '❌';
+          var dateStr = r.created_at ? r.created_at.substring(0, 16).replace('T', ' ') : '';
+          return '<div class="ocr-record-item" onclick="viewOCRRecord(' + r.id + ')">' +
+            '<span class="ocr-record-slot">' + escapeHtml(r.slot_name || '—') + '</span>' +
+            '<span class="ocr-record-file" title="' + escapeHtml(r.original_filename || '') + '">' + escapeHtml(r.original_filename || '—') + '</span>' +
+            '<span class="ocr-record-status ' + statusCls + '">' + statusIcon + '</span>' +
+            '<span class="ocr-record-time">' + (r.elapsed || 0) + 's</span>' +
+            '<span class="ocr-record-date">' + dateStr + '</span>' +
+            '</div>';
+        }).join('');
+
+        // 自动展开
+        document.getElementById('ocrRecordsBody').style.display = 'block';
+      } catch (err) {
+        document.getElementById('ocrRecordsList').innerHTML =
+          '<div class="records-list-empty">⚠️ 加载失败：' + escapeHtml(err.message) + '</div>';
+        document.getElementById('ocrRecordsCount').textContent = '—';
+      }
+    }
+
+    async function viewOCRRecord(recordId) {
+      try {
+        var resp = await fetch('/api/ocr/records/' + recordId, { headers: authHeaders() });
+        var record = await resp.json();
+        // 历史记录没有 ocr_blocks，以兼容格式传给 showOCRMdModal
+        showOCRMdModal(record.original_filename, null, {
+          markdown: record.markdown || '',
+          ocr_blocks: record.ocr_blocks || [],
+          ocr_lines: record.ocr_lines || [],
+          img_width: record.img_width || 0,
+          img_height: record.img_height || 0,
+          engine: record.engine || '',
+        }, record.slot_name);
+      } catch (err) {
+        alert('加载记录失败: ' + err.message);
+      }
+    }
+
+    function toggleOCRRecords() {
+      var body = document.getElementById('ocrRecordsBody');
+      body.style.display = body.style.display === 'none' ? 'block' : 'none';
+    }
+
+    /* ---- 在 onRecordSelected 中自动加载 OCR 记录 ---- */
+    // 覆盖原有的 onRecordSelected 函数，增加 OCR 记录加载
+    (function patchOnRecordSelected() {
+      var orig = window.onRecordSelected;
+      window.onRecordSelected = function() {
+        orig.apply(this, arguments);
+        loadOCRRecords();
+      };
+    })();
+
+    /* ---- 在 triggerUpload 中显示/隐藏 OCR 按钮 ---- */
+    (function patchTriggerUpload() {
+      var orig = window.triggerUpload;
+      if (!orig) return;
+      window.triggerUpload = function(item) {
+        orig.apply(this, arguments);
+        // 修改 input.onchange 逻辑在上传完成后显示 OCR 按钮
+        var input = item.querySelector('input[type="file"]');
+        var origOnchange = input.onchange;
+        input.onchange = function() {
+          if (origOnchange) origOnchange.apply(this, arguments);
+          // 延迟执行，等待上传处理完成
+          setTimeout(function() {
+            var ocrBtn = item.querySelector('.ocr-single-btn');
+            if (item.classList.contains('uploaded') && ocrBtn) {
+              ocrBtn.style.display = 'inline-flex';
+            }
+          }, 100);
+        };
+      };
+    })();
 
     // XML 简单格式化函数
     function formatXml(xml) {

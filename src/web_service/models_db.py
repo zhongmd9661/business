@@ -322,6 +322,24 @@ def _seed_default_templates(db: Session):
         ))
 
 
+class OCRRecord(Base):
+    """OCR 识别记录 — 关联用户名 + 流水号"""
+
+    __tablename__ = "ocr_records"
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String, nullable=False, index=True)       # 操作用户
+    serial_number = Column(String, index=True)                  # 关联流水号
+    slot_name = Column(String)                                  # 槽位名：审批单/申请单/报账单...
+    original_filename = Column(String)                          # 原始文件名
+    file_type = Column(String)                                  # image/pdf/doc/xml
+    markdown = Column(Text)                                     # OCR 识别的 Markdown 结果
+    status = Column(String, default="success")                  # success / error
+    error_message = Column(Text)                                # 错误信息
+    elapsed = Column(Float)                                     # 耗时(秒)
+    created_at = Column(String, default=lambda: datetime.now().isoformat())
+
+
 def get_db():
     db = SessionLocal()
     try:

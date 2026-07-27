@@ -170,7 +170,8 @@ def _analyze_with_vision(image_b64: str, image_format: str = "png") -> dict:
         }
 
 
-# ==================== OCR 识别引擎（RapidOCR / PaddleOCR） ====================
+# ==================== OCR 识别引擎（RapidOCR / PaddleOCR）====================
+# 共享 OCR 引擎实例从 router_ocr.py 导入（避免重复初始化）
 
 # 异常状态关键词
 ABNORMAL_STATUSES = {
@@ -180,33 +181,11 @@ ABNORMAL_STATUSES = {
 }
 NORMAL_STATUSES = {"存续", "在业", "开业"}
 
-# OCR 全局缓存（避免每次请求重新初始化）
-_ocr_instance = None
-_ocr_device = None  # 记录当前使用的 device
 
-
-def _get_ocr(device: str = "auto") -> "RapidOCR":
-    """获取 OCR 单例（延迟加载），支持 device 切换"""
-    global _ocr_instance, _ocr_device
-    if _ocr_instance is None or _ocr_device != device:
-        from rapidocr_onnxruntime import RapidOCR
-
-        # 映射 device 参数
-        if device == "gpu":
-            use_gpu = True
-        elif device == "cpu":
-            use_gpu = False
-        else:  # auto
-            # 自动检测：尝试看是否有 CUDA 可用的 ONNX 提供器
-            try:
-                import onnxruntime as ort
-                use_gpu = "CUDAExecutionProvider" in ort.get_available_providers()
-            except Exception:
-                use_gpu = False
-
-        _ocr_instance = RapidOCR(use_gpu=use_gpu, cls=True)
-        _ocr_device = "gpu" if use_gpu else "cpu"
-    return _ocr_instance
+def _get_ocr(device: str = "auto"):
+    """获取 OCR 单例 — 委托给 router_ocr.py 的共享实例"""
+    from .router_ocr import _get_ocr as _shared_get_ocr
+    return _shared_get_ocr(device)
 
 
 def _ocr_image(img: "Image.Image", device: str = "auto") -> str:
@@ -219,9 +198,7 @@ def _ocr_image(img: "Image.Image", device: str = "auto") -> str:
     if not result:
         return ""
 
-    # 按 y 坐标排序
     result_sorted = sorted(result, key=lambda x: x[0][0][1])
-
     lines = []
     for word_info in result_sorted:
         text = word_info[1]
@@ -230,9 +207,7 @@ def _ocr_image(img: "Image.Image", device: str = "auto") -> str:
 
 
 def _ocr_image_with_boxes(img: "Image.Image", device: str = "auto") -> list:
-    """使用 RapidOCR 识别图片，返回带坐标信息的文字块列表
-    返回: [{"text": str, "x": int, "y": int, "w": int, "h": int, "score": float}, ...]
-    """
+    """使用 RapidOCR 识别图片，返回带坐标信息的文字块列表"""
     import numpy as np
 
     ocr = _get_ocr(device=device)
@@ -243,11 +218,10 @@ def _ocr_image_with_boxes(img: "Image.Image", device: str = "auto") -> list:
 
     blocks = []
     for word_info in result:
-        box_points = word_info[0]  # [[x1,y1],[x2,y2],[x3,y3],[x4,y4]]
+        box_points = word_info[0]
         text_and_score = word_info[1]
         score = word_info[2] if len(word_info) > 2 else 1.0
 
-        # 计算包围盒
         xs = [p[0] for p in box_points]
         ys = [p[1] for p in box_points]
         x = int(min(xs))
