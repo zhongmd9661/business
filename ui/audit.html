@@ -91,6 +91,44 @@
       color: #3b82f6;
     }
 
+    /* ---- 用户信息栏 ---- */
+    .user-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: clamp(4px, 1.5vmin, 12px);
+      align-self: flex-start;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: clamp(4px, 1vmin, 10px);
+    }
+
+    .user-name {
+      font-size: clamp(12px, 1.4vmin, 14px);
+      color: #64748b;
+    }
+
+    .logout-btn {
+      padding: clamp(2px, 0.6vmin, 6px) clamp(8px, 1.5vmin, 16px);
+      font-size: clamp(10px, 1.2vmin, 12px);
+      border: 1px solid #e2e8f0;
+      border-radius: clamp(4px, 0.8vmin, 8px);
+      background: #ffffff;
+      cursor: pointer;
+      color: #64748b;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .logout-btn:hover {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+
     /* ---- 标题 ---- */
     .page-header {
       text-align: center;
@@ -1061,6 +1099,13 @@
       <svg viewBox="0 0 16 16" fill="none" width="16" height="16"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       返回首页
     </a>
+    <!-- 用户信息栏 -->
+    <div class="user-bar" id="user-bar" style="display:none;">
+      <div class="user-info">
+        <span class="user-name" id="user-display"></span>
+        <button class="logout-btn" onclick="handleLogout()">退出登录</button>
+      </div>
+    </div>
     <!-- 标题 -->
     <div class="page-header">
       <h1 class="page-title">招待费智能审核</h1>
@@ -1530,6 +1575,27 @@
     let uploadedCount = 0;
     let selectedRecord = null;
     let allRecords = [];
+    let currentUser = null;
+
+    /* ---- 登录校验 + 用户信息 ---- */
+    (function checkAuth() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (!user || !localStorage.getItem('auth_token')) {
+        window.location.href = '/';
+        return;
+      }
+      currentUser = user;
+      var userBar = document.getElementById('user-bar');
+      var userDisplay = document.getElementById('user-display');
+      userBar.style.display = 'flex';
+      userDisplay.textContent = '👤 ' + user.username;
+    })();
+
+    function handleLogout() {
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      window.location.href = '/';
+    }
 
     /* ---- 加载提交记录列表 ---- */
     async function loadRecords() {
@@ -1537,7 +1603,12 @@
         const token = localStorage.getItem('auth_token');
         const headers = {};
         if (token) headers['Authorization'] = 'Bearer ' + token;
-        const response = await fetch('/api/reception-records?limit=500', { headers });
+        var url = '/api/reception-records?limit=500';
+        // 非 admin 用户只加载自己的提交记录
+        if (currentUser && currentUser.role !== 'admin') {
+          url += '&username=' + encodeURIComponent(currentUser.username);
+        }
+        const response = await fetch(url, { headers });
         allRecords = await response.json();
         populateRecordSelect(allRecords);
       } catch (err) {
