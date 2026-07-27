@@ -1,6 +1,7 @@
 """OCR 单文件识别 API — 上传文件后立即返回 Markdown 识别结果"""
 import asyncio
 import io
+import json
 import shutil
 import time
 from datetime import datetime
@@ -118,6 +119,11 @@ def _save_record(
     status: str,
     error_message: str = "",
     elapsed: float = 0,
+    ocr_blocks: str = "",
+    ocr_lines: str = "",
+    img_width: int = 0,
+    img_height: int = 0,
+    engine: str = "",
 ) -> int:
     """保存 OCR 记录到数据库，返回 record_id"""
     record = OCRRecord(
@@ -130,6 +136,11 @@ def _save_record(
         status=status,
         error_message=error_message,
         elapsed=elapsed,
+        ocr_blocks=ocr_blocks,
+        ocr_lines=ocr_lines,
+        img_width=img_width,
+        img_height=img_height,
+        engine=engine,
     )
     db.add(record)
     db.commit()
@@ -212,6 +223,11 @@ async def ocr_recognize(
                 status=result.get("status", "error"),
                 error_message=result.get("error", ""),
                 elapsed=result.get("elapsed", 0),
+                ocr_blocks=json.dumps(result.get("ocr_blocks", []), ensure_ascii=False),
+                ocr_lines=json.dumps(result.get("ocr_lines", []), ensure_ascii=False),
+                img_width=result.get("img_width", 0) or 0,
+                img_height=result.get("img_height", 0) or 0,
+                engine=result.get("engine", "") or "",
             )
         except Exception as e:
             logger.error(f"Failed to save OCR record: {e}")
@@ -280,6 +296,11 @@ async def ocr_batch_recognize(
                     status=result.get("status", "error"),
                     error_message=result.get("error", ""),
                     elapsed=result.get("elapsed", 0),
+                    ocr_blocks=json.dumps(result.get("ocr_blocks", []), ensure_ascii=False),
+                    ocr_lines=json.dumps(result.get("ocr_lines", []), ensure_ascii=False),
+                    img_width=result.get("img_width", 0) or 0,
+                    img_height=result.get("img_height", 0) or 0,
+                    engine=result.get("engine", "") or "",
                 )
             except Exception as e:
                 logger.error(f"Failed to save OCR record for {file.filename}: {e}")
@@ -337,6 +358,11 @@ async def get_ocr_record(record_id: int, db: Session = Depends(get_db)):
         "error_message": record.error_message,
         "elapsed": record.elapsed,
         "created_at": record.created_at,
+        "ocr_blocks": json.loads(record.ocr_blocks) if record.ocr_blocks else [],
+        "ocr_lines": json.loads(record.ocr_lines) if record.ocr_lines else [],
+        "img_width": record.img_width or 0,
+        "img_height": record.img_height or 0,
+        "engine": record.engine or "",
     }
 
 

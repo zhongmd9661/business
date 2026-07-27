@@ -339,6 +339,13 @@ class OCRRecord(Base):
     elapsed = Column(Float)                                     # 耗时(秒)
     created_at = Column(String, default=lambda: datetime.now().isoformat())
 
+    # 坐标定位渲染相关字段
+    ocr_blocks = Column(Text)                                   # JSON: 带坐标的 OCR 文字块列表
+    ocr_lines = Column(Text)                                    # JSON: OCR 逐行文字列表
+    img_width = Column(Integer, default=0)                      # 原始图片宽度
+    img_height = Column(Integer, default=0)                     # 原始图片高度
+    engine = Column(String)                                     # 识别引擎: rapidocr-gpu / rapidocr-cpu / mineru
+
 
 def get_db():
     db = SessionLocal()
