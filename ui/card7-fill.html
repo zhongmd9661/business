@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -248,33 +248,33 @@
     .qichacha-recommendation { margin-top: var(--spacing-md); padding: var(--spacing-md); border-radius: var(--radius-sm); font-size: var(--font-size-xs); line-height: 1.7; }
     .qichacha-recommendation.success { background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--color-success); }
     .qichacha-recommendation.danger { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--color-error); }
-    .qichacha-compare-area { display: flex; gap: var(--spacing-lg); margin-top: var(--spacing-md); flex-wrap: wrap; align-items: flex-start; }
-    .qichacha-original-img { width: 420px; max-height: 480px; object-fit: contain; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fafbfc; display: block; }
-    .qichacha-html-view { flex: 1; min-width: 300px; max-height: 400px; overflow: auto; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm); position: relative; }
+    .qichacha-compare-area { display: flex; flex-direction: column; gap: var(--spacing-lg); margin-top: var(--spacing-md); align-items: stretch; }
+    .qichacha-original-img { width: 100%; max-height: 360px; object-fit: contain; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fafbfc; display: block; }
+    .qichacha-html-view { width: 100%; min-height: 200px; max-height: 520px; overflow-y: auto; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm); position: relative; }
+    /* iframe mode: full-page structured HTML rendering */
+    .qichacha-html-view iframe.ocr-iframe {
+      width: 100%; height: 520px; border: none; background: #fff;
+    }
+    /* OCR coordinate-based canvas — absolute positioning */
     .qichacha-html-view .ocr-canvas {
       position: relative; font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-      background: #fff; margin: 0; overflow: hidden;
+      background: #fff; margin: 0; overflow: visible;
     }
     .qichacha-html-view .ocr-block {
-      position: absolute; white-space: nowrap; line-height: 1.1;
-      color: #1a1a2e; overflow: hidden; text-overflow: ellipsis;
-      /* slight shadow to distinguish from background */
-      text-shadow: 0 0 1px rgba(0,0,0,0.02);
+      position: absolute; white-space: nowrap;
+      color: #1a1a2e; overflow: visible;
+      display: inline-block;
     }
-    .qichacha-html-view .ocr-block:hover {
-      background: rgba(59,130,246,0.08); outline: 1px solid rgba(59,130,246,0.3);
-      z-index: 10;
+    .qichacha-html-view .ocr-low-conf {
+      background: rgba(251,191,36,0.2); border-radius: 2px; padding: 0 2px;
     }
-    .qichacha-html-view .ocr-block.low-confidence {
-      background: rgba(251,191,36,0.15);
+    /* OCR flowing document — plain text fallback */
+    .qichacha-html-view .ocr-document {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      padding: 16px 20px; color: #1a1a2e; line-height: 1.8; overflow-y: auto; max-height: 520px;
     }
-    .qichacha-html-view .ocr-block .ocr-block-tooltip {
-      display: none; position: absolute; bottom: 100%; left: 0;
-      background: #1a1a2e; color: #fff; padding: 3px 8px; border-radius: 3px;
-      font-size: 10px; white-space: nowrap; z-index: 100; pointer-events: none;
-    }
-    .qichacha-html-view .ocr-block:hover .ocr-block-tooltip {
-      display: block;
+    .qichacha-html-view .ocr-document p {
+      margin: 0 0 4px 0; font-size: 13px; white-space: pre-wrap; word-break: break-all;
     }
     .qichacha-toggle-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); margin-top: var(--spacing-sm); transition: all var(--transition); }
     .qichacha-toggle-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
@@ -524,21 +524,12 @@
                 截图需包含：企业名称、经营状态（存续/注销/吊销/异常等）
               </div>
             </div>
-            <!-- 原图与识别文字对比区 -->
+            <!-- 原图与识别文字对比按钮 (点击弹出新窗口) -->
             <div id="qichachaCompareArea" style="display:none;">
               <button class="qichacha-toggle-btn" onclick="toggleCompareView()">📄 查看识别文字对比</button>
-              <div id="qichachaCompareContent" style="display:none;">
-                <div class="qichacha-compare-area">
-                  <div>
-                    <div style="font-size:11px; font-weight:600; color:var(--color-text-secondary); margin-bottom:4px;">原图</div>
-                    <img id="qichachaOriginalImg" class="qichacha-original-img" src="" alt="原图">
-                  </div>
-                  <div>
-                    <div style="font-size:11px; font-weight:600; color:var(--color-text-secondary); margin-bottom:4px;">AI 识别文字 (HTML)</div>
-                    <div id="qichachaHtmlView" class="qichacha-html-view"></div>
-                  </div>
-                </div>
-              </div>
+              <!-- Hidden elements for data reference -->
+              <img id="qichachaOriginalImg" style="display:none;" src="" alt="原图">
+              <div id="qichachaHtmlView" style="display:none;"></div>
             </div>
             <!-- 参考模板 -->
             <div class="qichacha-templates-area">
@@ -2492,7 +2483,8 @@
         originalImg.src = previewImg.src;
       }
 
-      if ((data.ocr_blocks && data.ocr_blocks.length > 0) || (data.ocr_lines && data.ocr_lines.length > 0) || data.markdown_text) {
+      if ((data.ocr_blocks && data.ocr_blocks.length > 0) || (data.ocr_lines && data.ocr_lines.length > 0) || data.markdown_text || data.html_content) {
+        _lastOcrData = data;
         htmlView.innerHTML = renderOcrAsHtml(data);
         compareArea.style.display = 'block';
       } else {
@@ -2500,81 +2492,251 @@
       }
     }
 
+    // Store last OCR data for re-render on toggle
+    var _lastOcrData = null;
+
     function toggleCompareView() {
-      const content = document.getElementById('qichachaCompareContent');
-      const btn = document.querySelector('.qichacha-toggle-btn');
-      if (content.style.display === 'none') {
-        content.style.display = 'block';
-        btn.textContent = '📄 隐藏识别文字对比';
-      } else {
-        content.style.display = 'none';
-        btn.textContent = '📄 查看识别文字对比';
+      if (!_lastOcrData) return;
+
+      // Get original image source
+      var originalSrc = '';
+      var originalImg = document.getElementById('qichachaOriginalImg');
+      if (originalImg && originalImg.src) {
+        originalSrc = originalImg.src;
       }
+
+      // Render OCR HTML in the parent page (avoids all popup JS issues)
+      var winW = Math.min(1400, screen.width - 40);
+      var ocrHtml = renderOcrAsHtmlForPopup(_lastOcrData, winW - 80);
+
+      // Open new window for comparison
+      var winH = Math.min(900, screen.height - 80);
+      var left = Math.max(0, (screen.width - winW) / 2);
+      var top = Math.max(0, (screen.height - winH) / 2);
+      var win = window.open('', '_blank', 'width=' + winW + ',height=' + winH + ',left=' + left + ',top=' + top + ',scrollbars=yes,resizable=yes');
+
+      var doc = win.document;
+      doc.open();
+      doc.write('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>OCR 识别文字对比</title><style>' +
+        '* { margin:0; padding:0; box-sizing:border-box; }' +
+        'body { font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Noto Sans SC,PingFang SC,Microsoft YaHei,sans-serif; background:#f9fafb; color:#1a1a2e; }' +
+        '.popup-header { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:#fff; border-bottom:1px solid #e5e7eb; position:sticky; top:0; z-index:10; }' +
+        '.popup-header h2 { font-size:18px; color:#1e4a8a; }' +
+        '.popup-header .close-btn { padding:6px 16px; border-radius:6px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; font-size:13px; font-family:inherit; transition:all 200ms; }' +
+        '.popup-header .close-btn:hover { background:#fef2f2; border-color:#ef4444; color:#ef4444; }' +
+        '.popup-body { display:flex; flex-direction:column; gap:16px; padding:20px 24px; }' +
+        '.popup-pane { display:flex; flex-direction:column; min-width:0; width:100%; }' +
+        '.popup-pane-title { font-size:13px; font-weight:600; color:#6b7280; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #e5e7eb; }' +
+        '.popup-pane-body { flex:1; overflow-y:auto; overflow-x:auto; background:#fff; border:1px solid #e5e7eb; border-radius:8px; min-height:300px; width:100%; }' +
+        '.popup-pane-body img.original-img { max-width:100%; height:auto; display:block; }' +
+        '.popup-pane-body iframe.ocr-iframe { width:100%; min-height:400px; border:none; background:#fff; }' +
+        '.popup-pane-body .ocr-canvas { position:relative; font-family:Microsoft YaHei,PingFang SC,sans-serif; background:#fff; overflow:visible; }' +
+        '.popup-pane-body .ocr-block { position:absolute; white-space:nowrap; color:#1a1a2e; overflow:visible; display:inline-block; }' +
+        '.popup-pane-body .ocr-low-conf { background:rgba(251,191,36,0.2); border-radius:2px; padding:0 2px; }' +
+        '.popup-pane-body .ocr-document { font-family:Microsoft YaHei,PingFang SC,sans-serif; padding:16px 20px; color:#1a1a2e; line-height:1.8; }' +
+        '.popup-pane-body .ocr-document p { margin:0 0 4px 0; font-size:13px; white-space:pre-wrap; word-break:break-all; }' +
+        '</style></head><body>' +
+        '<div class="popup-header"><h2>📄 OCR 识别文字对比</h2><button class="close-btn" onclick="window.close()">关闭</button></div>' +
+        '<div class="popup-body">' +
+          '<div class="popup-pane"><div class="popup-pane-title">AI 识别文字</div><div class="popup-pane-body">' + ocrHtml + '</div></div>' +
+          '<div class="popup-pane"><div class="popup-pane-title">原图</div><div class="popup-pane-body">' +
+            (originalSrc ? '<img class="original-img" src="' + originalSrc + '" alt="原图">' : '<div style="padding:24px;text-align:center;color:#9ca3af;">无原图</div>') +
+          '</div></div>' +
+        '</div></body></html>');
+      doc.close();
     }
 
-    // Render OCR result with absolute positioning matching original image layout
+    // Render OCR for popup — coordinate layout, full width, NO text truncation
+    function renderOcrAsHtmlForPopup(data, containerW) {
+      var blocks = data.ocr_blocks || [];
+      var imgW = data.img_width || 0;
+      var imgH = data.img_height || 0;
+      var mdText = data.markdown_text || '';
+      var ocrLines = data.ocr_lines || [];
+      var htmlContent = data.html_content || '';
+
+      // ── Priority 1: html_content iframe ──
+      if (htmlContent) {
+        var escaped = htmlContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return '<iframe class="ocr-iframe" sandbox="allow-same-origin" srcdoc="' + escaped + '"></iframe>';
+      }
+
+      // ── Priority 2: coordinate layout ──
+      if (blocks.length > 0 && imgW > 0) {
+        var containerH = Math.round(containerW * imgH / imgW);
+        var scale = containerW / imgW;
+        var html = '<div class="ocr-canvas" style="width:' + containerW + 'px;height:' + containerH + 'px;">';
+
+        var sorted = blocks.slice().sort(function(a,b){ if(Math.abs(a.y-b.y)>3) return a.y-b.y; return a.x-b.x; });
+        var rowThreshold = 8;
+        var rows = [], currentRow = [sorted[0]];
+        for (var i = 1; i < sorted.length; i++) {
+          if (Math.abs(sorted[i].y - currentRow[0].y) <= rowThreshold) currentRow.push(sorted[i]);
+          else { rows.push(currentRow); currentRow = [sorted[i]]; }
+        }
+        rows.push(currentRow);
+
+        for (var r = 0; r < rows.length; r++) {
+          rows[r].sort(function(a,b){ return a.x-b.x; });
+          for (var i = 0; i < rows[r].length; i++) {
+            var blk = rows[r][i];
+            var left = Math.round(blk.x * scale);
+            var top = Math.round(blk.y * scale);
+            var text = escapeHtml(blk.text);
+            var rawH = Math.max(Math.round(blk.h * scale), 2);
+            var fs = Math.max(Math.round(rawH * 0.85), 12);
+            var h = Math.max(rawH, fs + 4);
+            var pt = Math.max((h - fs) / 2, 1);
+            var rawRight = blk.x + blk.w;
+            if (i + 1 < rows[r].length) { rawRight = Math.max(rawRight, (blk.x + rows[r][i+1].x) / 2); }
+            var right = Math.round(rawRight * scale);
+            var w = Math.max(right - left, 2);
+            var cls = 'ocr-block';
+            if (blk.score !== undefined && blk.score < 0.5) cls += ' ocr-low-conf';
+            // NO overflow:hidden, NO text-overflow:ellipsis — text always fully visible
+            html += '<span class="' + cls + '" style="left:' + left + 'px;top:' + top + 'px;width:' + w + 'px;height:' + h + 'px;font-size:' + fs + 'px;line-height:' + h + 'px;">' + text + '</span>';
+          }
+        }
+        html += '</div>';
+        return html;
+      }
+
+      // ── Priority 3: plain text fallback ──
+      var allLines = [];
+      if (ocrLines.length > 0) allLines = ocrLines;
+      else if (mdText) allLines = mdText.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l; });
+
+      if (allLines.length > 0) {
+        html += '<div class="ocr-document">';
+        for (var i = 0; i < allLines.length; i++) {
+          html += '<p>' + escapeHtml(allLines[i]) + '</p>';
+        }
+        html += '</div>';
+        return html;
+      }
+
+      html += '<div class="ocr-document" style="padding:20px;text-align:center;color:#9ca3af;">暂无识别文字</div>';
+      return html;
+    }
+
+    // Render OCR result — supports structured HTML, coordinate layout, and plain text
     function renderOcrAsHtml(data) {
       var blocks = data.ocr_blocks || [];
       var imgW = data.img_width || 0;
       var imgH = data.img_height || 0;
       var mdText = data.markdown_text || '';
-      var lines = data.ocr_lines || [];
+      var ocrLines = data.ocr_lines || [];
+      var htmlContent = data.html_content || '';
 
-      // Container width: match the original image display width (max 420px)
-      var containerW = 420;
-      var containerH = imgW > 0 ? Math.round(containerW * imgH / imgW) : 600;
-      var scale = imgW > 0 ? containerW / imgW : 1;
+      // Measure container width dynamically — fills available space
+      var htmlView = document.getElementById('qichachaHtmlView');
+      var containerW = htmlView ? htmlView.clientWidth : 560;
 
       var html = '';
 
+      // ── Priority 1: html_content — full structured page (iframe) ──
+      if (htmlContent) {
+        var iframe = '<iframe class="ocr-iframe" sandbox="allow-same-origin"></iframe>';
+        html += iframe;
+        // Write content after DOM insertion
+        setTimeout(function() {
+          var el = document.querySelector('.ocr-iframe');
+          if (el) {
+            var doc = el.contentDocument || el.contentWindow.document;
+            doc.open();
+            doc.write(htmlContent);
+            doc.close();
+          }
+        }, 50);
+        return html;
+      }
+
+      // ── Priority 2: ocr_blocks — coordinate-based layout restoration ──
       if (blocks.length > 0 && imgW > 0) {
-        // Absolute positioning mode: each block placed at its original coordinates, scaled
+        var containerH = Math.round(containerW * imgH / imgW);
+        var scale = containerW / imgW;
+
         html += '<div class="ocr-canvas" style="width:' + containerW + 'px;height:' + containerH + 'px;">';
 
-        // Sort blocks by y then x for deterministic rendering order
         var sorted = blocks.slice().sort(function(a, b) {
           if (Math.abs(a.y - b.y) > 3) return a.y - b.y;
           return a.x - b.x;
         });
 
-        for (var i = 0; i < sorted.length; i++) {
-          var blk = sorted[i];
-          var left = Math.round(blk.x * scale);
-          var top = Math.round(blk.y * scale);
-          var w = Math.max(Math.round(blk.w * scale), 2);
-          var h = Math.max(Math.round(blk.h * scale), 2);
-          var fontSize = Math.max(Math.round(h * 0.85), 10);
-          var text = escapeHtml(blk.text);
-
-          // Low confidence highlight
-          var cls = 'ocr-block';
-          if (blk.score !== undefined && blk.score < 0.5) {
-            cls += ' low-confidence';
+        // ── Group into rows by y proximity, then expand widths to prevent horizontal overlap ──
+        var rowThreshold = 8; // px in original image
+        var rowScaleThreshold = Math.round(rowThreshold); // use original px for grouping
+        var rows = [];
+        var currentRow = [sorted[0]];
+        for (var i = 1; i < sorted.length; i++) {
+          if (Math.abs(sorted[i].y - currentRow[0].y) <= rowThreshold) {
+            currentRow.push(sorted[i]);
+          } else {
+            rows.push(currentRow);
+            currentRow = [sorted[i]];
           }
+        }
+        rows.push(currentRow);
 
-          html += '<span class="' + cls + '" style="left:' + left + 'px;top:' + top + 'px;width:' + w + 'px;font-size:' + fontSize + 'px;">';
-          html += text;
-          html += '<span class="ocr-block-tooltip">行' + (i + 1) + ' 置信度:' + (blk.score || 1).toFixed(2) + '</span>';
-          html += '</span>';
+        for (var r = 0; r < rows.length; r++) {
+          var row = rows[r];
+          // Sort row by x
+          row.sort(function(a, b) { return a.x - b.x; });
+
+          for (var i = 0; i < row.length; i++) {
+            var blk = row[i];
+            var left = Math.round(blk.x * scale);
+            var top  = Math.round(blk.y * scale);
+            var text = escapeHtml(blk.text);
+
+            // Ensure font size and height are sufficient to display text fully (no vertical clipping)
+            var rawH = Math.max(Math.round(blk.h * scale), 2);
+            var fs = Math.max(Math.round(rawH * 0.85), 12);
+            var h = Math.max(rawH, fs + 4);
+            var paddingTop = Math.max((h - fs) / 2, 1);
+
+            // Expand width: extend to midpoint of next block (or right edge of canvas) to prevent overlap
+            var rawRight = blk.x + blk.w;
+            if (i + 1 < row.length) {
+              var nextLeft = row[i + 1].x;
+              rawRight = Math.max(rawRight, (blk.x + nextLeft) / 2);
+            } else {
+              rawRight = Math.max(rawRight, blk.x + blk.w);
+            }
+            var right = Math.round(rawRight * scale);
+            var w = Math.max(right - left, 2);
+
+            var cls = 'ocr-block';
+            if (blk.score !== undefined && blk.score < 0.5) {
+              cls += ' ocr-low-conf';
+            }
+
+            html += '<span class="' + cls + '" style="left:' + left + 'px;top:' + top + 'px;width:' + w + 'px;height:' + h + 'px;font-size:' + fs + 'px;padding-top:' + paddingTop + 'px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + text + '</span>';
+          }
         }
 
         html += '</div>';
-      } else if (lines.length > 0 || mdText) {
-        // Fallback: no position data (VLM mode), show line-by-line list
-        var allLines = lines.length > 0 ? lines : mdText.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-        html += '<div class="ocr-canvas" style="width:' + containerW + 'px;padding:8px;font-size:12px;line-height:1.8;color:#374151;min-height:' + containerH + 'px;">';
-        for (var i = 0; i < allLines.length; i++) {
-          html += '<div style="padding:1px 4px;border-bottom:1px dotted #e5e7eb;">' + escapeHtml(allLines[i]) + '</div>';
-        }
-        html += '</div>';
-      } else {
-        html += '<div class="ocr-canvas" style="width:' + containerW + 'px;padding:20px;text-align:center;color:#9ca3af;">暂无识别文字</div>';
+        return html;
       }
 
+      // ── Priority 3: plain text fallback ──
+      var allLines = [];
+      if (ocrLines.length > 0) allLines = ocrLines;
+      else if (mdText) allLines = mdText.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l; });
+
+      if (allLines.length > 0) {
+        html += '<div class="ocr-document">';
+        for (var i = 0; i < allLines.length; i++) {
+          html += '<p>' + escapeHtml(allLines[i]) + '</p>';
+        }
+        html += '</div>';
+        return html;
+      }
+
+      html += '<div class="ocr-document" style="padding:20px;text-align:center;color:#9ca3af;">暂无识别文字</div>';
       return html;
     }
-
-    async function submitRecord() {
+async function submitRecord() {
       const activeCard = document.querySelector('.scenario-card.active');
       if (!activeCard) {
         showToast('⚠️ 请先选择场景');
