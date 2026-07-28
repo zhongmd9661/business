@@ -99,6 +99,17 @@
     .delete-btn { padding: 4px 10px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-bg-primary); cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); transition: all var(--transition); color: var(--color-text-secondary); }
     .delete-btn:hover { background: var(--color-error); color: #fff; border-color: var(--color-error); }
 
+    /* Audit button */
+    .audit-btn { display: inline-flex; align-items: center; gap: 3px; padding: 4px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-accent); background: var(--color-accent-light); cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); transition: all var(--transition); color: var(--color-accent); text-decoration: none; font-weight: var(--font-weight-semibold); }
+    .audit-btn:hover { background: var(--color-accent); color: #fff; }
+
+    /* OCR status indicator */
+    .ocr-status { display: inline-flex; align-items: center; gap: 3px; font-size: var(--font-size-xs); }
+    .ocr-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .ocr-dot.green { background: var(--color-success); }
+    .ocr-dot.yellow { background: var(--color-warning); }
+    .ocr-dot.gray { background: var(--color-border); }
+
     /* Empty state */
     .empty-state { text-align: center; padding: var(--spacing-2xl); color: var(--color-text-secondary); }
     .empty-state-icon { font-size: 48px; margin-bottom: var(--spacing-md); }
@@ -197,12 +208,13 @@
             <th>人均</th>
             <th>总金额</th>
             <th>状态</th>
+            <th>OCR</th>
             <th>提交时间</th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody id="records-body">
-          <tr><td colspan="12" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>
+          <tr><td colspan="13" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -236,7 +248,7 @@
 
     async function loadRecords() {
       const tbody = document.getElementById('records-body');
-      tbody.innerHTML = '<tr><td colspan="12" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="13" class="loading"><div class="spinner"></div><div>加载中...</div></td></tr>';
 
       const scenario = document.getElementById('filter-scenario').value;
       const status = document.getElementById('filter-status').value;
@@ -258,7 +270,7 @@
         renderRecords(records);
         updateSummary(records);
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="12" class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">加载失败：' + err.message + '</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">加载失败：' + err.message + '</div></td></tr>';
       }
     }
 
@@ -266,7 +278,7 @@
       const tbody = document.getElementById('records-body');
 
       if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">暂无提交记录</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">暂无提交记录</div></td></tr>';
         return;
       }
 
@@ -282,8 +294,12 @@
           <td>¥${(r.per_capita || 0).toFixed(2)}</td>
           <td class="amount">¥${(r.total_amount || 0).toFixed(2)}</td>
           <td><span class="status-badge ${statusClass(r.status)}">${getStatusText(r.status)}</span></td>
+          <td><span class="ocr-status">${getOcrStatus(r)}</span></td>
           <td>${formatDateTime(r.created_at)}</td>
-          <td><button class="delete-btn" onclick="deleteRecord(${r.id})">删除</button></td>
+          <td>
+            <a href="/audit-detail?serial_number=${encodeURIComponent(r.serial_number)}" class="audit-btn">🔍 审核</a>
+            <button class="delete-btn" onclick="deleteRecord(${r.id})" style="margin-left:4px">删除</button>
+          </td>
         </tr>
       `).join('');
     }
@@ -348,6 +364,13 @@
       } catch {
         return isoStr;
       }
+    }
+
+    function getOcrStatus(r) {
+      const count = r.ocr_file_count || 0;
+      if (count >= 9) return '<span class="ocr-dot green"></span> 完整(' + count + ')';
+      if (count > 0) return '<span class="ocr-dot yellow"></span> 部分(' + count + '/9)';
+      return '<span class="ocr-dot gray"></span> 未上传';
     }
 
     function escapeHtml(str) {

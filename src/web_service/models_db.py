@@ -15,7 +15,7 @@ from sqlalchemy import (
     Text,
     create_engine,
 )
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker, relationship
 
 from .config import DATABASE_URL
 
@@ -199,6 +199,10 @@ class ReceptionRecord(Base):
     nationality = Column(String)  # 外事招待-国籍
     fee = Column(String)  # 工作餐-费用
     status = Column(String, default="pending")  # pending / approved / rejected
+    ocr_status = Column(String, default="pending")  # pending / processing / completed / skipped
+    review_status = Column(String, default="pending")  # pending / reviewing / completed
+    ocr_file_count = Column(Integer, default=0)  # 已上传OCR文件数
+    review_report = Column(Text)  # 审核报告内容(Markdown)
     created_at = Column(String, default=lambda: datetime.now().isoformat())
     updated_at = Column(String, default=lambda: datetime.now().isoformat())
 
@@ -227,16 +231,34 @@ def _migrate_add_columns():
         # 获取所有表的列
         tables_to_check = {
             "ocr_records": [
+                ("ocr_blocks", "TEXT"),
+                ("ocr_lines", "TEXT"),
+                ("img_width", "INTEGER", "0"),
+                ("img_height", "INTEGER", "0"),
+                ("engine", "TEXT"),
                 ("original_file_path", "TEXT"),
+                ("dedup_key", "TEXT"),
+            ],
+            "reception_records": [
+                ("ocr_status", "TEXT"),
+                ("review_status", "TEXT"),
+                ("ocr_file_count", "INTEGER"),
+                ("review_report", "TEXT"),
             ],
         }
         for table, columns in tables_to_check.items():
             cur.execute(f"PRAGMA table_info({table})")
             existing = {row[1] for row in cur.fetchall()}
-            for col_name, col_type in columns:
+            for col_def in columns:
+                col_name = col_def[0]
+                col_type = col_def[1]
+                default = col_def[2] if len(col_def) > 2 else None
                 if col_name not in existing:
                     try:
-                        cur.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}")
+                        ddl = f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}"
+                        if default is not None:
+                            ddl += f" DEFAULT {default}"
+                        cur.execute(ddl)
                         logger.info(f"Migrated: added column {col_name} to {table}")
                     except sqlite3.OperationalError:
                         pass  # 忽略已存在的列
@@ -382,6 +404,39 @@ class OCRRecord(Base):
 
     # 原始文件存储
     original_file_path = Column(String)                         # 持久化文件路径（相对于 data/ocr_files/）
+    # 去重标识
+    dedup_key = Column(String, index=True)                      # slot_name + serial_number + file_hash
+
+
+class ExtractedField(Base):
+    """字段提取结果 — 每个OCR文件提取后的结构化字段"""
+
+    __tablename__ = "extracted_fields"
+
+    id = Column(Integer, primary_key=True)
+    serial_number = Column(String, nullable=False, index=True)  # 关联流水号
+    slot_name = Column(String, nullable=False, index=True)      # 槽位: 审批单/发票/支付凭证...
+    ocr_record_id = Column(Integer)                             # 关联OCR记录ID
+    extracted_json = Column(Text)                               # JSON: 提取的结构化字段
+    extraction_rule = Column(String)                            # 使用的提取规则名
+    status = Column(String, default="pending")                  # pending/extracted/errored
+    error_message = Column(Text)                                # 错误信息
+    created_at = Column(String, default=lambda: datetime.now().isoformat())
+    updated_at = Column(String, default=lambda: datetime.now().isoformat())
+
+
+class ReviewResult(Base):
+    """审核规则校验结果"""
+
+    __tablename__ = "review_results"
+
+    id = Column(Integer, primary_key=True)
+    serial_number = Column(String, nullable=False, index=True)
+    rule_name = Column(String, nullable=False)                  # 规则名: 金额一致性/日期一致性...
+    severity = Column(String, default="高")                     # 高/中/低/提示
+    passed = Column(Boolean, default=True)                      # 是否通过
+    detail = Column(Text)                                       # 校验详情/不通过原因
+    created_at = Column(String, default=lambda: datetime.now().isoformat())
 
 
 def get_db():

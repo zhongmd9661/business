@@ -216,6 +216,9 @@ def list_records(
                 "nationality": r.nationality or "",
                 "fee": r.fee or "",
                 "status": _status_label(r.status),
+                "ocr_status": r.ocr_status or "pending",
+                "review_status": r.review_status or "pending",
+                "ocr_file_count": r.ocr_file_count or 0,
                 "created_at": r.created_at or "",
                 "updated_at": r.updated_at or "",
             }

@@ -102,6 +102,15 @@ async def ui_records():
     return _html_response("<h1>记录页未找到</h1>")
 
 
+@app.get("/audit-detail", response_class=HTMLResponse)
+async def ui_audit_detail():
+    """审核详情页"""
+    detail_file = ui_dir / "audit-detail.html" if ui_dir.exists() else None
+    if detail_file and detail_file.exists():
+        return _html_response(detail_file.read_text(encoding="utf-8"))
+    return _html_response("<h1>审核详情页未找到</h1>")
+
+
 @app.get("/reference", response_class=HTMLResponse)
 async def ui_reference():
     """参考资料页"""
@@ -129,7 +138,7 @@ async def on_startup():
     init_app_settings()
 
     # 4. Load routers (lazy to avoid circular imports)
-    from . import router, router_rule, router_standards, router_standards_admin, router_application_form, router_reception_records, router_qichacha, router_ocr
+    from . import router, router_rule, router_standards, router_standards_admin, router_application_form, router_reception_records, router_qichacha, router_ocr, router_audit_detail
 
     app.include_router(router.settings_router, prefix="/api", tags=["settings"])
     app.include_router(router.task_router, prefix="/api", tags=["tasks"])
@@ -140,6 +149,7 @@ async def on_startup():
     app.include_router(router_reception_records.router, prefix="/api", tags=["reception-records"])
     app.include_router(router_qichacha.router, prefix="/api", tags=["qichacha"])
     app.include_router(router_ocr.router, prefix="/api", tags=["ocr"])
+    app.include_router(router_audit_detail.router, prefix="/api", tags=["audit-detail"])
     # 申请单生成页面不需要 /api 前缀，直接挂载
     app.include_router(router_application_form.router, tags=["application-form"])
 

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>审核详情</title>
+<meta http-equiv="Cache-Control" content="no-cache">
+<style>
+:root{--c1:#1a1a2e;--c2:#6b7280;--cb:#e5e7eb;--bg:#fff;--bg2:#f9fafb;--ac:#3b82f6;--acl:#eff6ff;--su:#10b981;--sub:#ecfdf5;--wa:#f59e0b;--wab:#fffbeb;--er:#ef4444;--erb:#fef2f2;--r:10px;--sp:16px;--f:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,PingFang SC,Microsoft YaHei,sans-serif;--sh:0 1px 3px rgba(0,0,0,.06);--shh:0 4px 12px rgba(0,0,0,.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--f);font-size:14px;color:var(--c1);background:var(--bg2);line-height:1.5}
+.wrap{max-width:1280px;margin:0 auto;padding:32px 24px}
+.back{display:inline-flex;align-items:center;gap:4px;color:var(--ac);font-size:13px;text-decoration:none;margin-bottom:16px}
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.ttl{font-size:18px;font-weight:700}
+.acts{display:flex;gap:12px}
+.btn{padding:8px 20px;border-radius:var(--r);border:1px solid var(--cb);background:var(--bg);cursor:pointer;font-size:13px;font-family:var(--f);font-weight:600}
+.bp{background:var(--ac);color:#fff;border-color:var(--ac)}.bp:hover{background:#2563eb}
+.bs{background:var(--su);color:#fff;border-color:var(--su)}
+.cd{background:var(--bg);border-radius:14px;border:1px solid var(--cb);box-shadow:var(--sh);padding:var(--sp);margin-bottom:24px}
+.ct{font-weight:600;margin-bottom:12px}
+.gd{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.ik{font-size:12px;color:var(--c2)}.iv{font-size:13px;font-weight:600}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.sl{border:2px dashed var(--cb);border-radius:var(--r);padding:var(--sp);text-align:center;cursor:pointer;transition:all 200ms;background:var(--bg2)}
+.sl:hover{border-color:var(--ac);background:var(--acl)}
+.sl.ok{border-color:var(--su);border-style:solid;background:var(--sub)}
+.sl.er{border-color:var(--er);border-style:solid;background:var(--erb)}
+.sn{font-weight:600;margin-bottom:4px}
+.sf{font-size:12px;color:var(--c2);word-break:break-all}
+.bg{display:inline-flex;align-items:center;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:600}
+.bg.ok{background:var(--sub);color:var(--su)}.bg.er{background:var(--erb);color:var(--er)}.bg.na{background:var(--bg2);color:var(--c2)}
+.ri{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--cb)}
+.ri:last-child{border-bottom:none}
+.sv{font-size:12px;padding:1px 8px;border-radius:4px;margin-left:6px}
+.sv-高{background:var(--erb);color:var(--er)}.sv-中{background:var(--wab);color:var(--wa)}.sv-低,.sv-提示{background:var(--acl);color:var(--ac)}
+.tb{display:flex;gap:0;border-bottom:2px solid var(--cb);margin-bottom:16px;overflow-x:auto}
+.ta{padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--c2);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all 200ms}
+.ta:hover{color:var(--ac)}.ta.on{color:var(--ac);border-bottom-color:var(--ac)}
+.tc{display:none}.tc.on{display:block}
+.fr{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)}
+.fk{color:var(--c2);font-size:13px}.fv{font-weight:600;font-size:13px}
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center;padding:24px}
+.mo.show{display:flex}
+.md{background:var(--bg);border-radius:14px;max-width:900px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shh)}
+.mh{display:flex;justify-content:space-between;align-items:center;padding:var(--sp);border-bottom:1px solid var(--cb);position:sticky;top:0;background:var(--bg);z-index:1}
+.mx{background:none;border:none;font-size:24px;cursor:pointer;color:var(--c2)}
+.mb{padding:var(--sp)}
+.mv img,.mv iframe{max-width:100%;max-height:50vh;border:1px solid var(--cb);border-radius:var(--r)}
+.mt{background:var(--bg2);padding:var(--sp);border-radius:var(--r);font-size:12px;white-space:pre-wrap;max-height:30vh;overflow-y:auto}
+.uz{border:2px dashed var(--cb);border-radius:var(--r);padding:var(--sp);text-align:center;cursor:pointer;margin-top:var(--sp);transition:all 200ms}
+.uz:hover{border-color:var(--ac);background:var(--acl)}
+.rp{background:var(--bg2);padding:var(--sp);border-radius:var(--r);font-size:13px;white-space:pre-wrap;max-height:60vh;overflow-y:auto}
+.ts{position:fixed;bottom:24px;right:24px;padding:12px 24px;background:var(--su);color:#fff;border-radius:var(--r);font-size:13px;box-shadow:var(--shh);opacity:0;transform:translateY(10px);transition:all 300ms;pointer-events:none;z-index:999}
+.ts.show{opacity:1;transform:translateY(0)}
+@media(max-width:768px){.sg{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a href="/records" class="back">&#8592; 返回列表</a>
+<div class="hdr"><h1 class="ttl" id="ttl">审核详情</h1><div class="acts">
+<button class="btn bp" id="bEx" onclick="doEx()">字段提取</button>
+<button class="btn bp" id="bRe" onclick="doRe()">触发审核</button>
+<button class="btn bs" id="bRp" onclick="doRp()" style="display:none">下载报告</button>
+</div></div>
+<div class="cd"><div class="ct">提交记录信息</div><div class="gd" id="rInfo"></div></div>
+<div class="cd"><div class="ct">OCR 文件 <span style="font-weight:normal;color:var(--c2);font-size:12px">(点击查看详情)</span></div><div class="sg" id="sg"></div></div>
+<div class="cd"><div class="ct">提取信息</div><div class="tb" id="eTabs"></div><div id="eCon"></div></div>
+<div class="cd" id="rCard" style="display:none"><div class="ct">审核结果</div><div id="rList"></div></div>
+<div class="cd" id="pCard" style="display:none"><div class="ct">审核报告</div><div class="rp" id="pArea"></div></div>
+</div>
+<div class="mo" id="mO" onclick="if(event.target===this)closeM()">
+<div class="md" onclick="event.stopPropagation()">
+<div class="mh"><h3 id="mT">OCR 详情</h3><button class="mx" onclick="closeM()">&times;</button></div>
+<div class="mb">
+<div class="mv" id="mV"></div>
+<p style="margin-bottom:4px;font-size:13px;font-weight:600">OCR 原始文本</p>
+<div class="mt" id="mM"></div>
+<p style="margin:12px 0 4px;font-size:13px;font-weight:600">提取字段</p>
+<div id="mF"></div>
+<div class="uz" id="uZ" onclick="document.getElementById('fI').click()"><p style="color:var(--c2);font-size:13px">点击上传新文件（覆盖旧文件）</p><input type="file" id="fI" style="display:none" onchange="doUp(event)"></div>
+</div></div></div>
+<div id="toast" class="ts"></div>
+<script>
+const A=window.location.origin,SN=new URLSearchParams(location.search).get('serial_number');
+let D=null,CS=null;
+if(!SN)location.href='/records';
+async function load(){
+document.getElementById('ttl').textContent=SN;
+try{const r=await fetch(A+'/api/audit-detail/'+encodeURIComponent(SN));if(!r.ok)throw 0;D=await r.json();
+ren(D.record);rsl(D.ocr_files);rex(D.extracted_fields);rre(D.review_results);
+if(D.review_report){document.getElementById('pCard').style.display='';document.getElementById('bRp').style.display='';document.getElementById('pArea').textContent=D.review_report}
+if(D.review_results.length>0)document.getElementById('rCard').style.display=''}
+catch(e){document.getElementById('ttl').textContent='加载失败'}}
+function ren(r){
+const f=[['流水号',r.serial_number],['场景',r.scenario_name],['提交人',r.submitter],['日期',r.date||'-'],['地点',r.location||'-'],['对象',r.org||'-'],['人数',r.guests],['人均',r.per_capita||0],['总额',r.total_amount||0],['状态',r.status],['OCR',(r.ocr_file_count||0)+'/9']];
+document.getElementById('rInfo').innerHTML=f.map(([k,v])=>'<div><div class="ik">'+k+'</div><div class="iv">'+esc(v)+'</div></div>').join('')}
+function rsl(oc){
+document.getElementById('sg').innerHTML=oc.map((s,i)=>{const c=s.status==='success'?'ok':s.status==='error'?'er':'';
+const b=s.status==='success'?'<span class="bg ok">已识别</span>':s.status==='error'?'<span class="bg er">失败</span>':'<span class="bg na">未上传</span>';
+return'<div class="sl '+c+'" onclick="openS('+i+')"><div class="sn">'+s.label+'</div>'+b+(s.original_filename?'<div class="sf">'+esc(s.original_filename)+'</div>':'')+'</div>'}).join('')}
+function rex(fs){
+document.getElementById('eTabs').innerHTML=fs.map((f,i)=>'<div class="ta'+(i?'':' on')+'" onclick="sw('+i+')">'+f.slot_name+'</div>').join('');
+document.getElementById('eCon').innerHTML=fs.map((f,i)=>{const r=Object.entries(f.fields||{}).map(([k,v])=>'<div class="fr"><span class="fk">'+k+'</span><span class="fv">'+esc(v)+'</span></div>').join('');
+return'<div class="tc'+(i?'':' on')+'" id="t'+i+'">'+(r||'<p style="color:var(--c2);font-size:13px">暂无数据</p>')+'</div>'}).join('')}
+function sw(i){document.querySelectorAll('#eTabs .ta').forEach((x,j)=>x.classList.toggle('on',j===i));document.querySelectorAll('#eCon .tc').forEach((x,j)=>x.classList.toggle('on',j===i))}
+function rre(rs){
+if(!rs.length){document.getElementById('rCard').style.display='none';return}
+document.getElementById('rList').innerHTML=rs.map(r=>'<div class="ri"><span style="font-size:20px">'+(r.passed?'\u2705':'\u274c')+'</span><div><div style="font-weight:600;font-size:13px">'+r.rule_name+'<span class="sv sv-'+r.severity+'">'+r.severity+'</span></div><div style="font-size:13px;color:var(--c2);margin-top:4px">'+esc(r.detail)+'</div></div></div>').join('')}
+function openS(i){
+const s=D.ocr_files[i];if(!s)return;CS=s;
+document.getElementById('mT').textContent=s.label;document.getElementById('mO').classList.add('show');
+const v=document.getElementById('mV');v.innerHTML='';
+if(s.ocr_record_id){const e=(s.original_file_path||'').split('.').pop().toLowerCase();
+if(['jpg','jpeg','png','bmp','webp','gif'].includes(e))v.innerHTML='<img src="'+A+'/api/ocr/record-file/'+s.ocr_record_id+'">';
+else if(e==='pdf')v.innerHTML='<iframe src="'+A+'/api/ocr/record-file/'+s.ocr_record_id+'"></iframe>';
+fetch(A+'/api/ocr/records/'+s.ocr_record_id).then(r=>r.json()).then(d=>document.getElementById('mM').textContent=d.markdown||'无')}
+else{v.innerHTML='<p style="text-align:center;color:var(--c2);padding:24px">暂无</p>';document.getElementById('mM').textContent=''}
+const ef=D.extracted_fields.find(f=>f.slot_name===s.name);
+document.getElementById('mF').innerHTML=ef&&ef.fields&&Object.keys(ef.fields).length?
+Object.entries(ef.fields).map(([k,v])=>'<div class="fr"><span class="fk">'+k+'</span><span class="fv">'+esc(v)+'</span></div>').join(''):'<p style="color:var(--c2);font-size:12px">暂无</p>'}
+function closeM(){document.getElementById('mO').classList.remove('show')}
+async function doUp(e){
+const f=e.target.files[0];if(!f||!CS)return;
+const z=document.getElementById('uZ');z.innerHTML='<p>识别中...</p>';
+const form=new FormData();form.append('file',f);form.append('slot_name',CS.name);
+try{const r=await fetch(A+'/api/audit-detail/'+encodeURIComponent(SN)+'/ocr',{method:'POST',body:form});const d=await r.json();
+if(d.status==='success'||d.status==='duplicate'){toast(d.message||'上传成功');load();closeM()}else toast('失败: '+d.message)}
+catch(err){toast('错误: '+err.message)}z.innerHTML='<p style="color:var(--c2);font-size:13px">点击上传新文件</p>'}
+async function doEx(){
+const b=document.getElementById('bEx');b.disabled=true;b.textContent='提取中...';
+try{const r=await fetch(A+'/api/audit-detail/'+encodeURIComponent(SN)+'/extract',{method:'POST'});const d=await r.json();
+toast('提取完成: '+d.results.filter(r=>r.status==='success').length+'/'+d.results.length);load()}
+catch(e){toast('错误: '+e.message)}b.disabled=false;b.textContent='字段提取'}
+async function doRe(){
+const b=document.getElementById('bRe');b.disabled=true;b.textContent='审核中...';
+try{const r=await fetch(A+'/api/audit-detail/'+encodeURIComponent(SN)+'/review',{method:'POST'});const d=await r.json();
+if(d.status==='completed'){const p=d.results.filter(r=>r.passed).length;toast('审核完成: '+p+'/'+d.results.length+'通过');load()}}
+catch(e){toast('错误: '+e.message)}b.disabled=false;b.textContent='触发审核'}
+function doRp(){if(!D||!D.review_report)return;
+const b=new Blob([D.review_report],{type:'text/markdown'});const u=URL.createObjectURL(b);
+const a=document.createElement('a');a.href=u;a.download=SN+'_审核报告.md';a.click();URL.revokeObjectURL(u);toast('报告已下载')}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.background=/成功|完成|通过/.test(m)?'var(--su)':'var(--er)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+function esc(s){if(s==null)return'-';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
+document.addEventListener('DOMContentLoaded',load);
+</script>
+</body>
+</html>
