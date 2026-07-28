@@ -1,6 +1,9 @@
 """审核服务引擎 — 字段提取 + 审核规则校验 + 报告生成"""
+import asyncio
 import json
+import os
 import re
+import time
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -9,7 +12,7 @@ from typing import Any, Optional
 from loguru import logger
 from sqlalchemy.orm import Session
 
-from .models_db import ExtractedField, ReviewResult, OCRRecord, ReceptionRecord
+from .models_db import ExtractedField, ReviewResult, OCRRecord, ReceptionRecord, ExtractionRule
 
 logger = logging.getLogger(__name__)
 
@@ -32,19 +35,82 @@ SLOTS = [
 SLOT_NAMES = [s["name"] for s in SLOTS]
 
 # ===================================================================
+# 规则缓存：从数据库加载的提取规则，60 秒过期
+# ===================================================================
+
+_rule_cache: dict[str, tuple[list[dict], float]] = {}
+_RULE_CACHE_TTL = 60  # 秒
+
+
+def _load_rule_from_db(slot_name: str) -> Optional[list[dict]]:
+    """从数据库加载提取规则，带缓存"""
+    now = time.time()
+    if slot_name in _rule_cache:
+        fields, ts = _rule_cache[slot_name]
+        if now - ts < _RULE_CACHE_TTL:
+            return fields
+
+    try:
+        from .models_db import SessionLocal
+        db = SessionLocal()
+        try:
+            rule = db.query(ExtractionRule).filter(
+                ExtractionRule.slot_name == slot_name,
+                ExtractionRule.enabled == True,
+            ).first()
+            if rule and rule.fields_json:
+                fields = json.loads(rule.fields_json)
+                _rule_cache[slot_name] = (fields, now)
+                return fields
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning(f"Failed to load extraction rule for {slot_name}: {e}")
+    return None
+
+
+def _clear_rule_cache():
+    """清空规则缓存（规则修改后调用）"""
+    _rule_cache.clear()
+
+
+# ===================================================================
 # 字段提取引擎
 # ===================================================================
 
-def extract_from_markdown(markdown: str, rule_name: str) -> dict[str, Any]:
-    """从 OCR markdown 文本中按规则提取字段
+def extract_from_markdown(markdown: str, rule_name: str, slot_name: str = "", method: str = "rule") -> dict[str, Any]:
+    """从 OCR markdown 文本中提取字段
 
+    支持两种提取方式：
+    - "rule": 基于关键词规则的提取（默认）
+    - "llm": 使用大模型提取
+
+    优先使用数据库中的规则配置，如找不到则回退到 Python 硬编码函数
     支持：键值对匹配、表格单元格匹配、正则表达式、模糊文本匹配
     """
     if not markdown or not markdown.strip():
         return {}
 
+    if method == "llm":
+        try:
+            return extract_from_llm(markdown, slot_name)
+        except Exception as e:
+            logger.warning(f"LLM extraction failed for {slot_name}: {e}, falling back to rule-based")
+            # LLM 失败时回退到规则提取
+            pass
+
     md = markdown.strip()
 
+    # 优先从数据库加载规则
+    if slot_name:
+        db_fields = _load_rule_from_db(slot_name)
+        if db_fields:
+            try:
+                return _extract_from_json_rule(md, db_fields)
+            except Exception as e:
+                logger.warning(f"DB rule extraction failed for {slot_name}: {e}, falling back")
+
+    # 回退到 Python 硬编码函数
     extractors = {
         "approval_extraction": _extract_approval,
         "application_extraction": _extract_application,
@@ -65,6 +131,382 @@ def extract_from_markdown(markdown: str, rule_name: str) -> dict[str, Any]:
     except Exception as e:
         logger.warning(f"Extraction failed for rule {rule_name}: {e}")
         return {}
+
+
+def extract_from_llm(markdown: str, slot_name: str) -> dict[str, Any]:
+    """使用大模型从 OCR markdown 文本中提取字段
+
+    从数据库加载字段定义，构建提示词，调用 LLM API 进行提取。
+    """
+    if not markdown or not markdown.strip():
+        return {}
+
+    # 从数据库加载字段定义
+    fields = _load_rule_from_db(slot_name)
+    if not fields:
+        logger.warning(f"No field definition found for slot {slot_name} in LLM extraction")
+        return {}
+
+    # 查找槽位标签
+    slot_label = slot_name
+    for s in SLOTS:
+        if s["name"] == slot_name:
+            slot_label = s["label"]
+            break
+
+    # 构建字段描述
+    field_descs = []
+    field_types = {}
+    for field in fields:
+        name = field.get("name", "")
+        field_type = field.get("type", "text")
+        if name:
+            field_descs.append(f"- \"{name}\" (类型: {field_type})")
+            field_types[name] = field_type
+
+    # 构建示例 JSON 结构
+    example_json = "{" + ", ".join(f'"{f.get("name", "")}": ""' for f in fields if f.get("name")) + "}"
+
+    # 检查是否有自定义提示词模板
+    rule = None
+    try:
+        from .models_db import SessionLocal as SL
+        db_tmp = SL()
+        try:
+            rule = db_tmp.query(ExtractionRule).filter(
+                ExtractionRule.slot_name == slot_name,
+                ExtractionRule.enabled == True,
+            ).first()
+        finally:
+            db_tmp.close()
+    except Exception:
+        pass
+
+    if rule and rule.llm_prompt_template:
+        # 使用自定义提示词模板，支持 {markdown} 占位符
+        system_prompt = "你是一个文档信息提取助手。"
+        user_prompt = rule.llm_prompt_template.replace("{markdown}", markdown.strip()).replace("{slot_name}", slot_name).replace("{slot_label}", slot_label)
+    else:
+        system_prompt = "你是一个文档信息提取助手。请从 OCR 识别的文本中提取指定字段，并以 JSON 格式返回结果。"
+        user_prompt = f"""请从以下 OCR 识别文本中提取指定字段。
+
+文档类型：{slot_label}（{slot_name}）
+需要提取的字段：
+{chr(10).join(field_descs)}
+
+注意：
+- 如果某个字段在文本中找不到，该字段值设为 null
+- 日期格式统一为 YYYY-MM-DD
+- 数字字段提取纯数值（不含千分位分隔符和货币符号）
+- 请仅返回 JSON 格式的结果，不要包含任何其他文字说明
+- JSON 格式示例：{example_json}
+
+OCR 文本内容：
+---
+{markdown.strip()}
+---"""
+
+    # 读取 LLM 配置
+    base_url = os.environ.get("ANTHROPIC_BASE_URL", "http://192.168.231.1:1235")
+    api_key = os.environ.get("ANTHROPIC_AUTH_TOKEN", "lmstudio")
+    model = os.environ.get("LLM_MODEL", "Qwen/Qwen3.6-27B")
+    temperature = float(os.environ.get("LLM_LLM_EXTRACT_TEMPERATURE", "0.1"))
+    max_tokens = int(os.environ.get("LLM_LLM_EXTRACT_MAX_TOKENS", "4096"))
+
+    logger.info(f"LLM extraction: slot={slot_name}, base_url={base_url}, model={model}")
+
+    try:
+        # 在同步上下文中运行异步调用
+        from src.llm_client import llm_messages_create_async, extract_text_from_response
+
+        loop = asyncio.new_event_loop()
+        try:
+            response_data = loop.run_until_complete(
+                llm_messages_create_async(
+                    base_url=base_url,
+                    api_key=api_key,
+                    model=model,
+                    max_tokens=max_tokens,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": user_prompt}],
+                    temperature=temperature,
+                )
+            )
+        finally:
+            loop.close()
+
+        text = extract_text_from_response(response_data)
+        if not text:
+            logger.warning(f"LLM returned empty response for {slot_name}")
+            return {}
+
+        # 尝试从响应中提取 JSON（处理可能包含 ```json 标记的情况）
+        import re as _re
+        json_match = _re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, _re.DOTALL)
+        if json_match:
+            text = json_match.group(1)
+
+        result = json.loads(text.strip())
+        if not isinstance(result, dict):
+            logger.warning(f"LLM returned non-dict JSON for {slot_name}")
+            return {}
+
+        # 对字段进行类型转换
+        for name, ftype in field_types.items():
+            val = result.get(name)
+            if val is None:
+                continue
+            if ftype == "number":
+                if isinstance(val, str):
+                    result[name] = _extract_number(val)
+                elif isinstance(val, (int, float)):
+                    result[name] = float(val)
+            elif ftype == "date":
+                if isinstance(val, str):
+                    result[name] = _parse_date(val)
+
+        # 保存完整文本回复
+        result["_llm_raw_text"] = text
+        result["_llm_text"] = text
+        logger.info(f"LLM extraction success for {slot_name}: {len(result)} fields")
+        return result
+
+    except Exception as e:
+        logger.error(f"LLM extraction failed for {slot_name}: {e}")
+        return {}
+
+
+async def extract_from_llm_async(markdown: str, slot_name: str) -> dict[str, Any]:
+    """异步版本：使用大模型从 OCR markdown 文本中提取字段"""
+    if not markdown or not markdown.strip():
+        return {}
+
+    # 从数据库加载字段定义
+    fields = _load_rule_from_db(slot_name)
+    if not fields:
+        logger.warning(f"No field definition found for slot {slot_name} in LLM extraction")
+        return {}
+
+    # 查找槽位标签
+    slot_label = slot_name
+    for s in SLOTS:
+        if s["name"] == slot_name:
+            slot_label = s["label"]
+            break
+
+    # 构建字段描述
+    field_descs = []
+    field_types = {}
+    for field in fields:
+        name = field.get("name", "")
+        field_type = field.get("type", "text")
+        if name:
+            field_descs.append(f"- \"{name}\" (类型: {field_type})")
+            field_types[name] = field_type
+
+    # 构建示例 JSON 结构
+    example_json = "{" + ", ".join(f'"{f.get("name", "")}": ""' for f in fields if f.get("name")) + "}"
+
+    # 检查是否有自定义提示词模板
+    rule = None
+    try:
+        from .models_db import SessionLocal as SL
+        db_tmp = SL()
+        try:
+            rule = db_tmp.query(ExtractionRule).filter(
+                ExtractionRule.slot_name == slot_name,
+                ExtractionRule.enabled == True,
+            ).first()
+        finally:
+            db_tmp.close()
+    except Exception:
+        pass
+
+    if rule and rule.llm_prompt_template:
+        # 使用自定义提示词模板，支持 {markdown} 占位符
+        system_prompt = "你是一个文档信息提取助手。"
+        user_prompt = rule.llm_prompt_template.replace("{markdown}", markdown.strip()).replace("{slot_name}", slot_name).replace("{slot_label}", slot_label)
+    else:
+        system_prompt = "你是一个文档信息提取助手。请从 OCR 识别的文本中提取指定字段，并以 JSON 格式返回结果。"
+        user_prompt = f"""请从以下 OCR 识别文本中提取指定字段。
+
+文档类型：{slot_label}（{slot_name}）
+需要提取的字段：
+{chr(10).join(field_descs)}
+
+注意：
+- 如果某个字段在文本中找不到，该字段值设为 null
+- 日期格式统一为 YYYY-MM-DD
+- 数字字段提取纯数值（不含千分位分隔符和货币符号）
+- 请仅返回 JSON 格式的结果，不要包含任何其他文字说明
+- JSON 格式示例：{example_json}
+
+OCR 文本内容：
+---
+{markdown.strip()}
+---"""
+
+    # 读取 LLM 配置
+    base_url = os.environ.get("ANTHROPIC_BASE_URL", "http://192.168.231.1:1235")
+    api_key = os.environ.get("ANTHROPIC_AUTH_TOKEN", "lmstudio")
+    model = os.environ.get("LLM_MODEL", "Qwen/Qwen3.6-27B")
+    temperature = float(os.environ.get("LLM_LLM_EXTRACT_TEMPERATURE", "0.1"))
+    max_tokens = int(os.environ.get("LLM_LLM_EXTRACT_MAX_TOKENS", "4096"))
+
+    logger.info(f"LLM extraction (async): slot={slot_name}, base_url={base_url}, model={model}")
+
+    try:
+        from src.llm_client import llm_messages_create_async, extract_text_from_response
+
+        response_data = await llm_messages_create_async(
+            base_url=base_url,
+            api_key=api_key,
+            model=model,
+            max_tokens=max_tokens,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+            temperature=temperature,
+        )
+
+        text = extract_text_from_response(response_data)
+        if not text:
+            logger.warning(f"LLM returned empty response for {slot_name}")
+            return {}
+
+        # 尝试从响应中提取 JSON
+        import re as _re
+        json_match = _re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, _re.DOTALL)
+        if json_match:
+            text = json_match.group(1)
+
+        result = json.loads(text.strip())
+        if not isinstance(result, dict):
+            logger.warning(f"LLM returned non-dict JSON for {slot_name}")
+            return {}
+
+        # 对字段进行类型转换
+        for name, ftype in field_types.items():
+            val = result.get(name)
+            if val is None:
+                continue
+            if ftype == "number":
+                if isinstance(val, str):
+                    result[name] = _extract_number(val)
+                elif isinstance(val, (int, float)):
+                    result[name] = float(val)
+            elif ftype == "date":
+                if isinstance(val, str):
+                    result[name] = _parse_date(val)
+
+        # 保存完整文本回复
+        result["_llm_raw_text"] = text
+        result["_llm_text"] = text
+        logger.info(f"LLM extraction (async) success for {slot_name}: {len(result)} fields")
+        return result
+
+    except Exception as e:
+        logger.error(f"LLM extraction (async) failed for {slot_name}: {e}")
+        return {}
+
+
+# 异步提取任务管理
+_extract_tasks: dict[str, dict] = {}
+
+
+async def _run_async_extract(serial_number: str):
+    """后台异步执行 LLM 提取"""
+    from .models_db import SessionLocal
+    db = SessionLocal()
+    try:
+        record = db.query(ReceptionRecord).filter(
+            ReceptionRecord.serial_number == serial_number
+        ).first()
+        if not record:
+            return
+
+        # 更新状态为提取中
+        record.ocr_status = "extracting"
+        record.review_status = "pending"
+        db.commit()
+
+        results = []
+        for slot in SLOTS:
+            ocr = (
+                db.query(OCRRecord)
+                .filter(OCRRecord.serial_number == serial_number, OCRRecord.slot_name == slot["name"])
+                .order_by(OCRRecord.created_at.desc())
+                .first()
+            )
+            if not ocr or not ocr.markdown:
+                results.append({"slot_name": slot["name"], "status": "skipped", "reason": "无 OCR 数据"})
+                continue
+
+            try:
+                extracted = await extract_from_llm_async(ocr.markdown, slot["name"])
+                # 过滤 _llm_raw_text 字段，单独保存完整文本
+                raw_text = extracted.pop("_llm_raw_text", "")
+                extracted_json = json.dumps(extracted, ensure_ascii=False)
+
+                # 更新或创建提取记录
+                existing_ef = (
+                    db.query(ExtractedField)
+                    .filter(ExtractedField.serial_number == serial_number, ExtractedField.slot_name == slot["name"])
+                    .order_by(ExtractedField.created_at.desc())
+                    .first()
+                )
+                if existing_ef:
+                    existing_ef.extracted_json = extracted_json
+                    existing_ef.status = "extracted"
+                    existing_ef.extraction_rule = f"llm_{slot['rule']}"
+                    existing_ef.updated_at = datetime.now().isoformat()
+                else:
+                    ef = ExtractedField(
+                        serial_number=serial_number,
+                        slot_name=slot["name"],
+                        ocr_record_id=ocr.id,
+                        extracted_json=extracted_json,
+                        extraction_rule=f"llm_{slot['rule']}",
+                        status="extracted",
+                    )
+                    db.add(ef)
+                db.commit()
+                results.append({"slot_name": slot["name"], "status": "success", "fields": extracted})
+            except Exception as e:
+                logger.error(f"Async extraction failed for {slot['name']}: {e}")
+                results.append({"slot_name": slot["name"], "status": "error", "reason": str(e)})
+
+        # 更新状态
+        record.ocr_status = "completed"
+        db.commit()
+        _extract_tasks[serial_number] = {"status": "completed", "results": results}
+
+    except Exception as e:
+        logger.error(f"Async extraction failed for {serial_number}: {e}")
+        _extract_tasks[serial_number] = {"status": "error", "error": str(e)}
+    finally:
+        db.close()
+
+
+def _extract_from_json_rule(md: str, fields: list[dict]) -> dict[str, Any]:
+    """从 JSON 规则定义执行字段提取"""
+    result = {}
+    for field in fields:
+        name = field.get("name", "")
+        keywords = field.get("keywords", [])
+        field_type = field.get("type", "text")
+
+        if not name or not keywords:
+            continue
+
+        value = _kv_extract(md, keywords)
+
+        if field_type == "number":
+            value = _extract_number(value)
+        elif field_type == "date":
+            value = _parse_date(value)
+
+        result[name] = value
+    return result
 
 
 def _kv_extract(md: str, key_patterns: list[str]) -> Optional[str]:

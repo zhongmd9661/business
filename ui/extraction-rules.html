@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提取规则配置</title>
+<meta http-equiv="Cache-Control" content="no-cache">
+<style>
+:root{--c1:#1a1a2e;--c2:#6b7280;--cb:#e5e7eb;--bg:#fff;--bg2:#f9fafb;--ac:#3b82f6;--acl:#eff6ff;--su:#10b981;--sub:#ecfdf5;--wa:#f59e0b;--wab:#fffbeb;--er:#ef4444;--erb:#fef2f2;--r:10px;--sp:16px;--f:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,PingFang SC,Microsoft YaHei,sans-serif;--sh:0 1px 3px rgba(0,0,0,.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--f);font-size:14px;color:var(--c1);background:var(--bg2);line-height:1.5;display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--c1);color:#fff;padding:20px 0;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar h2{padding:0 20px 12px;font-size:15px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:8px}
+.sl-item{padding:10px 20px;cursor:pointer;font-size:13px;transition:all 150ms;border-left:3px solid transparent}
+.sl-item:hover{background:rgba(255,255,255,.1)}
+.sl-item.on{background:rgba(59,130,246,.3);border-left-color:var(--ac)}
+.main{flex:1;padding:24px;overflow-y:auto}
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.ttl{font-size:18px;font-weight:700}
+.btn{padding:8px 20px;border-radius:var(--r);border:1px solid var(--cb);background:var(--bg);cursor:pointer;font-size:13px;font-family:var(--f);font-weight:600}
+.bp{background:var(--ac);color:#fff;border-color:var(--ac)}.bp:hover{background:#2563eb}
+.bd{background:var(--er);color:#fff;border-color:var(--er)}.bd:hover{background:#dc2626}
+.bs{background:var(--su);color:#fff;border-color:var(--su)}.bs:hover{background:#059669}
+.cd{background:var(--bg);border-radius:14px;border:1px solid var(--cb);box-shadow:var(--sh);padding:var(--sp);margin-bottom:20px}
+.ct{font-weight:600;margin-bottom:12px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--cb);font-size:13px}
+th{background:var(--bg2);font-weight:600;color:var(--c2);font-size:12px}
+input[type="text"],select,textarea{padding:6px 10px;border:1px solid var(--cb);border-radius:6px;font-size:13px;font-family:var(--f);outline:none;transition:border 150ms}
+input[type="text"]:focus,select:focus,textarea:focus{border-color:var(--ac)}
+input[type="text"]{width:100%}
+select{min-width:80px}
+.del-btn{background:none;border:none;color:var(--er);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:4px}
+.del-btn:hover{background:var(--erb)}
+.add-row{padding:10px;display:flex;gap:8px;align-items:center}
+.mt{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center;padding:24px}
+.mt.show{display:flex}
+.md{background:var(--bg);border-radius:14px;width:90%;max-width:800px;max-height:85vh;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.mh{display:flex;justify-content:space-between;align-items:center;padding:var(--sp);border-bottom:1px solid var(--cb);position:sticky;top:0;background:var(--bg);z-index:1}
+.mx{background:none;border:none;font-size:24px;cursor:pointer;color:var(--c2)}
+.mb{padding:var(--sp)}
+textarea{width:100%;min-height:200px;padding:var(--sp);border:1px solid var(--cb);border-radius:var(--r);font-size:13px;font-family:var(--f);resize:vertical;outline:none}
+textarea:focus{border-color:var(--ac)}
+.preview-result{background:var(--bg2);padding:var(--sp);border-radius:var(--r);font-size:13px;margin-top:12px}
+.fr{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)}
+.fk{color:var(--c2)}.fv{font-weight:600}
+.ts{position:fixed;bottom:24px;right:24px;padding:12px 24px;background:var(--su);color:#fff;border-radius:var(--r);font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.08);opacity:0;transform:translateY(10px);transition:all 300ms;pointer-events:none;z-index:999}
+.ts.show{opacity:1;transform:translateY(0)}
+.kw-input{min-width:200px}
+.empty{text-align:center;padding:40px;color:var(--c2);font-size:13px}
+
+/* Tab styles */
+.tabs{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--cb);border-radius:var(--r);overflow:hidden}
+.tab{padding:10px 24px;cursor:pointer;font-size:13px;font-weight:600;background:var(--bg);color:var(--c2);border-right:1px solid var(--cb);transition:all 150ms;user-select:none}
+.tab:last-child{border-right:none}
+.tab:hover{background:var(--bg2)}
+.tab.on{background:var(--ac);color:#fff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Toggle switch */
+.toggle-wrap{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.toggle{position:relative;width:44px;height:24px;background:var(--cb);border-radius:12px;cursor:pointer;transition:background 200ms;flex-shrink:0}
+.toggle.on{background:var(--su)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform 200ms;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{transform:translateX(20px)}
+.toggle-label{font-size:14px;font-weight:600}
+
+/* LLM config sections */
+.llm-section{margin-bottom:20px}
+.llm-section-title{font-weight:600;font-size:13px;margin-bottom:8px;color:var(--c2)}
+.llm-hint{font-size:12px;color:var(--c2);margin-top:6px;line-height:1.6}
+.llm-status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.llm-status.enabled{background:var(--sub);color:var(--su)}
+.llm-status.disabled{background:var(--bg2);color:var(--c2)}
+
+@media(max-width:768px){.sidebar{width:160px}.main{padding:16px}.kw-input{min-width:120px}}
+</style>
+</head>
+<body>
+<div class="sidebar">
+<h2>📋 提取规则配置</h2>
+<div id="authBar" style="padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.1);display:none">
+<a href="/audit" style="color:#93c5fd;font-size:12px;text-decoration:none" onclick="event.stopPropagation()">→ 点击登录</a>
+</div>
+<div id="slotList"></div>
+</div>
+<div class="main">
+<div class="hdr"><h1 class="ttl" id="ttl">选择槽位</h1><div style="display:flex;gap:8px">
+<button class="btn bp" onclick="saveRule()">💾 保存</button>
+<button class="btn" onclick="openPreview('keyword')">🔍 关键词预览</button>
+<button class="btn" onclick="openPreview('llm')">🤖 LLM 预览</button>
+</div></div>
+
+<!-- Tabs -->
+<div class="tabs">
+<div class="tab on" id="tabKeyword" onclick="switchTab('keyword')">🔑 关键词规则</div>
+<div class="tab" id="tabLLM" onclick="switchTab('llm')">🤖 LLM 大模型提取</div>
+</div>
+
+<!-- Tab 1: Keyword rules (existing) -->
+<div class="tab-content active" id="contentKeyword">
+<div class="cd"><div class="ct">字段列表</div>
+<div id="fieldTable"></div>
+<div class="add-row">
+<button class="btn bp" onclick="addField()">+ 添加字段</button>
+</div>
+</div>
+<div class="cd"><div class="ct">说明</div>
+<p style="font-size:13px;color:var(--c2);line-height:1.8">
+• <b>字段名</b>：提取后输出的字段名称<br>
+• <b>关键词</b>：在 OCR 文本中搜索的关键词（逗号分隔多个，按顺序匹配，匹配到第一个即返回）<br>
+• <b>类型</b>：<code>text</code> 纯文本 / <code>number</code> 提取数字 / <code>date</code> 解析为日期<br>
+• 匹配模式：支持 <code>关键词: 值</code>、<code>关键词 = 值</code>、<code>| 关键词 | 值 |</code> 等格式
+</p>
+</div>
+</div>
+
+<!-- Tab 2: LLM extraction config -->
+<div class="tab-content" id="contentLLM">
+<div class="cd">
+<div class="ct">LLM 大模型提取配置</div>
+
+<div class="toggle-wrap">
+<div class="toggle" id="llmToggle" onclick="toggleLLM()"></div>
+<span class="toggle-label" id="llmToggleLabel">启用大模型提取</span>
+<span class="llm-status disabled" id="llmStatusBadge">未启用</span>
+</div>
+<p style="font-size:13px;color:var(--c2);line-height:1.8;margin-bottom:16px">
+启用后，该槽位的字段提取将优先使用大模型（LLM）进行智能识别，而非关键词匹配。大模型能更好地理解文档语义，提取准确率更高。
+</p>
+
+<div class="llm-section">
+<div class="llm-section-title">自定义提示词模板（可选）</div>
+<textarea id="llmPrompt" placeholder="留空则使用默认提示词。支持占位符：&#10;{markdown} - OCR 识别文本内容&#10;{slot_name} - 槽位名称&#10;{slot_label} - 槽位显示名称" style="min-height:180px"></textarea>
+<div class="llm-hint">
+💡 提示词模板将指导大模型如何提取字段。留空时使用系统默认提示词，已包含字段类型信息和格式要求。
+</div>
+</div>
+
+<div class="llm-section">
+<div class="llm-section-title">恢复默认提示词</div>
+<button class="btn" onclick="restoreDefaultPrompt()">📝 查看默认提示词</button>
+<button class="btn bp" style="margin-left:8px" onclick="clearPrompt()">清除自定义提示词</button>
+</div>
+
+<div class="llm-section">
+<div class="llm-section-title">当前配置提取的字段</div>
+<div id="llmFieldList"></div>
+</div>
+</div>
+
+<div class="cd"><div class="ct">LLM 提取说明</div>
+<p style="font-size:13px;color:var(--c2);line-height:1.8">
+• 大模型提取利用 LLM 的语义理解能力，对非结构化文档的提取效果通常优于关键词匹配<br>
+• 提取的字段定义与关键词规则共享（上方的字段列表）<br>
+• 大模型地址、API Key、模型名称等在 <b>系统设置</b> 中统一配置<br>
+• 启用后，OCR 完成时会自动使用 LLM 进行字段提取<br>
+• 可在预览测试中对比 "关键词预览" 和 "LLM 预览" 的效果差异
+</p>
+</div>
+</div>
+</div>
+
+<!-- 预览弹窗 -->
+<div class="mt" id="previewModal" onclick="if(event.target===this)closePreview()">
+<div class="md" onclick="event.stopPropagation()">
+<div class="mh"><h3 id="previewTitle">预览测试</h3><button class="mx" onclick="closePreview()">&times;</button></div>
+<div class="mb">
+<p style="margin-bottom:8px;font-size:13px;font-weight:600">粘贴 OCR 文本（Markdown）</p>
+<textarea id="ocrText" placeholder="在此粘贴 OCR 识别的文本内容..."></textarea>
+<div style="margin-top:12px;display:flex;gap:8px">
+<button class="btn bp" id="runPreviewBtn" onclick="runPreview()">运行提取</button>
+<button class="btn" onclick="loadSampleOCR()">加载示例 OCR</button>
+</div>
+<div id="previewStatus" style="margin-top:8px;font-size:12px;color:var(--c2);display:none"></div>
+<div class="preview-result" id="previewResult" style="display:none"></div>
+</div></div></div>
+<div id="toast" class="ts"></div>
+<script>
+const A=window.location.origin;
+let slots=[], currentSlot=null, fields=[];
+let currentPreviewMode='keyword'; // 'keyword' or 'llm'
+
+function authHeaders(){
+const token=localStorage.getItem('auth_token');
+return token?{'Authorization':'Bearer '+token}:{};}
+
+async function load(){
+try{
+const r=await fetch(A+'/api/admin/extraction-rules',{headers:authHeaders()});
+if(r.status===401){document.getElementById('authBar').style.display='';return}
+slots=await r.json();
+renderSlotList();
+if(slots.length)selectSlot(slots[0].slot_name);
+}catch(e){document.getElementById('ttl').textContent='加载失败: '+e.message}}
+
+function renderSlotList(){
+document.getElementById('slotList').innerHTML=slots.map(s=>
+'<div class="sl-item'+(currentSlot&&currentSlot.slot_name===s.slot_name?' on':'')+'" onclick="selectSlot(\''+esc(s.slot_name)+'\')">'+esc(s.slot_name)+(s.enabled?'':' <span style="color:#f87171;font-size:11px">(已禁用)</span>')+'</div>'
+).join('')||'<div class="empty" style="color:#9ca3af">暂无规则</div>'}
+
+function selectSlot(name){
+const s=slots.find(x=>x.slot_name===name);
+if(!s)return;
+currentSlot=s;fields=s.fields||[];
+document.getElementById('ttl').textContent=s.slot_name+' — 提取规则';
+renderSlotList();renderFields();renderLLMConfig()}
+
+function renderFields(){
+if(!fields.length){document.getElementById('fieldTable').innerHTML='<p class="empty">暂无字段，点击下方按钮添加</p>';return}
+let html='<table><thead><tr><th style="width:140px">字段名</th><th>关键词（逗号分隔）</th><th style="width:100px">类型</th><th style="width:50px"></th></tr></thead><tbody>';
+fields.forEach((f,i)=>{
+html+='<tr>';
+html+='<td><input type="text" value="'+esc(f.name)+'" onchange="fields['+i+'].name=this.value"></td>';
+html+='<td><input type="text" class="kw-input" value="'+(f.keywords||[]).map(k=>esc(k)).join(',')+'" onchange="fields['+i+'].keywords=this.value.split(\',\').map(s=>s.trim()).filter(Boolean)"></td>';
+html+='<td><select onchange="fields['+i+'].type=this.value">';
+['text','number','date'].forEach(t=>{html+='<option value="'+t+'"'+(f.type===t?' selected':'')+'>'+t+'</option>'});
+html+='</select></td>';
+html+='<td><button class="del-btn" onclick="delField('+i+')">&times;</button></td>';
+html+='</tr>'});
+html+='</tbody></table>';
+document.getElementById('fieldTable').innerHTML=html}
+
+function addField(){fields.push({name:'新字段',keywords:['关键词'],type:'text'});renderFields();renderLLMFieldList()}
+function delField(i){fields.splice(i,1);renderFields();renderLLMFieldList()}
+
+// ---- Tab switching ----
+function switchTab(tab){
+document.getElementById('tabKeyword').classList.toggle('on', tab==='keyword');
+document.getElementById('tabLLM').classList.toggle('on', tab==='llm');
+document.getElementById('contentKeyword').classList.toggle('active', tab==='keyword');
+document.getElementById('contentLLM').classList.toggle('active', tab==='llm');}
+
+// ---- LLM Config ----
+function renderLLMConfig(){
+if(!currentSlot)return;
+const useLlm=currentSlot.use_llm||false;
+const toggle=document.getElementById('llmToggle');
+const badge=document.getElementById('llmStatusBadge');
+toggle.classList.toggle('on', useLlm);
+badge.className='llm-status '+(useLlm?'enabled':'disabled');
+badge.textContent=useLlm?'已启用':'未启用';
+document.getElementById('llmPrompt').value=currentSlot.llm_prompt_template||'';
+renderLLMFieldList()}
+
+function toggleLLM(){
+if(!currentSlot)return;
+currentSlot.use_llm=!currentSlot.use_llm;
+renderLLMConfig();}
+
+function renderLLMFieldList(){
+const el=document.getElementById('llmFieldList');
+if(!fields.length){el.innerHTML='<p class="empty">暂无字段配置</p>';return}
+el.innerHTML='<table><thead><tr><th>字段名</th><th>类型</th><th>关键词</th></tr></thead><tbody>'+
+fields.map(f=>'<tr><td>'+esc(f.name)+'</td><td><code>'+esc(f.type||'text')+'</code></td><td style="color:var(--c2)">'+((f.keywords||[]).map(k=>esc(k)).join(', ')||'—')+'</td></tr>').join('')+
+'</tbody></table>';}
+
+function restoreDefaultPrompt(){
+if(!currentSlot)return;
+const slotLabel=currentSlot.slot_name;
+const fieldDescs=fields.map(f=>'- "'+f.name+'" (类型: '+(f.type||'text')+')').join('\n');
+const exampleJson='{' + fields.filter(f=>f.name).map(f=>'"'+f.name+'": ""').join(', ') + '}';
+const prompt='请从以下 OCR 识别文本中提取指定字段。\n\n文档类型：'+slotLabel+'\n需要提取的字段：\n'+fieldDescs+'\n\n注意：\n- 如果某个字段在文本中找不到，该字段值设为 null\n- 日期格式统一为 YYYY-MM-DD\n- 数字字段提取纯数值（不含千分位分隔符和货币符号）\n- 请仅返回 JSON 格式的结果，不要包含任何其他文字说明\n- JSON 格式示例：'+exampleJson+'\n\nOCR 文本内容：\n---\n{markdown}\n---';
+document.getElementById('llmPrompt').value=prompt;
+toast('已恢复默认提示词')}
+
+function clearPrompt(){
+document.getElementById('llmPrompt').value='';
+if(currentSlot)currentSlot.llm_prompt_template=null;
+toast('已清除自定义提示词')}
+
+// ---- Save ----
+async function saveRule(){
+if(!currentSlot)return;
+const btn=event.target;btn.disabled=true;btn.textContent='保存中...';
+try{
+const payload={
+slot_name:currentSlot.slot_name,
+rule_name:currentSlot.rule_name,
+fields:fields,
+enabled:currentSlot.enabled!==false,
+use_llm:currentSlot.use_llm||false,
+llm_prompt_template:document.getElementById('llmPrompt').value||null,
+};
+const r=await fetch(A+'/api/admin/extraction-rules',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},authHeaders()),body:JSON.stringify(payload)});
+const d=await r.json();
+if(d.id){
+const idx=slots.findIndex(s=>s.slot_name===currentSlot.slot_name);
+if(idx>=0){slots[idx]=d;currentSlot=d}
+else slots.push(d);
+renderSlotList();renderLLMConfig();
+toast('保存成功')}
+else toast('保存失败')}
+catch(e){toast('错误: '+e.message)}
+btn.disabled=false;btn.textContent='💾 保存'}
+
+// ---- Preview ----
+function openPreview(mode){
+currentPreviewMode=mode;
+document.getElementById('previewTitle').textContent=mode==='llm'?'🤖 LLM 提取预览':'🔍 关键词提取预览';
+document.getElementById('previewModal').classList.add('show');
+document.getElementById('previewResult').style.display='none';
+document.getElementById('previewStatus').style.display='none';}
+function closePreview(){document.getElementById('previewModal').classList.remove('show')}
+
+async function runPreview(){
+const md=document.getElementById('ocrText').value;
+if(!md.trim()){toast('请输入 OCR 文本');return}
+const btn=document.getElementById('runPreviewBtn');
+const status=document.getElementById('previewStatus');
+btn.disabled=true;btn.textContent='提取中...';
+status.style.display='';status.textContent=currentPreviewMode==='llm'?'正在调用大模型提取，请稍候...':'正在提取...';
+try{
+let url, body;
+if(currentPreviewMode==='llm'){
+url=A+'/api/admin/extraction-rules/'+encodeURIComponent(currentSlot.slot_name)+'/llm-preview';
+body={markdown:md, fields:fields};
+if(document.getElementById('llmPrompt').value.trim()){
+body.prompt_template=document.getElementById('llmPrompt').value.trim();}}
+else{
+url=A+'/api/admin/extraction-rules/'+encodeURIComponent(currentSlot.slot_name)+'/preview';
+body={markdown:md, fields:fields};}
+const r=await fetch(url,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},authHeaders()),body:JSON.stringify(body)});
+const d=await r.json();
+status.style.display='none';
+const res=document.getElementById('previewResult');res.style.display='';
+const fieldsObj=d.fields||{};
+const entries=Object.entries(fieldsObj).filter(([k])=>!k.startsWith('_'));
+if(entries.length){
+res.innerHTML=entries.map(([k,v])=>'<div class="fr"><span class="fk">'+esc(k)+'</span><span class="fv">'+esc(String(v==null?'':v))+'</span></div>').join('');
+// Show LLM raw text if available
+if(currentPreviewMode==='llm' && fieldsObj._llm_text){
+res.innerHTML+='<div style="margin-top:16px;border-top:1px solid var(--cb);padding-top:12px">';
+res.innerHTML+='<div class="llm-section-title">🤖 LLM 原始回复</div>';
+res.innerHTML+='<pre style="background:var(--bg2);padding:12px;border-radius:8px;font-size:12px;max-height:300px;overflow:auto;white-space:pre-wrap">'+esc(fieldsObj._llm_text)+'</pre>';
+res.innerHTML+='</div>';}
+}else{
+res.innerHTML='<p class="empty">未提取到任何字段</p>';}
+toast('提取完成')}
+catch(e){status.style.display='none';toast('错误: '+e.message)}
+btn.disabled=false;btn.textContent='运行提取'}
+
+async function loadSampleOCR(){
+if(!currentSlot)return;
+try{
+const r=await fetch(A+'/api/audit-detail/list?limit=100');
+const records=await r.json();
+for(const rec of records){
+const detail=await fetch(A+'/api/audit-detail/'+encodeURIComponent(rec.serial_number));
+const d=await detail.json();
+const ocr=d.ocr_files.find(f=>f.name===currentSlot.slot_name&&f.status==='success');
+if(ocr){
+const ocrDetail=await fetch(A+'/api/ocr/records/'+ocr.ocr_record_id);
+const ocrData=await ocrDetail.json();
+document.getElementById('ocrText').value=ocrData.markdown||'';
+toast('已加载示例 OCR');return}}
+toast('未找到示例 OCR 数据')}
+catch(e){toast('加载失败: '+e.message)}}
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.background=/成功|完成/.test(m)?'var(--su)':'var(--er)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+function esc(s){if(s==null)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
+
+document.addEventListener('DOMContentLoaded',load);
+</script>
+</body>
+</html>

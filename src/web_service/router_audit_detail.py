@@ -1,13 +1,15 @@
 """审核详情页 API — 提交记录的 OCR 管理、字段提取、审核校验"""
+import asyncio
 import hashlib
 import json
+import os
 import shutil
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile, HTTPException, Query
 from fastapi.responses import FileResponse
 from loguru import logger
 from sqlalchemy.orm import Session
@@ -18,6 +20,7 @@ from .models_db import (
 )
 from .service_audit import (
     SLOTS, SLOT_NAMES, extract_from_markdown, run_review, generate_review_report,
+    _extract_tasks, _run_async_extract,
 )
 from .router_ocr import _detect_file_type, _ocr_image_file, _run_ocr, _temp_dir, _files_dir, _ocr_semaphore
 
@@ -159,6 +162,7 @@ def get_audit_detail(serial_number: str, db: Session = Depends(get_db)):
             "field_id": ef.id if ef else None,
             "status": ef.status if ef else "missing",
             "fields": data,
+            "llm_text": ef.error_message if ef and ef.error_message else "",
         })
 
     # 审核结果
@@ -219,6 +223,7 @@ def get_audit_detail(serial_number: str, db: Session = Depends(get_db)):
 @router.post("/audit-detail/{serial_number}/ocr")
 async def upload_ocr_file(
     serial_number: str,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     slot_name: str = Form(""),
     username: str = Form(""),
@@ -346,6 +351,13 @@ async def upload_ocr_file(
         record.ocr_status = "completed"
         db.commit()
 
+        # 如果启用了自动 LLM 提取，触发后台提取任务
+        auto_extract = os.environ.get("LLM_LLM_EXTRACT_AUTO", "True").lower() in ("true", "1", "yes")
+        if auto_extract:
+            _extract_tasks[serial_number] = {"status": "pending", "results": [], "ocr_count": ocr_count}
+            background_tasks.add_task(_run_async_extract, serial_number)
+            logger.info(f"Auto-extract triggered for {serial_number}")
+
         return {
             "record_id": new_record.id,
             "status": "success",
@@ -373,11 +385,15 @@ async def upload_ocr_file(
 def extract_fields(
     serial_number: str,
     slot_name: Optional[str] = Query(None),
+    method: str = Query("rule"),
     db: Session = Depends(get_db),
 ):
     """触发字段提取。
     如果指定 slot_name，只提取该槽位；否则提取所有已有 OCR 的槽位
+    method: 提取方式 — "rule"（规则提取，默认）或 "llm"（大模型提取）
     """
+    if method not in ("rule", "llm"):
+        raise HTTPException(400, f"无效的提取方法: {method}，可选值: rule, llm")
     record = db.query(ReceptionRecord).filter(
         ReceptionRecord.serial_number == serial_number
     ).first()
@@ -405,7 +421,8 @@ def extract_fields(
             continue
 
         try:
-            extracted = extract_from_markdown(ocr.markdown, slot["rule"])
+            extracted = extract_from_markdown(ocr.markdown, slot["rule"], slot["name"], method=method)
+            llm_text = extracted.pop("_llm_text", "")  # 取出原始文本，不存入 extracted_json
             extracted_json = json.dumps(extracted, ensure_ascii=False)
 
             # 更新或创建提取记录
@@ -419,6 +436,7 @@ def extract_fields(
             if existing_ef:
                 existing_ef.extracted_json = extracted_json
                 existing_ef.status = "extracted"
+                existing_ef.extraction_rule = f"{method}_{slot['rule']}"
                 existing_ef.updated_at = datetime.now().isoformat()
                 ef_id = existing_ef.id
             else:
@@ -427,7 +445,7 @@ def extract_fields(
                     slot_name=slot["name"],
                     ocr_record_id=ocr.id,
                     extracted_json=extracted_json,
-                    extraction_rule=slot["rule"],
+                    extraction_rule=f"{method}_{slot['rule']}",
                     status="extracted",
                 )
                 db.add(ef)
@@ -440,6 +458,7 @@ def extract_fields(
                 "status": "success",
                 "field_id": ef_id,
                 "fields": extracted,
+                "llm_text": llm_text if method == "llm" else "",
             })
 
         except Exception as e:
@@ -447,6 +466,57 @@ def extract_fields(
             results.append({"slot_name": slot["name"], "status": "error", "reason": str(e)})
 
     return {"serial_number": serial_number, "results": results}
+
+
+@router.post("/audit-detail/{serial_number}/extract-async")
+async def extract_fields_async(
+    serial_number: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """后台异步触发 LLM 字段提取（全部 9 个槽位）。
+    立即返回，前端通过 extract-status 轮询结果。
+    """
+    record = db.query(ReceptionRecord).filter(
+        ReceptionRecord.serial_number == serial_number
+    ).first()
+    if not record:
+        raise HTTPException(404, f"未找到流水号 {serial_number}")
+
+    # 检查是否有 OCR 数据
+    ocr_count = (
+        db.query(OCRRecord)
+        .filter(OCRRecord.serial_number == serial_number, OCRRecord.status == "success")
+        .count()
+    )
+    if ocr_count == 0:
+        raise HTTPException(400, "没有可用的 OCR 数据，请先上传文件并执行 OCR")
+
+    # 重置提取任务状态
+    _extract_tasks[serial_number] = {"status": "running", "results": [], "ocr_count": ocr_count}
+
+    # 启动后台任务
+    background_tasks.add_task(_run_async_extract, serial_number)
+
+    return {
+        "serial_number": serial_number,
+        "status": "submitted",
+        "message": f"已提交后台提取任务，共 {ocr_count} 个文件待处理",
+    }
+
+
+@router.get("/audit-detail/{serial_number}/extract-status")
+def get_extract_status(serial_number: str):
+    """查询异步提取任务状态"""
+    task = _extract_tasks.get(serial_number)
+    if not task:
+        return {"serial_number": serial_number, "status": "none", "message": "暂无提取任务"}
+    return {
+        "serial_number": serial_number,
+        "status": task["status"],  # running / completed / error
+        "results": task.get("results", []),
+        "error": task.get("error", ""),
+    }
 
 
 # ===================================================================

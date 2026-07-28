@@ -2660,6 +2660,29 @@
           </label>
         </div>
       </div>
+      <!-- 大模型提取设置行 -->
+      <div class="ocr-settings-row" style="background:var(--prl,#f3e8ff);border-color:#e9d5ff">
+        <div class="ocr-setting-group">
+          <span class="ocr-setting-label">🤖 大模型提取：</span>
+          <label class="ocr-radio-label">
+            <input type="checkbox" id="autoExtractToggle" checked>
+            <span class="ocr-radio-custom"></span>
+            OCR 完成后自动提取
+          </label>
+          <label class="ocr-radio-label" onclick="openExtractSettings()">
+            <span class="ocr-radio-custom"></span>
+            ⚙️ 提取设置
+          </label>
+        </div>
+      </div>
+      <!-- 提取汇总 -->
+      <div id="extractSummary" style="display:none;margin-bottom:clamp(8px,1.8vmin,20px);border:1px solid #e9d5ff;border-radius:clamp(8px,1vmin,12px);background:#faf5ff;padding:clamp(10px,1.8vmin,18px);">
+        <div style="font-weight:600;color:#5b21b6;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <span>🤖 大模型提取汇总</span>
+          <span id="extractSummaryStatus" style="font-size:12px;color:#7c3aed;font-weight:normal;"></span>
+        </div>
+        <div id="extractSummaryGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
+      </div>
       <div class="btn-row">
         <button class="btn btn--secondary" onclick="resetAll()">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -2839,6 +2862,26 @@
     </div>
   </div>
 
+  <!-- 大模型提取设置弹窗 -->
+  <div class="ocr-records-modal-overlay" id="extractSettingsOverlay" onclick="document.getElementById('extractSettingsOverlay').classList.remove('visible')">
+    <div class="ocr-records-modal" style="max-width:500px" onclick="event.stopPropagation()">
+      <div class="ocr-records-modal-header">
+        <div class="ocr-records-modal-title">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>大模型提取设置</span>
+        </div>
+        <button class="ocr-modal-close" onclick="document.getElementById('extractSettingsOverlay').classList.remove('visible')">×</button>
+      </div>
+      <div class="ocr-records-modal-body">
+        <div style="padding:16px">
+          <div style="margin-bottom:16px"><label style="font-weight:600;display:block;margin-bottom:4px">温度 (Temperature)</label><input type="number" id="extTemp" min="0" max="1" step="0.1" value="0.1" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;font-size:14px"><div style="font-size:11px;color:#64748b;margin-top:4px">控制随机性，越低越稳定（0-1）</div></div>
+          <div style="margin-bottom:16px"><label style="font-weight:600;display:block;margin-bottom:4px">最大 Token 数</label><input type="number" id="extMaxTokens" min="256" max="8192" step="256" value="4096" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;font-size:14px"></div>
+          <div style="margin-bottom:16px"><label style="font-weight:600;display:block;margin-bottom:4px">OCR 完成后自动提取</label><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="extAutoCheck" checked><span>文件 OCR 识别完成后自动触发大模型提取</span></label></div>
+          <div style="text-align:right"><button class="btn" style="background:#7c3aed;color:#fff;border-color:#7c3aed" onclick="saveExtractSettings()">保存设置</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- 模板查看弹窗 -->
   <div class="tmpl-modal-overlay" id="tmplModalOverlay" onclick="closeTemplateModal(event)">
     <div class="tmpl-modal" onclick="event.stopPropagation()">
@@ -3802,7 +3845,146 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadRecords();
       setupPdfWheelZoom();
+      // 加载 LLM 提取设置
+      loadExtractSettings();
     });
+
+    /* ==================== 大模型提取功能 ==================== */
+    var _extractPollTimer = null;
+
+    async function triggerLlmExtract(serialNumber) {
+      try {
+        var resp = await fetch('/api/audit-detail/' + encodeURIComponent(serialNumber) + '/extract-async', { method: 'POST' });
+        var result = await resp.json();
+        if (result.status === 'submitted') {
+          showExtractSummary('running', serialNumber);
+          startExtractPoll(serialNumber);
+        } else if (result.message) {
+          showExtractSummary('none', serialNumber);
+        }
+      } catch (err) {
+        console.error('触发 LLM 提取失败:', err);
+      }
+    }
+
+    function startExtractPoll(serialNumber) {
+      if (_extractPollTimer) clearInterval(_extractPollTimer);
+      _extractPollTimer = setInterval(async function() {
+        try {
+          var resp = await fetch('/api/audit-detail/' + encodeURIComponent(serialNumber) + '/extract-status');
+          var d = await resp.json();
+          if (d.status === 'completed') {
+            clearInterval(_extractPollTimer);
+            _extractPollTimer = null;
+            showExtractSummary('completed', serialNumber, d.results);
+            // 重新加载完整审核详情
+            if (selectedRecord && selectedRecord.serial_number === serialNumber) {
+              loadAuditDetailExtracted(serialNumber);
+            }
+          } else if (d.status === 'error') {
+            clearInterval(_extractPollTimer);
+            _extractPollTimer = null;
+            showExtractSummary('error', serialNumber, null, d.error);
+          } else if (d.status === 'running') {
+            showExtractSummary('running', serialNumber);
+          }
+        } catch (e) {
+          console.error('轮询提取状态失败:', e);
+        }
+      }, 3000);
+    }
+
+    async function loadAuditDetailExtracted(serialNumber) {
+      try {
+        var resp = await fetch('/api/audit-detail/' + encodeURIComponent(serialNumber) + '?t=' + Date.now());
+        var data = await resp.json();
+        if (data.extracted_fields) {
+          renderExtractSummary(data.extracted_fields);
+        }
+      } catch (e) {
+        console.error('加载提取结果失败:', e);
+      }
+    }
+
+    function showExtractSummary(status, serialNumber, results, error) {
+      var summary = document.getElementById('extractSummary');
+      var statusEl = document.getElementById('extractSummaryStatus');
+      var grid = document.getElementById('extractSummaryGrid');
+      summary.style.display = '';
+
+      if (status === 'running') {
+        statusEl.textContent = '⏳ 后台提取中...';
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#7c3aed;font-weight:600;">🤖 大模型正在提取信息，请稍候...</div>';
+      } else if (status === 'completed') {
+        statusEl.textContent = '✅ 提取完成';
+        renderExtractSummary(results);
+      } else if (status === 'error') {
+        statusEl.textContent = '❌ 提取失败';
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#dc2626;">' + (error || '未知错误') + '</div>';
+      } else {
+        statusEl.textContent = '';
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#7c3aed;">等待 OCR 完成后自动提取...</div>';
+      }
+    }
+
+    function renderExtractSummary(fields) {
+      var grid = document.getElementById('extractSummaryGrid');
+      var statusEl = document.getElementById('extractSummaryStatus');
+      var done = 0, total = 0;
+      grid.innerHTML = fields.map(function(f) {
+        var c = f.status === 'extracted' ? 'done' : f.status === 'extracting' ? 'running' : 'skip';
+        var fieldCount = Object.entries(f.fields || {}).filter(function(e) { return e[1] != null && e[1] !== ''; }).length;
+        if (f.status === 'extracted') done++;
+        total++;
+        return '<div style="padding:8px 12px;border-radius:8px;border:1.5px solid ' + (c === 'done' ? '#059669' : c === 'running' ? '#7c3aed' : '#d1d5db') + ';background:' + (c === 'done' ? '#ecfdf5' : c === 'running' ? '#f3e8ff' : '#f3f4f6') + '"><div style="font-weight:600;font-size:13px;">' + f.slot_name + '</div><div style="font-size:12px;color:#64748b;margin-top:2px;">' + (c === 'done' ? '✅ 已提取' : c === 'running' ? '⏳ 提取中' : '⬜ 未提取') + '</div><div style="font-size:12px;font-weight:600;color:#1e3a5f;margin-top:4px;">' + fieldCount + ' 个字段</div></div>';
+      }).join('');
+      statusEl.textContent = '共 ' + total + ' 个槽位，已提取 ' + done + ' 个';
+    }
+
+    function openExtractSettings() {
+      fetch('/api/settings/llm')
+        .then(function(r) { return r.json(); })
+        .then(function(s) {
+          document.getElementById('extTemp').value = s.llm_extract_temperature != null ? s.llm_extract_temperature : 0.1;
+          document.getElementById('extMaxTokens').value = s.llm_extract_max_tokens != null ? s.llm_extract_max_tokens : 4096;
+          document.getElementById('extAutoCheck').checked = s.llm_extract_auto !== false;
+          document.getElementById('autoExtractToggle').checked = s.llm_extract_auto !== false;
+          document.getElementById('extractSettingsOverlay').classList.add('visible');
+        })
+        .catch(function(e) {
+          console.error('加载提取设置失败:', e);
+        });
+    }
+
+    async function saveExtractSettings() {
+      var data = {
+        llm_extract_temperature: parseFloat(document.getElementById('extTemp').value),
+        llm_extract_max_tokens: parseInt(document.getElementById('extMaxTokens').value),
+        llm_extract_auto: document.getElementById('extAutoCheck').checked
+      };
+      try {
+        await fetch('/api/settings/llm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        document.getElementById('extractSettingsOverlay').classList.remove('visible');
+        alert('设置已保存');
+      } catch (e) {
+        alert('保存失败: ' + e.message);
+      }
+    }
+
+    async function loadExtractSettings() {
+      try {
+        var resp = await fetch('/api/settings/llm');
+        var s = await resp.json();
+        var autoEl = document.getElementById('autoExtractToggle');
+        if (autoEl) autoEl.checked = s.llm_extract_auto !== false;
+      } catch (e) {
+        console.error('加载提取设置失败:', e);
+      }
+    }
 
     /* ==================== 模板查看功能 ==================== */
     // 上传槽位 index → 模板文件名的映射（与后端一致）
@@ -3882,9 +4064,10 @@
     });
 
     /* ==================== OCR 功能 ==================== */
+    // 与后端 SLOTS 定义保持一致（service_audit.py）
     var slotNameMap = [
-      '审批单', '申请单', '报账单', '发票(XML)', '电子发票(PDF)',
-      '招待单位经营状态', '支付凭证', '支付流水证明', '活动函件'
+      '审批单', '申请单', '报账单', '发票XML', '发票PDF',
+      '经营状态', '支付凭证', '支付流水', '活动函件'
     ];
 
     /* ---- OCR 方法/设备选择器 ---- */
@@ -4005,6 +4188,12 @@
 
         // 重新加载 OCR 记录
         loadOCRRecords();
+
+        // OCR 完成后自动触发 LLM 提取
+        var autoExt = document.getElementById('autoExtractToggle');
+        if (autoExt && autoExt.checked && selectedRecord) {
+          triggerLlmExtract(selectedRecord.serial_number);
+        }
       } catch (err) {
         alert('批量 OCR 失败: ' + err.message);
       } finally {

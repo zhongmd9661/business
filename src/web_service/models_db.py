@@ -216,9 +216,11 @@ SessionLocal = sessionmaker(bind=engine)
 def init_db():
     Base.metadata.create_all(bind=engine)
     _migrate_add_columns()
+    _migrate_slot_names()
     _seed_default_rules()
     _ensure_standards_seeded()
     _ensure_templates_seeded()
+    _ensure_extraction_rules_seeded()
 
 
 def _migrate_add_columns():
@@ -269,6 +271,48 @@ def _migrate_add_columns():
         conn.close()
 
 
+def _migrate_slot_names():
+    """修正 OCR 记录中的 slot_name — 将前端旧版不规范的名称映射到后端标准名称"""
+    import sqlite3
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    conn = sqlite3.connect(db_path)
+    try:
+        cur = conn.cursor()
+
+        # 旧前端 slotNameMap → 后端 SLOTS 标准 name 的映射
+        slot_mapping = {
+            "发票(XML)": "发票XML",
+            "电子发票(PDF)": "发票PDF",
+            "招待单位经营状态": "经营状态",
+            "支付流水证明": "支付流水",
+        }
+
+        # 检查是否需要迁移
+        needs_migration = False
+        for old_name in slot_mapping:
+            cur.execute("SELECT COUNT(*) FROM ocr_records WHERE slot_name = ?", (old_name,))
+            if cur.fetchone()[0] > 0:
+                needs_migration = True
+                break
+
+        if not needs_migration:
+            return
+
+        tables_to_fix = ["ocr_records", "extracted_fields"]
+        for table in tables_to_fix:
+            for old_name, new_name in slot_mapping.items():
+                cur.execute(f"UPDATE {table} SET slot_name = ? WHERE slot_name = ?", (new_name, old_name))
+                affected = cur.rowcount
+                if affected > 0:
+                    logger.info(f"Migrated: {table} slot_name '{old_name}' → '{new_name}' ({affected} rows)")
+
+        conn.commit()
+    except Exception as e:
+        logger.warning(f"Slot name migration failed: {e}")
+    finally:
+        conn.close()
+
+
 def _ensure_standards_seeded():
     """确保标准数据已注入（独立于规则注入）"""
     db = SessionLocal()
@@ -295,6 +339,130 @@ def _ensure_templates_seeded():
         db.rollback()
     finally:
         db.close()
+
+
+def _ensure_extraction_rules_seeded():
+    """确保字段提取规则已注入"""
+    db = SessionLocal()
+    try:
+        if db.query(ExtractionRule).first():
+            return
+        _seed_default_extraction_rules(db)
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+
+
+def _seed_default_extraction_rules(db: Session):
+    """注入默认字段提取规则"""
+    rules = [
+        {
+            "slot_name": "审批单",
+            "rule_name": "approval_extraction",
+            "fields": [
+                {"name": "招待日期", "keywords": ["招待日期", "日期"], "type": "date"},
+                {"name": "招待人数", "keywords": ["招待人数", "对象人数", "招待对象人数"], "type": "number"},
+                {"name": "陪同人数", "keywords": ["陪同人数", "陪同"], "type": "number"},
+                {"name": "人均费用", "keywords": ["人均费用", "人均", "人均消费"], "type": "number"},
+                {"name": "招待金额", "keywords": ["招待金额", "金额", "预算金额"], "type": "number"},
+                {"name": "招待类型", "keywords": ["招待类型", "类型", "业务类型"], "type": "text"},
+                {"name": "招待对象", "keywords": ["招待对象", "对象单位", "招待单位", "对方单位"], "type": "text"},
+                {"name": "陪同人员", "keywords": ["陪同人员", "陪同"], "type": "text"},
+                {"name": "事由", "keywords": ["事由", "事由及内容"], "type": "text"},
+            ],
+        },
+        {
+            "slot_name": "申请单",
+            "rule_name": "application_extraction",
+            "fields": [
+                {"name": "申请日期", "keywords": ["申请日期", "日期"], "type": "date"},
+                {"name": "事由", "keywords": ["事由", "申请事由", "申请内容"], "type": "text"},
+                {"name": "预计费用", "keywords": ["预计费用", "预算", "金额"], "type": "number"},
+                {"name": "参加人员", "keywords": ["参加人员", "人员"], "type": "text"},
+            ],
+        },
+        {
+            "slot_name": "报账单",
+            "rule_name": "reimbursement_extraction",
+            "fields": [
+                {"name": "发票金额", "keywords": ["发票金额", "金额"], "type": "number"},
+                {"name": "税额", "keywords": ["税额"], "type": "number"},
+                {"name": "合计金额", "keywords": ["合计", "合计金额", "报销金额"], "type": "number"},
+                {"name": "报销日期", "keywords": ["报销日期", "日期"], "type": "date"},
+            ],
+        },
+        {
+            "slot_name": "发票XML",
+            "rule_name": "invoice_extraction",
+            "fields": [
+                {"name": "价税合计大写", "keywords": ["价税合计（大写)", "价税合计大写", "合计大写"], "type": "text"},
+                {"name": "价税合计小写", "keywords": ["价税合计（小写)", "（小写）", "小写"], "type": "number"},
+                {"name": "开票日期", "keywords": ["开票日期", "日期"], "type": "date"},
+                {"name": "购买方", "keywords": ["购买方", "买方"], "type": "text"},
+                {"name": "销售方", "keywords": ["销售方", "卖方"], "type": "text"},
+                {"name": "发票号码", "keywords": ["发票号码", "号码"], "type": "text"},
+            ],
+        },
+        {
+            "slot_name": "发票PDF",
+            "rule_name": "invoice_extraction",
+            "fields": [
+                {"name": "价税合计大写", "keywords": ["价税合计（大写)", "价税合计大写", "合计大写"], "type": "text"},
+                {"name": "价税合计小写", "keywords": ["价税合计（小写)", "（小写）", "小写"], "type": "number"},
+                {"name": "开票日期", "keywords": ["开票日期", "日期"], "type": "date"},
+                {"name": "购买方", "keywords": ["购买方", "买方"], "type": "text"},
+                {"name": "销售方", "keywords": ["销售方", "卖方"], "type": "text"},
+                {"name": "发票号码", "keywords": ["发票号码", "号码"], "type": "text"},
+            ],
+        },
+        {
+            "slot_name": "经营状态",
+            "rule_name": "business_status_extraction",
+            "fields": [
+                {"name": "单位名称", "keywords": ["单位名称", "企业名称"], "type": "text"},
+                {"name": "经营状态", "keywords": ["经营状态", "状态"], "type": "text"},
+            ],
+        },
+        {
+            "slot_name": "支付凭证",
+            "rule_name": "payment_extraction",
+            "fields": [
+                {"name": "交易单号", "keywords": ["交易单号", "单号"], "type": "text"},
+                {"name": "商户单号", "keywords": ["商户单号"], "type": "text"},
+                {"name": "金额", "keywords": ["金额", "账单金额"], "type": "number"},
+                {"name": "商户全称", "keywords": ["商户全称", "商户名称", "商户"], "type": "text"},
+                {"name": "支付时间", "keywords": ["支付时间", "时间"], "type": "date"},
+            ],
+        },
+        {
+            "slot_name": "支付流水",
+            "rule_name": "payment_flow_extraction",
+            "fields": [
+                {"name": "交易单号", "keywords": ["交易单号", "单号"], "type": "text"},
+                {"name": "交易对方", "keywords": ["交易对方", "对方", "收款方"], "type": "text"},
+                {"name": "金额", "keywords": ["金额", "金额(元)"], "type": "number"},
+                {"name": "交易时间", "keywords": ["交易时间", "时间"], "type": "date"},
+            ],
+        },
+        {
+            "slot_name": "活动函件",
+            "rule_name": "event_extraction",
+            "fields": [
+                {"name": "活动名称", "keywords": ["活动名称", "活动", "会议名称", "函件主题"], "type": "text"},
+                {"name": "交流时间", "keywords": ["交流时间", "活动时间", "时间"], "type": "date"},
+                {"name": "参加人员", "keywords": ["参加人员", "参会人员", "人员"], "type": "text"},
+            ],
+        },
+    ]
+    for rule in rules:
+        db.add(ExtractionRule(
+            slot_name=rule["slot_name"],
+            rule_name=rule["rule_name"],
+            fields_json=json.dumps(rule["fields"], ensure_ascii=False),
+            enabled=True,
+        ))
 
 
 def _seed_default_rules():
@@ -437,6 +605,24 @@ class ReviewResult(Base):
     passed = Column(Boolean, default=True)                      # 是否通过
     detail = Column(Text)                                       # 校验详情/不通过原因
     created_at = Column(String, default=lambda: datetime.now().isoformat())
+
+
+class ExtractionRule(Base):
+    """字段提取规则 — 管理员可通过页面配置"""
+
+    __tablename__ = "extraction_rules"
+
+    id = Column(Integer, primary_key=True)
+    slot_name = Column(String, nullable=False, unique=True)    # 槽位名: 审批单/申请单/...
+    rule_name = Column(String, nullable=False)                  # 规则标识: approval_extraction 等
+    fields_json = Column(Text)                                  # JSON: 字段定义列表
+    enabled = Column(Boolean, default=True)                     # 是否启用
+    # LLM 提取配置
+    use_llm = Column(Boolean, default=False)                    # 是否启用大模型提取
+    llm_prompt_template = Column(Text)                          # 自定义提示词模板（可选）
+    llm_response_schema = Column(Text)                          # JSON Schema，规定返回格式（可选）
+    created_at = Column(String, default=lambda: datetime.now().isoformat())
+    updated_at = Column(String, default=lambda: datetime.now().isoformat())
 
 
 def get_db():

@@ -40,6 +40,10 @@ _DEFAULT_SETTINGS = {
     "anthropic_base_url": os.environ.get("ANTHROPIC_BASE_URL", "http://192.168.231.1:1235"),
     "anthropic_auth_token": os.environ.get("ANTHROPIC_AUTH_TOKEN", "lmstudio"),
     "llm_model": os.environ.get("LLM_MODEL", "Qwen/Qwen3.6-27B"),
+    # 提取设置
+    "llm_extract_temperature": 0.1,
+    "llm_extract_max_tokens": 4096,
+    "llm_extract_auto": True,  # OCR 完成后自动触发 LLM 提取
 }
 
 
@@ -64,6 +68,11 @@ def _apply_app_settings():
             val = data.get(key)
             if val is not None:
                 os.environ[env_name] = str(val)
+        # 提取设置也存入环境变量
+        for key in ("llm_extract_temperature", "llm_extract_max_tokens", "llm_extract_auto"):
+            val = data.get(key)
+            if val is not None:
+                os.environ[f"LLM_{key.upper()}"] = str(val)
     except Exception:
         pass  # Fallback to existing env vars
 
@@ -87,4 +96,8 @@ def save_app_settings(data: dict):
         val = data.get(key)
         if val is not None:
             os.environ[mapping[key]] = str(val)
+    for key in ("llm_extract_temperature", "llm_extract_max_tokens", "llm_extract_auto"):
+        val = data.get(key)
+        if val is not None:
+            os.environ[f"LLM_{key.upper()}"] = str(val)
     APP_SETTINGS_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")

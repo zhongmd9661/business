@@ -38,7 +38,8 @@ def set_llm_settings(data: dict):
     """Save LLM configuration and apply immediately."""
     from .config import get_app_settings, save_app_settings
     current = get_app_settings()
-    allowed_keys = {"anthropic_base_url", "anthropic_auth_token", "llm_model"}
+    allowed_keys = {"anthropic_base_url", "anthropic_auth_token", "llm_model",
+                     "llm_extract_temperature", "llm_extract_max_tokens", "llm_extract_auto"}
     updates = {k: v for k, v in data.items() if k in allowed_keys and v is not None}
     if updates:
         merged = {**current, **updates}

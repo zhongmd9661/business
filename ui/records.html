@@ -150,6 +150,7 @@
     <div class="page-header">
       <h1 class="page-title">📋 提交记录</h1>
       <p class="page-subtitle" id="page-subtitle"></p>
+      <a href="/extraction-rules" id="exRulesLink" style="display:none;font-size:13px;color:var(--color-accent);text-decoration:none" target="_blank">⚙️ 提取规则配置</a>
     </div>
 
     <!-- Filter bar -->
@@ -243,6 +244,10 @@
         subtitle.textContent = user.role === 'admin'
           ? '查看所有招待费提交记录'
           : '查看 ' + user.username + ' 的招待费提交记录';
+        if (user.role === 'admin') {
+          const link = document.getElementById('exRulesLink');
+          if (link) link.style.display = '';
+        }
       }
     })();
 
