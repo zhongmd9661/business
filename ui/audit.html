@@ -17,12 +17,13 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
       background: #f5f7fa;
-      height: 100vh;
+      min-height: 100vh;
       width: 100vw;
       position: relative;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
     }
 
@@ -63,6 +64,11 @@
     .scale-wrapper {
       transform-origin: center center;
       width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
     }
 
     /* ---- 主内容 ---- */
@@ -2905,40 +2911,35 @@
   </div>
 
   <script>
-    /* ---- 自动缩放适配 ---- */
+    /* ---- 自动缩放适配 (仅按宽度) ---- */
     (function () {
       var wrapper = document.getElementById('scaleWrapper');
-      var body = document.body;
 
       function scaleToFit() {
         var availW = window.innerWidth;
-        var availH = window.innerHeight;
         var contentW = wrapper.scrollWidth;
-        var contentH = wrapper.scrollHeight;
-        if (contentW === 0 || contentH === 0) return;
-        var scaleX = availW / contentW;
-        var scaleY = availH / contentH;
-        var scale = Math.min(scaleX, scaleY, 1); // 不放大，只缩小
-        // 留一点边距
+        if (contentW === 0) return;
+
+        // 只按宽度缩放，高度超出时用 body 自然滚动
+        var scale = Math.min(availW / contentW, 1);
         scale *= 0.97;
         wrapper.style.transform = 'scale(' + scale + ')';
       }
 
-      // 使用 requestAnimationFrame 确保在布局完成后计算
       function requestScale() {
         requestAnimationFrame(scaleToFit);
       }
 
       window.addEventListener('resize', requestScale);
-      // 页面加载完成后执行
       window.addEventListener('load', requestScale);
-      // 也立即执行一次（DOMContentLoaded 后）
       requestScale();
-      // 当审核结果区域显示时重新计算
+
       var observer = new MutationObserver(function () {
         requestScale();
       });
       observer.observe(document.body, { attributes: true, subtree: true, attributesFilter: ['class'] });
+      // 暴露到 window 供外部调用
+      window.requestScale = requestScale;
     })();
 
     const totalFiles = 9;
@@ -3327,19 +3328,7 @@
       document.getElementById('ocrRecordsCount').textContent = '—';
       document.getElementById('ocrRecordsBody').style.display = 'none';
       // 重新计算缩放
-      requestAnimationFrame(function () {
-        var wrapper = document.getElementById('scaleWrapper');
-        var availW = window.innerWidth;
-        var availH = window.innerHeight;
-        var contentW = wrapper.scrollWidth;
-        var contentH = wrapper.scrollHeight;
-        if (contentW === 0 || contentH === 0) return;
-        var scaleX = availW / contentW;
-        var scaleY = availH / contentH;
-        var scale = Math.min(scaleX, scaleY, 1);
-        scale *= 0.97;
-        wrapper.style.transform = 'scale(' + scale + ')';
-      });
+      if (window.requestScale) window.requestScale();
     }
 
     function startAudit() {
