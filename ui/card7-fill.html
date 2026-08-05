@@ -658,7 +658,7 @@
           <div class="form-field">
             <span class="form-field-label">餐费合计</span>
             <span class="form-field-value"><span id="scenario-A-meal-total">¥0.00</span> 元</span>
-            <span class="form-field-hint" id="scenario-A-meal-formula">人均餐标 × 招待人数</span>
+            <span class="form-field-hint" id="scenario-A-meal-formula">人均餐标 × (招待人数 + 陪同人数)</span>
           </div>
           <div class="form-field">
             <span class="form-field-label">白酒单价</span>
@@ -835,7 +835,7 @@
           <div class="form-field">
             <span class="form-field-label">餐费合计</span>
             <span class="form-field-value"><span id="scenario-B-meal-total">¥0.00</span> 元</span>
-            <span class="form-field-hint" id="scenario-B-meal-formula">人均餐标 × 招待人数</span>
+            <span class="form-field-hint" id="scenario-B-meal-formula">人均餐标 × (招待人数 + 陪同人数)</span>
           </div>
           <div class="form-field">
             <span class="form-field-label">白酒单价</span>
@@ -994,7 +994,7 @@
           <div class="form-field">
             <span class="form-field-label">餐费合计</span>
             <span class="form-field-value"><span id="scenario-C-meal-total">¥0.00</span> 元</span>
-            <span class="form-field-hint" id="scenario-C-meal-formula">人均餐标 × 招待人数</span>
+            <span class="form-field-hint" id="scenario-C-meal-formula">人均餐标 × (招待人数 + 陪同人数)</span>
           </div>
           <div class="form-field">
             <span class="form-field-label">白酒单价</span>
@@ -1145,7 +1145,7 @@
           <div class="form-field">
             <span class="form-field-label">餐费合计</span>
             <span class="form-field-value"><span id="scenario-D-meal-total">¥0.00</span> 元</span>
-            <span class="form-field-hint" id="scenario-D-meal-formula">人均餐标 × 招待人数</span>
+            <span class="form-field-hint" id="scenario-D-meal-formula">人均餐标 × (招待人数 + 陪同人数)</span>
           </div>
           <div class="form-field">
             <span class="form-field-label">酒水情况</span>
@@ -1945,12 +1945,14 @@
       const rooms = parseInt(document.getElementById('scenario-A-rooms').value) || 0;
       const roomPrice = parseFloat(document.getElementById('scenario-A-room-price').value) || 0;
 
-      const mealTotal = perCapita * guests;
+      const accompanyCount = parseInt(document.getElementById('scenario-A-accompany-count').value) || 0;
+      const totalHeadcount = guests + accompanyCount;
+      const mealTotal = perCapita * totalHeadcount;
       const alcoholTotal = (baijiuPrice * 0.5 + winePrice * 0.75) * guests;
       const giftTotal = giftPer * guests;
       const roomTotal = rooms * roomPrice;
       const total = mealTotal + alcoholTotal + giftTotal + roomTotal;
-      const per = guests > 0 ? total / guests : 0;
+      const per = totalHeadcount > 0 ? total / totalHeadcount : 0;
 
       document.getElementById('scenario-A-meal-total').textContent = '¥' + mealTotal.toFixed(2);
       document.getElementById('scenario-A-gift-total').textContent = '¥' + giftTotal.toFixed(2);
@@ -1989,12 +1991,14 @@
       const rooms = parseInt(document.getElementById('scenario-B-rooms').value) || 0;
       const roomPrice = parseFloat(document.getElementById('scenario-B-room-price').value) || 0;
 
-      const mealTotal = perCapita * guests;
+      const accompanyCount = parseInt(document.getElementById('scenario-B-accompany-count').value) || 0;
+      const totalHeadcount = guests + accompanyCount;
+      const mealTotal = perCapita * totalHeadcount;
       const alcoholTotal = (baijiuPrice * 0.5 + winePrice * 0.75) * guests;
       const giftTotal = giftPer * guests;
       const roomTotal = rooms * roomPrice;
       const total = mealTotal + alcoholTotal + giftTotal + roomTotal;
-      const per = guests > 0 ? total / guests : 0;
+      const per = totalHeadcount > 0 ? total / totalHeadcount : 0;
 
       document.getElementById('scenario-B-meal-total').textContent = '¥' + mealTotal.toFixed(2);
       document.getElementById('scenario-B-gift-total').textContent = '¥' + giftTotal.toFixed(2);
@@ -2029,10 +2033,12 @@
       const baijiuPrice = parseFloat(document.getElementById('scenario-C-baijiu-price').value) || 0;
       const winePrice = parseFloat(document.getElementById('scenario-C-wine-price').value) || 0;
 
-      const mealTotal = perCapita * guests;
+      const accompanyCount = parseInt(document.getElementById('scenario-C-accompany-count').value) || 0;
+      const totalHeadcount = guests + accompanyCount;
+      const mealTotal = perCapita * totalHeadcount;
       const alcoholTotal = (baijiuPrice * 0.5 + winePrice * 0.75) * guests;
       const total = mealTotal + alcoholTotal;
-      const per = guests > 0 ? total / guests : 0;
+      const per = totalHeadcount > 0 ? total / totalHeadcount : 0;
 
       document.getElementById('scenario-C-meal-total').textContent = '¥' + mealTotal.toFixed(2);
       document.getElementById('scenario-C-summary-meal').textContent = '¥' + mealTotal.toFixed(2);
@@ -2061,9 +2067,11 @@
       const perCapita = parseFloat(document.getElementById('scenario-D-per-capita').value) || 0;
       const guests = parseInt(document.getElementById('scenario-D-guests').value) || 0;
 
-      const mealTotal = perCapita * guests;
+      const accompanyCount = parseInt(document.getElementById('scenario-D-accompany-count').value) || 0;
+      const totalHeadcount = guests + accompanyCount;
+      const mealTotal = perCapita * totalHeadcount;
       const total = mealTotal;
-      const per = guests > 0 ? total / guests : 0;
+      const per = totalHeadcount > 0 ? total / totalHeadcount : 0;
 
       document.getElementById('scenario-D-meal-total').textContent = '¥' + mealTotal.toFixed(2);
       document.getElementById('scenario-D-summary-meal').textContent = '¥' + mealTotal.toFixed(2);
@@ -2091,9 +2099,11 @@
       const perCapita = parseFloat(document.getElementById('scenario-E-per-capita').value) || 0;
       const guests = parseInt(document.getElementById('scenario-E-guests').value) || 0;
 
-      const mealTotal = perCapita * guests;
+      const accompanyCount = parseInt(document.getElementById('scenario-E-accompany-count').value) || 0;
+      const totalHeadcount = guests + accompanyCount;
+      const mealTotal = perCapita * totalHeadcount;
       const total = mealTotal;
-      const per = guests > 0 ? total / guests : 0;
+      const per = totalHeadcount > 0 ? total / totalHeadcount : 0;
 
       document.getElementById('scenario-E-meal-total').textContent = '¥' + mealTotal.toFixed(2);
       document.getElementById('scenario-E-summary-meal').textContent = '¥' + mealTotal.toFixed(2);
