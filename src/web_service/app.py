@@ -156,7 +156,7 @@ async def on_startup():
     init_app_settings()
 
     # 4. Load routers (lazy to avoid circular imports)
-    from . import router, router_rule, router_standards, router_standards_admin, router_application_form, router_reception_records, router_qichacha, router_ocr, router_audit_detail, router_extraction_rules
+    from . import router, router_rule, router_standards, router_standards_admin, router_application_form, router_reception_records, router_qichacha, router_ocr, router_audit_detail, router_extraction_rules, router_internal_units
 
     app.include_router(router.settings_router, prefix="/api", tags=["settings"])
     app.include_router(router.task_router, prefix="/api", tags=["tasks"])
@@ -169,6 +169,7 @@ async def on_startup():
     app.include_router(router_ocr.router, prefix="/api", tags=["ocr"])
     app.include_router(router_audit_detail.router, prefix="/api", tags=["audit-detail"])
     app.include_router(router_extraction_rules.router, prefix="/api", tags=["extraction-rules"])
+    app.include_router(router_internal_units.router, prefix="/api", tags=["internal-units"])
     # 申请单生成页面不需要 /api 前缀，直接挂载
     app.include_router(router_application_form.router, tags=["application-form"])
 

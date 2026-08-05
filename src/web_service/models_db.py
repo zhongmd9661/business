@@ -221,6 +221,8 @@ def init_db():
     _ensure_standards_seeded()
     _ensure_templates_seeded()
     _ensure_extraction_rules_seeded()
+    _migrate_internal_units()
+    _seed_internal_units()
 
 
 def _migrate_add_columns():
@@ -625,9 +627,77 @@ class ExtractionRule(Base):
     updated_at = Column(String, default=lambda: datetime.now().isoformat())
 
 
+class InternalUnit(Base):
+    """内部单位通信录 — 通过 Excel 导入/导出管理"""
+
+    __tablename__ = "internal_units"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)  # 公司名称
+    status = Column(String, default="active")           # active / deleted
+    created_at = Column(String, default=lambda: datetime.now().isoformat())
+    updated_at = Column(String, default=lambda: datetime.now().isoformat())
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
+    finally:
+        db.close()
+
+def _migrate_internal_units():
+    """增量迁移：为已有数据库补加 internal_units 表"""
+    import sqlite3
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    conn = sqlite3.connect(db_path)
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='internal_units'")
+        if cur.fetchone() is None:
+            cur.execute("""
+                CREATE TABLE internal_units (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE,
+                    status TEXT DEFAULT 'active',
+                    created_at TEXT,
+                    updated_at TEXT
+                )
+            """)
+            print("Migrated: created internal_units table")
+        conn.commit()
+    except Exception as e:
+        print(f"Migration internal_units failed: {e}")
+    finally:
+        conn.close()
+
+def _seed_internal_units():
+    """确保内部单位数据已注入（首次启动时从 Excel 读取）"""
+    db = SessionLocal()
+    try:
+        if db.query(InternalUnit).first():
+            return
+        try:
+            import openpyxl
+        except ImportError:
+            print("openpyxl not installed, skipping internal_units seed")
+            return
+        excel_path = Path(__file__).parent.parent.parent / "审核标准" / "内部单位清单.xlsx"
+        if excel_path.exists():
+            wb = openpyxl.load_workbook(str(excel_path))
+            ws = wb.active
+            count = 0
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row, values_only=True):
+                if row[0]:
+                    unit = InternalUnit(
+                        name=str(row[0]).strip(),
+                        status="deleted" if row[1] == "删除" else "active",
+                    )
+                    db.add(unit)
+                    count += 1
+            db.commit()
+            print(f"Seeded internal_units from Excel ({count} rows)")
+    except Exception as e:
+        db.rollback()
+        print(f"Seed internal_units failed: {e}")
     finally:
         db.close()

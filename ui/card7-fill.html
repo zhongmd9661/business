@@ -1456,6 +1456,7 @@
 
     <!-- Action bar -->
     <div class="action-bar">
+      <button class="action-btn" onclick="openInternalUnitsModal()">📇 内部单位管理</button>
       <button class="action-btn" onclick="onOpenStandardsClicked()">⚙️ 标准设置</button>
       <button class="action-btn" onclick="resetForm()">🔄 重置表单</button>
       <button class="action-btn" onclick="exportFormData()">📤 导出JSON</button>
@@ -1687,6 +1688,40 @@
         <button class="modal-btn" onclick="closeStandardsModal()">取消</button>
         <button class="modal-btn primary" onclick="saveStandardsFromModal()">💾 保存</button>
       </div>
+    </div>
+  </div>
+  <!-- ===== 内部单位管理模态框 ===== -->
+  <div id="internal-units-modal" class="modal-overlay" onclick="if(event.target===this)closeInternalUnitsModal()">
+    <div class="modal-container" style="max-width:900px; width:95%;">
+      <div class="modal-header">
+        <span class="modal-title">📇 内部单位通信录管理</span>
+        <button class="modal-close" onclick="closeInternalUnitsModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-bottom:var(--spacing-lg);">
+          通过导入 Excel 文件管理内部单位列表（状态列：增加=启用，删除=停用）。
+        </p>
+        <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+          <button class="action-btn" onclick="downloadInternalUnitsTemplate()" style="font-size:13px; padding:8px 14px;">📥 下载导入模板</button>
+          <label class="action-btn" style="font-size:13px; padding:8px 14px; cursor:pointer;">📤 导入 Excel<input type="file" accept=".xlsx,.xls" style="display:none;" onchange="importInternalUnits(event)"></label>
+          <button class="action-btn" onclick="exportInternalUnits()" style="font-size:13px; padding:8px 14px;">📤 导出 Excel</button>
+          <button class="action-btn" onclick="loadInternalUnits()" style="font-size:13px; padding:8px 14px;">🔄 刷新</button>
+          <span style="margin-left:auto; font-size:13px; color:var(--color-text-secondary);" id="units-count-info"></span>
+        </div>
+        <div style="margin-bottom:12px; display:flex; gap:8px;">
+          <input type="text" id="units-search-input" class="form-input" placeholder="搜索单位名称..." style="flex:1; padding:8px 12px; font-size:13px;" oninput="filterInternalUnits()">
+          <select id="units-status-filter" class="form-input" style="width:120px; padding:8px 12px; font-size:13px;" onchange="filterInternalUnits()"><option value="">全部状态</option><option value="active">启用</option><option value="deleted">停用</option></select>
+        </div>
+        <div style="max-height:50vh; overflow-y:auto; border:1px solid var(--color-border); border-radius:var(--radius-md);">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead style="position:sticky; top:0; background:#f9fafb; z-index:1;">
+              <tr><th style="padding:10px 12px; text-align:left; border-bottom:2px solid var(--color-border);">#</th><th style="padding:10px 12px; text-align:left; border-bottom:2px solid var(--color-border);">公司名称</th><th style="padding:10px 12px; text-align:center; border-bottom:2px solid var(--color-border);">状态</th><th style="padding:10px 12px; text-align:center; border-bottom:2px solid var(--color-border); width:110px;">操作</th></tr>
+            </thead>
+            <tbody id="internal-units-tbody"><tr><td colspan="4" style="padding:40px; text-align:center; color:var(--color-text-secondary);">加载中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="modal-btn" onclick="closeInternalUnitsModal()">关闭</button></div>
     </div>
   </div>
 
@@ -3354,5 +3389,6 @@ async function submitRecord() {
       window.location.href = '/login';
     }
   </script>
+  <script src="js/internal-units.js"></script>
 </body>
 </html>
