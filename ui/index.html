@@ -952,7 +952,7 @@
     (function checkAuth() {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       if (!user || !localStorage.getItem('auth_token')) {
-        window.location.href = '/';
+        window.location.href = '/login';
         return;
       }
       // 显示用户信息
@@ -965,7 +965,7 @@
     function handleLogout() {
       localStorage.removeItem('user');
       localStorage.removeItem('auth_token');
-      window.location.href = '/';
+      window.location.href = '/login';
     }
   </script>
 </body>

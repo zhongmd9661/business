@@ -93,7 +93,7 @@ async function handleLogin(e) {
         api.setUser(user, user.access_token);
         errorDiv.textContent = '';
         // 登录成功后跳转到招待费管理主页
-        window.location.href = '/ui-index';
+        window.location.href = '/';
     } catch (error) {
         errorDiv.textContent = error.message;
     }

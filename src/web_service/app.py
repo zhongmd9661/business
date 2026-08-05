@@ -45,20 +45,29 @@ if standards_dir.exists():
 # 主页路由
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    """返回前端主页"""
-    index_file = static_dir / "index.html"
-    if index_file.exists():
-        return index_file.read_text(encoding="utf-8")
-    return "<h1>业务招待费智能审核系统</h1><p>前端文件未找到</p>"
+    """返回招待费管理主页（新 UI）"""
+    ui_index_file = ui_dir / "index.html" if ui_dir.exists() else None
+    if ui_index_file and ui_index_file.exists():
+        return _html_response(ui_index_file.read_text(encoding="utf-8"))
+    return "<h1>UI 目录未找到</h1>"
 
 
 # 招待费智能体 UI 快捷路由
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    """登录/注册页面"""
+    index_file = static_dir / "index.html"
+    if index_file.exists():
+        return _html_response(index_file.read_text(encoding="utf-8"))
+    return "<h1>登录页未找到</h1>"
+
+
 @app.get("/ui-index", response_class=HTMLResponse)
 async def ui_index():
-    """招待费智能体主页"""
+    """招待费智能体主页（同 / ）"""
     ui_index_file = ui_dir / "index.html" if ui_dir.exists() else None
     if ui_index_file and ui_index_file.exists():
-        return ui_index_file.read_text(encoding="utf-8")
+        return _html_response(ui_index_file.read_text(encoding="utf-8"))
     return "<h1>UI 目录未找到</h1>"
 
 

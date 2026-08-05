@@ -2952,7 +2952,7 @@
     (function checkAuth() {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       if (!user || !localStorage.getItem('auth_token')) {
-        window.location.href = '/';
+        window.location.href = '/login';
         return;
       }
       currentUser = user;
@@ -2965,7 +2965,7 @@
     function handleLogout() {
       localStorage.removeItem('user');
       localStorage.removeItem('auth_token');
-      window.location.href = '/';
+      window.location.href = '/login';
     }
 
     /* ---- 状态工具函数 ---- */

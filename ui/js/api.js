@@ -100,7 +100,7 @@ class ApiClient {
         this.token = null;
         localStorage.removeItem('user');
         localStorage.removeItem('auth_token');
-        window.location.href = '/';
+        window.location.href = '/login';
     }
 
     isAuthenticated() {
