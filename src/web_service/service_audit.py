@@ -707,16 +707,6 @@ def _extract_event(md: str) -> dict:
 # ===================================================================
 # 审核规则引擎
 # ===================================================================
-# 规则函数注册表（check_expression -> 函数）
-RULE_REGISTRY = {
-    "amount_consistency": _rule_amount_consistency,
-    "date_consistency": _rule_date_consistency,
-    "standard_compliance": _rule_standard_compliance,
-    "business_status": _rule_business_status,
-    "payment_consistency": _rule_payment_consistency,
-    "event_date": _rule_event_date,
-}
-
 
 # 从数据库加载启用的审核规则
 def _load_active_rules(db):
@@ -1102,6 +1092,16 @@ def _rule_event_date(fields: dict) -> dict:
         return {"rule_name": "活动函件日期", "severity": "中", "passed": False,
                 "detail": f"❌ 日期解析失败: {e}"}
 
+
+# 规则函数注册表（check_expression -> 函数）
+RULE_REGISTRY = {
+    "amount_consistency": _rule_amount_consistency,
+    "date_consistency": _rule_date_consistency,
+    "standard_compliance": _rule_standard_compliance,
+    "business_status": _rule_business_status,
+    "payment_consistency": _rule_payment_consistency,
+    "event_date": _rule_event_date,
+}
 
 # ===================================================================
 # 审核报告生成
