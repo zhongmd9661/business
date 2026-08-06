@@ -3220,7 +3220,7 @@
       const pct = Math.round((uploadedCount / totalFiles) * 100);
       document.getElementById('progressFill').style.width = pct + '%';
       document.getElementById('progressText').textContent = `已上传 ${uploadedCount} / ${totalFiles}`;
-      document.getElementById('submitBtn').disabled = uploadedCount < totalFiles;
+      document.getElementById('submitBtn').disabled = uploadedCount < 1;
       // 批量 OCR 按钮：至少有一个文件即可
       document.getElementById('batchOcrBtn').disabled = uploadedCount < 1;
     }
@@ -3238,7 +3238,7 @@
       // 如果已经上传，不重复触发
       if (item.classList.contains('uploaded')) return;
       const input = item.querySelector('input[type="file"]');
-      input.click();
+      // 先绑定 onchange，再调用 click()，防止时序问题导致 change 事件丢失
       input.onchange = function () {
         if (this.files && this.files.length > 0) {
           const file = this.files[0];
@@ -3312,6 +3312,8 @@
           updateProgress();
         }
       };
+      // onchange 绑定完成后再触发文件选择器
+      input.click();
     }
 
     function removeFile(btn) {
