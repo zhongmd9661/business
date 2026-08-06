@@ -583,7 +583,7 @@
         <span class="scenario-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
         </span>
-        <span class="scenario-desc">商务场景</span>
+        <span class="scenario-desc">商务招待场景</span>
       </button>
       <button class="scenario-btn" onclick="selectScenario('B')">
         <span class="scenario-icon">
@@ -622,14 +622,14 @@
       <span>请根据实际业务情况选择正确的招待场景</span>
     </div>
 
-    <!-- Scenario A: 商务场景 -->
+    <!-- Scenario A: 商务招待场景 -->
     <div id="scenario-A" class="scenario-card active">
       <div class="scenario-card-header">
-        <span class="scenario-card-title">商务场景</span>
+        <span class="scenario-card-title">商务招待场景</span>
       </div>
       <div class="scenario-card-body">
         <div class="scenario-definition info">
-          <strong>场景定义：</strong>在商业谈判或商业合作中招待客户、合资合作方、经贸联络考察团组的活动。<strong>商务场景对象不包括党政军机关工作人员和国有企业集团总部工作人员。</strong>
+          <strong>场景定义：</strong>在商业谈判或商业合作中招待客户、合资合作方、经贸联络考察团组的活动。<strong>商务招待对象不包括党政军机关工作人员和国有企业集团总部工作人员。</strong>
         </div>
 
         <div class="level-selector">
@@ -648,7 +648,7 @@
         <div class="form-grid">
           <div class="form-field">
             <span class="form-field-label">招待类型</span>
-            <span>□ 商务场景</span>
+            <span>□ 商务招待</span>
           </div>
           <div class="form-field">
             <span class="form-field-label">招待日期</span>
@@ -778,9 +778,9 @@
 
         <div class="std-ref" id="scenario-A-std-ref">
           <strong>📊 餐标参考（按人员级别）：</strong><br>
-          省管中层：外事/商务场景 ≤<span class="std-number">400</span>元/人·次 · 纪念品 ≤<span class="std-number">400</span>元/人·次 · 酒水 白酒≤<span class="std-number">400</span>元/500ml，红酒≤<span class="std-number">400</span>元/750ml<br>
-          市管中层：外事/商务场景 ≤<span class="std-number">300</span>元/人·次 · 纪念品 ≤<span class="std-number">300</span>元/人·次 · 酒水 白酒≤<span class="std-number">300</span>元/500ml，红酒≤<span class="std-number">300</span>元/750ml<br>
-          其他人员：外事/商务场景 ≤<span class="std-number">200</span>元/人·次 · 纪念品 ≤<span class="std-number">200</span>元/人·次 · 酒水 白酒≤<span class="std-number">200</span>元/500ml，红酒≤<span class="std-number">200</span>元/750ml
+          省管中层：外事/商务招待 ≤<span class="std-number">400</span>元/人·次 · 纪念品 ≤<span class="std-number">400</span>元/人·次 · 酒水 白酒≤<span class="std-number">400</span>元/500ml，红酒≤<span class="std-number">400</span>元/750ml<br>
+          市管中层：外事/商务招待 ≤<span class="std-number">300</span>元/人·次 · 纪念品 ≤<span class="std-number">300</span>元/人·次 · 酒水 白酒≤<span class="std-number">300</span>元/500ml，红酒≤<span class="std-number">300</span>元/750ml<br>
+          其他人员：外事/商务招待 ≤<span class="std-number">200</span>元/人·次 · 纪念品 ≤<span class="std-number">200</span>元/人·次 · 酒水 白酒≤<span class="std-number">200</span>元/500ml，红酒≤<span class="std-number">200</span>元/750ml
         </div>
 
         <div class="compliance-box">
@@ -3350,7 +3350,7 @@ async function submitRecord() {
       ext.forEach(function(item) {
         var baijiu = (item.alcohol || '').split('，')[0] || '—';
         var wine = (item.alcohol || '').split('，')[1] || '—';
-        html += item.level + '：外事/商务场景 ≤<span class="std-number">' +
+        html += item.level + '：外事/商务招待 ≤<span class="std-number">' +
           escapeHtml(item.externalBanquet) + '</span> · 纪念品 ≤<span class="std-number">' +
           escapeHtml(item.externalGift) + '</span> · 酒水 ' +
           '<span class="std-number">' + escapeHtml(baijiu) + '</span>，' +
