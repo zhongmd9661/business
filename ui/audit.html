@@ -3381,9 +3381,12 @@
         // 已选择记录，直接使用
         runReview(selectedRecord.serial_number);
       } else {
-        // 未选择记录，自动创建一条临时记录
-        auditToast('未选择记录，自动创建审核记录...');
+        // 未选择记录，自动创建一条临时记录，然后上传文件到后端再审核
+        auditToast('未选择记录，自动创建审核记录并上传文件...');
         createTempRecord().then(function(sn) {
+          // 将已上传的文件发送到后端
+          return uploadFilesForReview(sn);
+        }).then(function(sn) {
           runReview(sn);
         }).catch(function(err) {
           document.getElementById('loadingSpinner').classList.remove('visible');
@@ -3419,6 +3422,56 @@
           document.getElementById('loadingSpinner').classList.remove('visible');
           showReportError('审核请求失败: ' + err.message);
         });
+    }
+
+    /* ---- 将已上传文件发送到后端（用于未选择记录的审核） ---- */
+    function uploadFilesForReview(sn) {
+      var user = JSON.parse(localStorage.getItem('user') || 'null');
+      var username = user ? user.username : 'anonymous';
+      var items = document.querySelectorAll('.upload-item');
+      var uploads = [];
+      items.forEach(function(item) {
+        var index = parseInt(item.getAttribute('data-index'));
+        var slotName = slotNameMap[index] || ('slot-' + index);
+        var input = item.querySelector('input[type="file"]');
+        if (input && input.files && input.files[0] && item.classList.contains('uploaded')) {
+          var file = input.files[0];
+          uploads.push(function() {
+            return new Promise(function(resolve, reject) {
+              var formData = new FormData();
+              formData.append('file', file);
+              formData.append('serial_number', sn);
+              formData.append('slot_name', slotName);
+              formData.append('username', username);
+              formData.append('method', getSelectedOcrMethod());
+              formData.append('device', getSelectedOcrDevice());
+              fetch('/api/ocr/recognize', { method: 'POST', body: formData })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                  auditToast(slotName + ' 上传完成');
+                  resolve(d);
+                })
+                .catch(function(err) { reject(err); });
+            });
+          });
+        }
+      });
+      if (uploads.length === 0) {
+        auditToast('未上传文件，直接审核');
+        return Promise.resolve(sn);
+      }
+      // 串行上传所有文件，然后提取字段
+      var chain = Promise.resolve();
+      uploads.forEach(function(fn) {
+        chain = chain.then(fn);
+      });
+      return chain.then(function() {
+        // 上传完成后，触发字段提取
+        auditToast('正在提取字段...');
+        return fetch('/api/audit-detail/' + encodeURIComponent(sn) + '/extract', { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function() { return sn; });
+      });
     }
 
     function createTempRecord() {
