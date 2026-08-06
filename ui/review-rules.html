@@ -171,12 +171,35 @@ textarea{min-height:60px;resize:vertical}
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script>// === 认证辅助：自动从 localStorage 读取 token 并附加到请求头 ===
+function getAuthToken() {
+  return localStorage.getItem('auth_token');
+}
+function authFetch(url, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = 'Bearer ' + token;
+  }
+  if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return window.fetch(url, { ...options, headers });
+}
+
+// 认证检查：未登录则跳转
+(function checkAuth() {
+  if (!getAuthToken()) {
+    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+  }
+})();
+
+
 let rules = [];
 
 async function loadCategories() {
   try {
-    const res = await fetch('/api/admin/review-rules/categories');
+    const res = await authFetch('/api/admin/review-rules/categories');
     if (!res.ok) return;
     const cats = await res.json();
     const sel = document.getElementById('filterCategory');
@@ -191,7 +214,7 @@ async function loadRules() {
   const cat = document.getElementById('filterCategory').value;
   const url = cat ? `/api/admin/review-rules?category=${encodeURIComponent(cat)}` : '/api/admin/review-rules';
   try {
-    const res = await fetch(url);
+    const res = await authFetch(url);
     if (!res.ok) throw new Error(await res.text());
     rules = await res.json();
     renderRules();
@@ -247,9 +270,9 @@ async function toggleEnabled(id, current) {
   const action = current ? 'disable' : 'restore';
   try {
     if (action === 'disable') {
-      await fetch(`/api/admin/review-rules/${id}`, { method: 'DELETE' });
+      await authFetch(`/api/admin/review-rules/${id}`, { method: 'DELETE' });
     } else {
-      await fetch(`/api/admin/review-rules/${id}/restore`, { method: 'POST' });
+      await authFetch(`/api/admin/review-rules/${id}/restore`, { method: 'POST' });
     }
     toast(action === 'disable' ? '已禁用规则' : '已启用规则');
     loadRules();
@@ -308,12 +331,12 @@ async function saveRule() {
   try {
     let res;
     if (id) {
-      res = await fetch(`/api/admin/review-rules/${id}`, {
+      res = await authFetch(`/api/admin/review-rules/${id}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
       });
     } else {
-      res = await fetch('/api/admin/review-rules', {
+      res = await authFetch('/api/admin/review-rules', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
       });
@@ -331,7 +354,7 @@ async function saveRule() {
 async function deleteRule(id) {
   if (!confirm('确定禁用此规则？禁用后将不再执行。')) return;
   try {
-    await fetch(`/api/admin/review-rules/${id}`, { method: 'DELETE' });
+    await authFetch(`/api/admin/review-rules/${id}`, { method: 'DELETE' });
     toast('规则已禁用');
     loadRules();
   } catch(e) {
