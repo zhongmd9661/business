@@ -2020,13 +2020,32 @@
         opacity: 0.3;
       }
     }
-  </style>
+  
+    .audit-report{padding:20px 0}
+    .audit-report h1{font-size:22px;font-weight:700;color:#1e3a5f;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #e2e8f0}
+    .audit-report h2{font-size:18px;font-weight:700;color:#1e3a5f;margin:20px 0 12px;padding-bottom:8px;border-bottom:1px solid #f1f5f9}
+    .audit-report p{font-size:14px;color:#475569;line-height:1.8;margin:4px 0}
+    .audit-report ul{padding-left:20px;margin:8px 0}
+    .audit-report li{font-size:14px;color:#475569;line-height:1.8}
+    .audit-report strong{color:#1e3a5f}
+    .audit-report hr{border:none;border-top:1px solid #e2e8f0;margin:16px 0}
+    .audit-report .report-meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:12px 0;padding:12px;background:#f8fafc;border-radius:8px}
+    .audit-report .report-meta p{margin:0;font-size:13px}
+    .audit-report .rule-item{padding:12px 16px;margin:8px 0;border-radius:8px;border-left:4px solid}
+    .audit-report .rule-item.passed{background:#f0fdf4;border-color:#059669}
+    .audit-report .rule-item.failed{background:#fef2f2;border-color:#dc2626}
+    .audit-report .rule-item .rule-name{font-weight:600;font-size:14px;margin-bottom:4px}
+    .audit-report .rule-item.passed .rule-name{color:#059669}
+    .audit-report .rule-item.failed .rule-name{color:#dc2626}
+    .audit-report .rule-detail{font-size:13px;color:#475569;line-height:1.6}
+    .report-error-box{padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;text-align:center;font-size:14px}
+    </style>
   <!-- Tesseract.js for client-side OCR -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+  <script src="/static/libs/tesseract.min.js" defer></script>
   <!-- PDF.js for rendering PDF pages (v3 for UMD compatibility) -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script src="/static/libs/pdf.min.js" defer></script>
   <!-- Mammoth.js for extracting Word document text -->
-  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+  <script src="/static/libs/mammoth.browser.min.js" defer></script>
   <script>
     /* ---- Dynamic PDF.js loader (fallback if CDN fails) ---- */
     var _pdfjsLoaded = false;
@@ -2039,7 +2058,7 @@
       _pdfjsLoaded = true;
       return new Promise(function (resolve, reject) {
         var s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+        s.src = '/static/libs/pdf.min.js';
         s.onload = function () {
           if (typeof pdfjsLib !== 'undefined') resolve(pdfjsLib);
           else reject(new Error('PDF.js loaded but pdfjsLib not found'));
@@ -2096,7 +2115,7 @@
             <path d="M9 14l2 2 4-4"/>
           </svg>
           <span class="record-selector-label">选择提交记录</span>
-          <span class="record-selector-required">*</span>
+          <span class="record-selector-required" style="color:#1e40af;">[可选]</span>
         </div>
         <select id="recordSelect" onchange="onRecordSelected()">
           <option value="">-- 请选择要审核的提交记录 --</option>
@@ -2735,16 +2754,32 @@
     <div class="result-section" id="resultSection">
       <div class="result-card">
         <div class="result-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"    <!-- 审核结果区域 -->
+    <div class="result-section" id="resultSection">
+      <div class="result-card">
+        <div class="result-title">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
             <polyline points="9 15 11 17 15 13"/>
           </svg>
-          审核进度
+          审核报告
         </div>
         <div class="loading-spinner visible" id="loadingSpinner">
           <div class="spinner"></div>
           <div class="loading-text">正在智能分析上传材料，请稍候...</div>
+        </div>
+        <div id="reportError" style="display:none;" class="report-error-box"></div>
+        <div id="auditReport" style="display:none;"></div>
+        <div id="reportActions" style="display:none;" class="btn-row" style="margin-top:20px;justify-content:center;gap:12px;">
+          <button class="btn btn--secondary" onclick="printReport()" style="padding:8px 24px;font-size:14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            打印报告
+          </button>
+          <button class="btn btn--secondary" onclick="copyReport()" style="padding:8px 24px;font-size:14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            复制报告
+          </button>
         </div>
       </div>
     </div>
@@ -3102,10 +3137,9 @@
       var details = document.getElementById('recordDetails');
 
       if (!recordId) {
-        // 取消选择，禁用上传
+        // 取消选择，记录选择为可选，不禁用上传
         selectedRecord = null;
         details.classList.remove('visible');
-        disableUploadSlots();
         return;
       }
 
@@ -3192,13 +3226,6 @@
     function triggerUpload(item) {
       // 如果已经上传，不重复触发
       if (item.classList.contains('uploaded')) return;
-      // 如果没有选择提交记录，禁止上传
-      if (!selectedRecord) {
-        var recordSelect = document.getElementById('recordSelect');
-        recordSelect.focus();
-        alert('请先选择要审核的提交记录');
-        return;
-      }
       const input = item.querySelector('input[type="file"]');
       input.click();
       input.onchange = function () {
@@ -3322,7 +3349,7 @@
       selectedRecord = null;
       document.getElementById('recordSelect').value = '';
       document.getElementById('recordDetails').classList.remove('visible');
-      disableUploadSlots();
+      enableUploadSlots();  // 重置后保持上传可用（记录选择为可选）
       // 清空 OCR 记录面板
       document.getElementById('ocrRecordsList').innerHTML = '<div class="records-list-empty">请先选择提交记录</div>';
       document.getElementById('ocrRecordsCount').textContent = '—';
@@ -3332,29 +3359,146 @@
     }
 
     function startAudit() {
-      if (!selectedRecord) {
-        alert('请先选择要审核的提交记录');
-        return;
-      }
-      const resultSection = document.getElementById('resultSection');
+      var resultSection = document.getElementById('resultSection');
       resultSection.classList.add('visible');
-      // 重新计算缩放，因为内容增加了
-      requestAnimationFrame(function () {
-        var wrapper = document.getElementById('scaleWrapper');
-        var availW = window.innerWidth;
-        var availH = window.innerHeight;
-        var contentW = wrapper.scrollWidth;
-        var contentH = wrapper.scrollHeight;
-        if (contentW === 0 || contentH === 0) return;
-        var scaleX = availW / contentW;
-        var scaleY = availH / contentH;
-        var scale = Math.min(scaleX, scaleY, 1);
-        scale *= 0.97;
-        wrapper.style.transform = 'scale(' + scale + ')';
-      });
-      // TODO: 对接后端审核 API，传递 selectedRecord.id 和上传文件
-      console.log('审核提交记录:', selectedRecord.id, '流水号:', selectedRecord.serial_number);
+      document.getElementById('loadingSpinner').classList.add('visible');
+      document.getElementById('reportError').style.display = 'none';
+      document.getElementById('auditReport').style.display = 'none';
+      document.getElementById('reportActions').style.display = 'none';
+
+      if (selectedRecord && selectedRecord.serial_number) {
+        // 已选择记录，直接使用
+        runReview(selectedRecord.serial_number);
+      } else {
+        // 未选择记录，自动创建一条临时记录
+        auditToast('未选择记录，自动创建审核记录...');
+        createTempRecord().then(function(sn) {
+          runReview(sn);
+        }).catch(function(err) {
+          document.getElementById('loadingSpinner').classList.remove('visible');
+          showReportError('创建审核记录失败: ' + err.message);
+        });
+      }
+
+      setTimeout(function() { resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
     }
+
+    function runReview(sn) {
+      document.getElementById('loadingSpinner').querySelector('.loading-text').textContent = '正在审核中...';
+      fetch('/api/audit-detail/' + encodeURIComponent(sn) + '/review', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === 'completed') {
+            return fetch('/api/audit-detail/' + encodeURIComponent(sn) + '/report').then(function(r2) { return r2.json(); });
+          }
+          throw new Error(data.detail || '审核失败');
+        })
+        .then(function(rd) {
+          document.getElementById('loadingSpinner').classList.remove('visible');
+          if (rd.report) {
+            window._currentReportMarkdown = rd.report;
+            renderAuditReport(rd.report);
+            document.getElementById('auditReport').style.display = 'block';
+            document.getElementById('reportActions').style.display = 'flex';
+          } else {
+            showReportError('审核完成但未生成报告');
+          }
+        })
+        .catch(function(err) {
+          document.getElementById('loadingSpinner').classList.remove('visible');
+          showReportError('审核请求失败: ' + err.message);
+        });
+    }
+
+    function createTempRecord() {
+      var user = JSON.parse(localStorage.getItem('user') || 'null');
+      var payload = {
+        scenario: 'external',
+        scenario_name: '外部商务招待',
+        submitter: user ? user.username : '匿名',
+        date: new Date().toISOString().slice(0, 10),
+        location: '',
+        org: '',
+        guests: 0,
+        accompany_count: 0,
+        per_capita: 0,
+        total_amount: 0
+      };
+      return fetch('/api/reception-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.serial_number) return d.serial_number;
+        throw new Error('未返回流水号');
+      });
+    }
+
+    function showReportError(msg) {
+      var el = document.getElementById('reportError');
+      el.style.display = 'block';
+      el.innerHTML = '<p>❌ ' + escapeHtmlText(msg) + '</p>';
+    }
+
+    function renderAuditReport(md) {
+      document.getElementById('auditReport').innerHTML = '<div class="audit-report">' + mdToHtml(md) + '</div>';
+    }
+
+    function escapeHtmlText(t) {
+      var d = document.createElement('div'); d.textContent = t; return d.innerHTML;
+    }
+
+    function mdToHtml(md) {
+      var lines = md.split('\n'), h = '', inUl = false, inMeta = false, inRule = false;
+      for (var i = 0; i < lines.length; i++) {
+        var L = lines[i].replace(/\r$/, '');
+        if (L.startsWith('# ')) { close(); h += '<h1>' + esc(L.slice(2)) + '</h1>'; continue; }
+        if (L.startsWith('## ')) { close(); h += '<h2>' + esc(L.slice(3)) + '</h2>'; continue; }
+        if (L.startsWith('### ')) { close();
+          var c = L.slice(4), ok = c.indexOf('✅') !== -1;
+          var m = c.replace(/[✅❌]\s*/, '').match(/^(.+)\s+\((.+)\)$/);
+          if (m) { h += '<div class="rule-item ' + (ok?'passed':'failed') + '"><div class="rule-name">' + c.charAt(0) + ' ' + esc(m[1]) + ' <span style="font-weight:normal;font-size:12px;color:#64748b;">(' + esc(m[2]) + ')</span></div>'; inRule = true; }
+          continue; }
+        if (L === '---') { close(); h += '<hr>'; continue; }
+        if (L.match(/^- \*\*.+?\*\*:/)) {
+          if (inUl){h+='</ul>';inUl=false;} if(inRule){h+='</div>';inRule=false;}
+          if(!inMeta){h+='<div class="report-meta">';inMeta=true;}
+          var mm=L.match(/^- \*\*(.+?)\*\*:\s*(.+)$/);
+          if(mm) h+='<p><strong>'+esc(mm[1])+'</strong>: '+esc(mm[2])+'</p>';
+          continue; }
+        if (L.match(/^\*\*.+?\*\*:/)) {
+          if(inMeta){h+='</div>';inMeta=false;}
+          h+='<p class="rule-detail">'+esc(L)+'</p>'; continue; }
+        if (L.match(/^[\-\*] /)) {
+          if(inRule){h+='</div>';inRule=false;}
+          if(!inUl){h+='<ul>';inUl=true;}
+          h+='<li>'+esc(L.slice(2))+'</li>'; continue; }
+        if (L.trim()==='') continue;
+        if(L.match(/^\*.+\*$/)){h+='<p style="text-align:right;color:#94a3b8;font-style:italic;font-size:12px;margin-top:20px;">'+esc(L)+'</p>';continue;}
+        if(inRule){h+='<p class="rule-detail">'+esc(L)+'</p>';inRule=false;}else h+='<p>'+esc(L)+'</p>';
+      }
+      close(); return h;
+      function esc(t){return escapeHtmlText(t);}
+      function close(){if(inUl){h+='</ul>';inUl=false;}if(inMeta){h+='</div>';inMeta=false;}if(inRule){h+='</div>';inRule=false;}}
+    }
+
+    function copyReport() {
+      var el = document.getElementById('auditReport'), txt = el.innerText||el.textContent;
+      if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){auditToast('报告已复制');});}
+      else{var t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);auditToast('报告已复制');}
+    }
+
+    function printReport() {
+      var el=document.getElementById('auditReport'),w=window.open('','_blank');
+      w.document.write('<html><head><title>审核报告</title><style>body{font-family:"Microsoft YaHei",sans-serif;padding:40px;color:#1e3a5f}h1{font-size:20px;border-bottom:2px solid #e2e8f0;padding-bottom:12px}h2{font-size:16px;margin-top:20px}.rule-item.passed{background:#f0fdf4;border-left:4px solid #059669;padding:10px;margin:8px 0}.rule-item.failed{background:#fef2f2;border-left:4px solid #dc2626;padding:10px;margin:8px 0}.report-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px;background:#f8fafc;border-radius:8px}.rule-detail{font-size:13px;color:#475569;line-height:1.6}hr{border:none;border-top:1px solid #e2e8f0;margin:16px 0}</style></head><body>');
+      w.document.write(el.innerHTML); w.document.write('</body></html>'); w.document.close(); w.print();
+    }
+
+    function auditToast(msg) {
+      var t=document.createElement('div');
+      t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e3a5f;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+      t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2000);
+    }}
 
     /* ---- OCR / 文件预览功能 ---- */
     // 设置 PDF.js worker（等 CDN 加载完成后设置）
@@ -3836,6 +3980,8 @@
       setupPdfWheelZoom();
       // 加载 LLM 提取设置
       loadExtractSettings();
+      // 记录选择为可选，页面加载后即启用上传槽位
+      enableUploadSlots();
     });
 
     /* ==================== 大模型提取功能 ==================== */
