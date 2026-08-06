@@ -134,7 +134,7 @@ def download_template():
 def list_internal_units(
     status: str | None = None,
     db: Session = Depends(get_db),
-    _admin: User = Depends(get_admin_user),
+    _user: User = Depends(get_current_user),
 ):
     """获取所有内部单位（可按状态筛选）"""
     query = db.query(InternalUnit)

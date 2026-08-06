@@ -255,12 +255,13 @@ function checkInternalUnitAndSwitch(scenario) {
     if (val.includes(internalNames[i]) || internalNames[i].includes(val)) {
       if (_switchDebounce) return;  // 防抖：避免重复弹框
       _switchDebounce = setTimeout(function () { _switchDebounce = null; }, 3000);
-      if (confirm('❓ 检测到「' + input.value.trim() + '」为系统内部单位\n\n建议切换至"内部业务招待"场景，是否切换？')) {
-        switchScenarioTo('D');
-        // 切换后将单位名称填入场景D的org字段
-        var dOrg = document.getElementById('scenario-D-org');
-        if (dOrg) dOrg.value = input.value.trim();
-      }
+      // 自动切换至内部业务招待场景（无需确认）
+      switchScenarioTo('D');
+      // 将单位名称填入场景D的org字段
+      var dOrg = document.getElementById('scenario-D-org');
+      if (dOrg) dOrg.value = input.value.trim();
+      // 提示用户已自动切换
+      showToast('[OK] 检测到「' + input.value.trim() + '」为内部单位，已自动切换至内部业务招待场景');
       return;
     }
   }
