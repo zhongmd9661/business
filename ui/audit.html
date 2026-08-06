@@ -2779,8 +2779,6 @@
         </div>
       </div>
     </div>
-  </div>
-  </div>
 
   <!-- OCR 弹窗 -->
   <div class="ocr-modal-overlay" id="ocrModalOverlay" onclick="closeOCRModal(event)">
@@ -3133,7 +3131,24 @@
       var details = document.getElementById('recordDetails');
 
       if (!recordId) {
-        // 取消选择，记录选择为可选，不禁用上传
+        // 取消选择时，检查是否有已上传文件或审核报告
+        var hasFiles = uploadedCount > 0;
+        var hasReport = document.getElementById('resultSection').classList.contains('visible');
+        if (hasFiles || hasReport) {
+          var confirmed = confirm(
+            '⚠️ 取消选择记录将清空已上传文件和审核报告。\n\n确定要重置吗？'
+          );
+          if (!confirmed) {
+            // 用户取消，恢复之前的选择
+            if (selectedRecord) {
+              select.value = selectedRecord.id;
+            }
+            return;
+          }
+          // 用户确认，清空文件和审核报告
+          resetFilesOnly();
+          document.getElementById('resultSection').classList.remove('visible');
+        }
         selectedRecord = null;
         details.classList.remove('visible');
         return;
