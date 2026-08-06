@@ -129,6 +129,15 @@ async def ui_extraction_rules():
     return _html_response("<h1>提取规则页未找到</h1>")
 
 
+@app.get("/review-rules", response_class=HTMLResponse)
+async def ui_review_rules():
+    """审核规则管理页"""
+    rules_file = ui_dir / "review-rules.html" if ui_dir.exists() else None
+    if rules_file and rules_file.exists():
+        return _html_response(rules_file.read_text(encoding="utf-8"))
+    return _html_response("<h1>审核规则页未找到</h1>")
+
+
 @app.get("/reference", response_class=HTMLResponse)
 async def ui_reference():
     """参考资料页"""
@@ -156,7 +165,7 @@ async def on_startup():
     init_app_settings()
 
     # 4. Load routers (lazy to avoid circular imports)
-    from . import router, router_rule, router_standards, router_standards_admin, router_application_form, router_reception_records, router_qichacha, router_ocr, router_audit_detail, router_extraction_rules, router_internal_units
+    from . import router, router_rule, router_standards, router_standards_admin, router_application_form, router_reception_records, router_qichacha, router_ocr, router_audit_detail, router_extraction_rules, router_internal_units, router_review_rules
 
     app.include_router(router.settings_router, prefix="/api", tags=["settings"])
     app.include_router(router.task_router, prefix="/api", tags=["tasks"])
@@ -170,6 +179,7 @@ async def on_startup():
     app.include_router(router_audit_detail.router, prefix="/api", tags=["audit-detail"])
     app.include_router(router_extraction_rules.router, prefix="/api", tags=["extraction-rules"])
     app.include_router(router_internal_units.router, prefix="/api", tags=["internal-units"])
+    app.include_router(router_review_rules.router, prefix="/api", tags=["review-rules"])
     # 申请单生成页面不需要 /api 前缀，直接挂载
     app.include_router(router_application_form.router, tags=["application-form"])
 

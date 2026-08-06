@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>审核规则管理</title>
+<meta http-equiv="Cache-Control" content="no-cache">
+<style>
+:root{--c1:#1a1a2e;--c2:#6b7280;--cb:#e5e7eb;--bg:#fff;--bg2:#f9fafb;--ac:#3b82f6;--acl:#eff6ff;--su:#10b981;--sub:#ecfdf5;--wa:#f59e0b;--wab:#fffbeb;--er:#ef4444;--erb:#fef2f2;--r:10px;--sp:16px;--f:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,PingFang SC,Microsoft YaHei,sans-serif;--sh:0 1px 3px rgba(0,0,0,.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--f);font-size:14px;color:var(--c1);background:var(--bg2);line-height:1.5}
+.container{max-width:1200px;margin:0 auto;padding:24px}
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.ttl{font-size:20px;font-weight:700}
+.btn{padding:8px 20px;border-radius:var(--r);border:1px solid var(--cb);background:var(--bg);cursor:pointer;font-size:13px;font-family:var(--f);font-weight:600;transition:all .15s}
+.bp{background:var(--ac);color:#fff;border-color:var(--ac)}.bp:hover{background:#2563eb}
+.bd{background:var(--er);color:#fff;border-color:var(--er)}.bd:hover{background:#dc2626}
+.bs{background:var(--su);color:#fff;border-color:var(--su)}.bs:hover{background:#059669}
+.cd{background:var(--bg);border-radius:14px;border:1px solid var(--cb);box-shadow:var(--sh);padding:var(--sp);margin-bottom:20px}
+.ct{font-weight:600;margin-bottom:12px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--cb);font-size:13px;vertical-align:top}
+th{background:var(--bg2);font-weight:600;color:var(--c2);font-size:12px;position:sticky;top:0}
+input[type="text"],select,textarea{padding:6px 10px;border:1px solid var(--cb);border-radius:6px;font-size:13px;font-family:var(--f);outline:none;transition:border .15s;width:100%}
+input[type="text"]:focus,select:focus,textarea:focus{border-color:var(--ac)}
+select{min-width:80px;cursor:pointer}
+textarea{min-height:60px;resize:vertical}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-high{background:var(--erb);color:var(--er)}
+.badge-mid{background:var(--wab);color:#b45309}
+.badge-low{background:var(--sub);color:#047857}
+.badge-info{background:var(--acl);color:var(--ac)}
+.toggle{position:relative;width:40px;height:22px;background:var(--cb);border-radius:11px;cursor:pointer;transition:background .2s;display:inline-block;flex-shrink:0}
+.toggle.on{background:var(--su)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{transform:translateX(18px)}
+.act-btns{display:flex;gap:4px;flex-wrap:wrap}
+.act-btn{padding:3px 10px;border-radius:6px;border:1px solid var(--cb);background:var(--bg);cursor:pointer;font-size:12px;font-family:var(--f)}
+.act-btn:hover{background:var(--bg2)}
+.act-btn.del{color:var(--er);border-color:var(--er)}
+.act-btn.del:hover{background:var(--erb)}
+.act-btn.edit{color:var(--ac);border-color:var(--ac)}
+.act-btn.edit:hover{background:var(--acl)}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center;padding:24px}
+.modal.show{display:flex}
+.modal-box{background:var(--bg);border-radius:14px;width:90%;max-width:600px;max-height:85vh;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;padding:var(--sp);border-bottom:1px solid var(--cb);position:sticky;top:0;background:var(--bg);z-index:1;border-radius:14px 14px 0 0}
+.modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--c2)}
+.modal-body{padding:var(--sp)}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-weight:600;font-size:13px;margin-bottom:4px;color:var(--c2)}
+.form-hint{font-size:11px;color:var(--c2);margin-top:3px}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 24px;background:var(--su);color:#fff;border-radius:var(--r);font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.08);opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateY(0)}
+.empty{text-align:center;padding:40px;color:var(--c2)}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.back-link{color:var(--ac);font-size:13px;text-decoration:none}
+.back-link:hover{text-decoration:underline}
+.rule-count{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--c2)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hdr">
+    <div>
+      <a class="back-link" href="/ui-index">← 返回首页</a>
+      <h1 class="ttl" style="margin-top:8px">📋 审核规则管理</h1>
+      <p style="color:var(--c2);font-size:13px;margin-top:4px">管理审核引擎执行的规则，启用的规则会在审核时被自动调用</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bp" onclick="openAddModal()">＋ 新增规则</button>
+      <button class="btn" onclick="loadRules()">🔄 刷新</button>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <span style="font-size:13px;color:var(--c2)">分类筛选：</span>
+    <select id="filterCategory" onchange="loadRules()">
+      <option value="">全部分类</option>
+    </select>
+    <div class="rule-count" id="ruleCount"></div>
+  </div>
+
+  <div class="cd">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:40px">启用</th>
+          <th style="width:80px">分类</th>
+          <th>规则名称</th>
+          <th style="width:80px">级别</th>
+          <th>规则条款</th>
+          <th style="width:120px">check_expression</th>
+          <th style="width:160px">操作</th>
+        </tr>
+      </thead>
+      <tbody id="rulesBody">
+        <tr><td colspan="7" class="empty">加载中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 新增/编辑规则弹窗 -->
+<div class="modal" id="ruleModal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h3 id="modalTitle">新增规则</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-group">
+        <label class="form-label">分类</label>
+        <select id="fCategory">
+          <option value="一致性校验">一致性校验</option>
+          <option value="合规性校验">合规性校验</option>
+          <option value="经营风险">经营风险</option>
+          <option value="完整性校验">完整性校验</option>
+          <option value="自定义">自定义</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">规则名称 <span style="color:var(--er)">*</span></label>
+        <input type="text" id="fRuleName" placeholder="例如：金额一致性">
+      </div>
+      <div class="form-group">
+        <label class="form-label">规则条款</label>
+        <textarea id="fClause" placeholder="规则的简要描述，用于审核报告中展示"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">级别</label>
+        <select id="fLevel">
+          <option value="高">高</option>
+          <option value="中">中</option>
+          <option value="低">低</option>
+          <option value="提示">提示</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">详细说明</label>
+        <textarea id="fDescription" placeholder="规则的详细说明"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">check_expression <span style="color:var(--er)">*</span></label>
+        <input type="text" id="fCheckExpr" placeholder="对应的规则函数标识符">
+        <div class="form-hint">内置可选值：<code>amount_consistency</code>、<code>date_consistency</code>、<code>standard_compliance</code>、<code>business_status</code>、<code>payment_consistency</code>、<code>event_date</code>。自定义规则需先在代码中注册。</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">来源文档</label>
+        <input type="text" id="fSourceDoc" placeholder="规则依据的文档或规定">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="closeModal()">取消</button>
+        <button class="btn bp" onclick="saveRule()">💾 保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 规则详情弹窗 -->
+<div class="modal" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h3 id="detailTitle">规则详情</h3>
+      <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let rules = [];
+
+async function loadCategories() {
+  try {
+    const res = await fetch('/api/admin/review-rules/categories');
+    if (!res.ok) return;
+    const cats = await res.json();
+    const sel = document.getElementById('filterCategory');
+    sel.innerHTML = '<option value="">全部分类</option>';
+    cats.forEach(c => {
+      sel.innerHTML += `<option value="${c}">${c}</option>`;
+    });
+  } catch(e) { console.warn('Failed to load categories:', e); }
+}
+
+async function loadRules() {
+  const cat = document.getElementById('filterCategory').value;
+  const url = cat ? `/api/admin/review-rules?category=${encodeURIComponent(cat)}` : '/api/admin/review-rules';
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(await res.text());
+    rules = await res.json();
+    renderRules();
+  } catch(e) {
+    document.getElementById('rulesBody').innerHTML = `<tr><td colspan="7" class="empty">加载失败: ${e.message}</td></tr>`;
+  }
+}
+
+function renderRules() {
+  const body = document.getElementById('rulesBody');
+  const count = document.getElementById('ruleCount');
+  count.textContent = `共 ${rules.length} 条规则`;
+
+  if (!rules.length) {
+    body.innerHTML = '<tr><td colspan="7" class="empty">暂无规则</td></tr>';
+    return;
+  }
+
+  body.innerHTML = rules.map(r => `
+    <tr>
+      <td><div class="toggle ${r.enabled ? 'on' : ''}" onclick="toggleEnabled(${r.id}, ${r.enabled})"></div></td>
+      <td><span style="font-size:12px;color:var(--c2)">${esc(r.category)}</span></td>
+      <td><strong>${esc(r.rule_name)}</strong></td>
+      <td><span class="badge badge-${levelClass(r.level)}">${esc(r.level)}</span></td>
+      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.clause)}">${esc(r.clause)}</td>
+      <td><code style="font-size:11px;color:var(--ac)">${esc(r.check_expression)}</code></td>
+      <td>
+        <div class="act-btns">
+          <button class="act-btn edit" onclick="editRule(${r.id})">编辑</button>
+          <button class="act-btn" onclick="showDetail(${r.id})">详情</button>
+          <button class="act-btn del" onclick="deleteRule(${r.id})">禁用</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function levelClass(level) {
+  if (level === '高') return 'high';
+  if (level === '中') return 'mid';
+  if (level === '提示') return 'info';
+  return 'low';
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function toggleEnabled(id, current) {
+  const action = current ? 'disable' : 'restore';
+  try {
+    if (action === 'disable') {
+      await fetch(`/api/admin/review-rules/${id}`, { method: 'DELETE' });
+    } else {
+      await fetch(`/api/admin/review-rules/${id}/restore`, { method: 'POST' });
+    }
+    toast(action === 'disable' ? '已禁用规则' : '已启用规则');
+    loadRules();
+  } catch(e) {
+    alert('操作失败: ' + e.message);
+  }
+}
+
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = '新增规则';
+  document.getElementById('editId').value = '';
+  document.getElementById('fCategory').value = '一致性校验';
+  document.getElementById('fRuleName').value = '';
+  document.getElementById('fClause').value = '';
+  document.getElementById('fLevel').value = '高';
+  document.getElementById('fDescription').value = '';
+  document.getElementById('fCheckExpr').value = '';
+  document.getElementById('fSourceDoc').value = '';
+  document.getElementById('ruleModal').classList.add('show');
+}
+
+function editRule(id) {
+  const r = rules.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('modalTitle').textContent = '编辑规则';
+  document.getElementById('editId').value = id;
+  document.getElementById('fCategory').value = r.category;
+  document.getElementById('fRuleName').value = r.rule_name;
+  document.getElementById('fClause').value = r.clause || '';
+  document.getElementById('fLevel').value = r.level;
+  document.getElementById('fDescription').value = r.description || '';
+  document.getElementById('fCheckExpr').value = r.check_expression;
+  document.getElementById('fSourceDoc').value = r.source_document || '';
+  document.getElementById('ruleModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('ruleModal').classList.remove('show');
+}
+
+async function saveRule() {
+  const id = document.getElementById('editId').value;
+  const data = {
+    category: document.getElementById('fCategory').value,
+    rule_name: document.getElementById('fRuleName').value.trim(),
+    clause: document.getElementById('fClause').value.trim(),
+    level: document.getElementById('fLevel').value,
+    description: document.getElementById('fDescription').value.trim(),
+    check_expression: document.getElementById('fCheckExpr').value.trim(),
+    source_document: document.getElementById('fSourceDoc').value.trim(),
+  };
+  if (!data.rule_name || !data.check_expression) {
+    alert('规则名称和 check_expression 为必填项');
+    return;
+  }
+  try {
+    let res;
+    if (id) {
+      res = await fetch(`/api/admin/review-rules/${id}`, {
+        method: 'PUT', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+    } else {
+      res = await fetch('/api/admin/review-rules', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+    }
+    if (!res.ok) throw new Error(await res.text());
+    toast(id ? '规则已更新' : '规则已创建');
+    closeModal();
+    loadCategories();
+    loadRules();
+  } catch(e) {
+    alert('保存失败: ' + e.message);
+  }
+}
+
+async function deleteRule(id) {
+  if (!confirm('确定禁用此规则？禁用后将不再执行。')) return;
+  try {
+    await fetch(`/api/admin/review-rules/${id}`, { method: 'DELETE' });
+    toast('规则已禁用');
+    loadRules();
+  } catch(e) {
+    alert('操作失败: ' + e.message);
+  }
+}
+
+function showDetail(id) {
+  const r = rules.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('detailTitle').textContent = r.rule_name;
+  document.getElementById('detailBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:100px 1fr;gap:8px 16px">
+      <strong>分类</strong><span>${esc(r.category)}</span>
+      <strong>规则名称</strong><span>${esc(r.rule_name)}</span>
+      <strong>级别</strong><span><span class="badge badge-${levelClass(r.level)}">${esc(r.level)}</span></span>
+      <strong>规则条款</strong><span>${esc(r.clause)}</span>
+      <strong>check_expression</strong><code>${esc(r.check_expression)}</code>
+      <strong>详细说明</strong><span>${esc(r.description || '—')}</span>
+      <strong>来源文档</strong><span>${esc(r.source_document || '—')}</span>
+      <strong>状态</strong><span>${r.enabled ? '✅ 启用' : '❌ 禁用'}</span>
+      <strong>创建时间</strong><span>${r.created_at || '—'}</span>
+      <strong>更新时间</strong><span>${r.updated_at || '—'}</span>
+    </div>
+  `;
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').classList.remove('show');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// 点击遮罩关闭弹窗
+document.getElementById('ruleModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDetailModal();
+});
+
+// 初始化
+loadCategories();
+loadRules();
+</script>
+</body>
+</html>

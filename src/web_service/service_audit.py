@@ -12,7 +12,7 @@ from typing import Any, Optional
 from loguru import logger
 from sqlalchemy.orm import Session
 
-from .models_db import ExtractedField, ReviewResult, OCRRecord, ReceptionRecord, ExtractionRule
+from .models_db import ExtractedField, ReviewResult, OCRRecord, ReceptionRecord, ExtractionRule, AuditRule
 
 logger = logging.getLogger(__name__)
 
@@ -707,6 +707,56 @@ def _extract_event(md: str) -> dict:
 # ===================================================================
 # 审核规则引擎
 # ===================================================================
+# 规则函数注册表（check_expression -> 函数）
+RULE_REGISTRY = {
+    "amount_consistency": _rule_amount_consistency,
+    "date_consistency": _rule_date_consistency,
+    "standard_compliance": _rule_standard_compliance,
+    "business_status": _rule_business_status,
+    "payment_consistency": _rule_payment_consistency,
+    "event_date": _rule_event_date,
+}
+
+
+# 从数据库加载启用的审核规则
+def _load_active_rules(db):
+    return db.query(AuditRule).filter(AuditRule.enabled == True).order_by(AuditRule.id).all()
+
+
+# 初始化默认规则（首次调用时插入）
+def _seed_default_rules(db):
+    existing = db.query(AuditRule).filter(
+        AuditRule.check_expression == "amount_consistency"
+    ).first()
+    if existing:
+        return
+    default_rules = [
+        {"category": "一致性校验", "rule_name": "金额一致性", "clause": "以发票小写金额为准",
+         "level": "高", "description": "核对发票金额与各单据金额是否一致",
+         "check_expression": "amount_consistency", "source_document": "系统内置", "enabled": True},
+        {"category": "一致性校验", "rule_name": "日期一致性", "clause": "以审批单招待日期为基准",
+         "level": "高", "description": "核对审批单、发票、支付凭证的日期逻辑关系",
+         "check_expression": "date_consistency", "source_document": "系统内置", "enabled": True},
+        {"category": "合规性校验", "rule_name": "招待标准合规性", "clause": "人均费用和陪同人数应符合标准",
+         "level": "高", "description": "工作餐≤60元，内部≤150元，其他公务≤200元，外事/商务≤400元",
+         "check_expression": "standard_compliance", "source_document": "系统内置", "enabled": True},
+        {"category": "经营风险", "rule_name": "单位经营状态", "clause": "招待单位应处于正常经营状态",
+         "level": "提示", "description": "检查招待单位是否正常经营",
+         "check_expression": "business_status", "source_document": "系统内置", "enabled": True},
+        {"category": "一致性校验", "rule_name": "支付凭证一致性", "clause": "支付凭证和流水关键信息应一致",
+         "level": "高", "description": "比对交易单号、金额、商户名称",
+         "check_expression": "payment_consistency", "source_document": "系统内置", "enabled": True},
+        {"category": "一致性校验", "rule_name": "活动函件日期", "clause": "函件日期与招待日期应相差在±7天内",
+         "level": "中", "description": "核对活动函件时间与审批单日期",
+         "check_expression": "event_date", "source_document": "系统内置", "enabled": True},
+    ]
+    for rd in default_rules:
+        rule = AuditRule(**rd)
+        db.add(rule)
+    db.commit()
+    logger.info("审核规则种子数据已初始化（6 条默认规则）")
+
+
 
 def run_review(db: Session, serial_number: str) -> list[dict]:
     """执行全部审核规则，返回结果列表并写入数据库"""
@@ -729,24 +779,26 @@ def run_review(db: Session, serial_number: str) -> list[dict]:
             except json.JSONDecodeError:
                 pass
 
-    rules = [
-        _rule_amount_consistency,
-        _rule_date_consistency,
-        _rule_standard_compliance,
-        _rule_business_status,
-        _rule_payment_consistency,
-        _rule_event_date,
-    ]
+    # 从数据库加载启用的规则
+    _seed_default_rules(db)
+    active_rules = _load_active_rules(db)
 
     results = []
-    for rule_func in rules:
+    for db_rule in active_rules:
+        rule_func = RULE_REGISTRY.get(db_rule.check_expression)
+        if rule_func is None:
+            logger.warning(f"规则 '{db_rule.rule_name}' 的 check_expression 未注册，跳过")
+            continue
         try:
             result = rule_func(fields_by_slot)
+            # 使用数据库中配置的 rule_name 和 severity
+            result['rule_name'] = db_rule.rule_name
+            result['severity'] = db_rule.level
             results.append(result)
             rr = ReviewResult(
                 serial_number=serial_number,
-                rule_name=result["rule_name"],
-                severity=result["severity"],
+                rule_name=db_rule.rule_name,
+                severity=db_rule.level,
                 passed=result["passed"],
                 detail=result["detail"],
             )
