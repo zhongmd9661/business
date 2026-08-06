@@ -2041,11 +2041,11 @@
     .report-error-box{padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;text-align:center;font-size:14px}
     </style>
   <!-- Tesseract.js for client-side OCR -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js" defer></script>
   <!-- PDF.js for rendering PDF pages (v3 for UMD compatibility) -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js" defer></script>
   <!-- Mammoth.js for extracting Word document text -->
-  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js" defer></script>
   <script>
     /* ---- Dynamic PDF.js loader (fallback if CDN fails) ---- */
     var _pdfjsLoaded = false;
