@@ -416,7 +416,6 @@ async def query_qcc_company(body: dict):
     try:
         from qcc_scraper.browser import BrowserManager
         from qcc_scraper.login_checker import check_and_login
-        from qcc_scraper.searcher import Searcher
         from qcc_scraper.collector import Collector
         from qcc_scraper.config import QCC_URL
 
@@ -424,15 +423,41 @@ async def query_qcc_company(body: dict):
             browser = None
             try:
                 browser = BrowserManager().launch()
-                page = browser.navigate_to(QCC_URL)
+                page = browser.page
+                # 如果已经在 QCC 首页，跳过导航节省 3 秒
+                if not page.url.startswith("https://www.qcc.com"):
+                    page = browser.navigate_to(QCC_URL)
+                    page.wait_for_timeout(1000)
 
                 if not check_and_login(page):
                     raise RuntimeError("登录失败，请在浏览器中完成登录后重试")
 
                 browser.close_popup()
 
-                searcher = Searcher(page)
-                searcher.search(company_name)
+                # --- 快速搜索（跳过 CLI 的逐字输入和随机延迟）---
+                import time
+                # 定位搜索框并输入
+                input_sel = ".qccd-input, .qccd-input-group input, input[placeholder*='搜索'], input[placeholder*='企业']"
+                input_el = page.locator(input_sel).first
+                input_el.click(timeout=5000)
+                input_el.fill("")
+                input_el.fill(company_name)
+                page.wait_for_timeout(500)
+                # 点击搜索
+                btn_sel = ".qccd-input-search-button, .qccd-btn.qccd-btn-primary.qccd-input-search-button, button[class*='search-button']"
+                try:
+                    page.locator(btn_sel).first.click(timeout=5000)
+                except Exception:
+                    page.keyboard.press("Enter")
+                # 等待结果加载
+                page.wait_for_timeout(3000)
+                # 检查 URL 是否变化（最多等 8 秒）
+                start = time.time()
+                while time.time() - start < 8:
+                    if page.url != "https://www.qcc.com/" and page.url != "https://www.qcc.com":
+                        break
+                    page.wait_for_timeout(500)
+                page.wait_for_timeout(1000)
 
                 browser.close_popup()
 
