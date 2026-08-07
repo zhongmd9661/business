@@ -775,15 +775,51 @@ def run_review(db: Session, serial_number: str) -> list[dict]:
 
     results = []
     for db_rule in active_rules:
-        rule_func = RULE_REGISTRY.get(db_rule.check_expression)
-        if rule_func is None:
-            logger.warning(f"规则 '{db_rule.rule_name}' 的 check_expression 未注册，跳过")
-            continue
+        result = None
+
+        # 双模式判断：JSON 表达式 or 硬编码函数名
         try:
-            result = rule_func(fields_by_slot)
-            # 使用数据库中配置的 rule_name 和 severity
-            result['rule_name'] = db_rule.rule_name
-            result['severity'] = db_rule.level
+            parsed_expr = json.loads(db_rule.check_expression)
+            is_json_expr = isinstance(parsed_expr, dict) and "type" in parsed_expr
+        except (json.JSONDecodeError, TypeError):
+            is_json_expr = False
+
+        if is_json_expr:
+            # 模式 1: JSON 表达式 — 动态求值
+            try:
+                result = evaluate_expression(
+                    parsed_expr, fields_by_slot,
+                    rule_name=db_rule.rule_name,
+                    severity=db_rule.level,
+                )
+            except Exception as e:
+                logger.error(f"JSON 规则 '{db_rule.rule_name}' 执行异常: {e}")
+                result = {
+                    "rule_name": db_rule.rule_name,
+                    "severity": db_rule.level,
+                    "passed": False,
+                    "detail": f"规则执行异常: {str(e)}",
+                }
+        else:
+            # 模式 2: 硬编码函数名 — 向后兼容
+            rule_func = RULE_REGISTRY.get(db_rule.check_expression)
+            if rule_func is None:
+                logger.warning(f"规则 '{db_rule.rule_name}' 的 check_expression 未注册，跳过")
+                continue
+            try:
+                result = rule_func(fields_by_slot)
+                result['rule_name'] = db_rule.rule_name
+                result['severity'] = db_rule.level
+            except Exception as e:
+                logger.error(f"规则 '{db_rule.rule_name}' 执行异常: {e}")
+                result = {
+                    "rule_name": db_rule.rule_name,
+                    "severity": db_rule.level,
+                    "passed": False,
+                    "detail": f"规则执行异常: {str(e)}",
+                }
+
+        if result:
             results.append(result)
             rr = ReviewResult(
                 serial_number=serial_number,
@@ -793,14 +829,6 @@ def run_review(db: Session, serial_number: str) -> list[dict]:
                 detail=result["detail"],
             )
             db.add(rr)
-        except Exception as e:
-            logger.error(f"Rule {rule_func.__name__} failed: {e}")
-            results.append({
-                "rule_name": rule_func.__name__,
-                "severity": "高",
-                "passed": False,
-                "detail": f"规则执行异常: {str(e)}",
-            })
 
     db.commit()
 
@@ -1102,6 +1130,313 @@ RULE_REGISTRY = {
     "payment_consistency": _rule_payment_consistency,
     "event_date": _rule_event_date,
 }
+
+
+
+# ===================================================================
+# JSON 表达式求值器 — 支持跨槽位字段比较、关键词匹配、金额阈值
+# ===================================================================
+
+def _parse_date_str(val):
+    """解析日期字符串，统一返回 YYYY-MM-DD 格式"""
+    import re
+    if not isinstance(val, str):
+        val = str(val)
+    m = re.match(r"(\d{4})-(\d{1,2})-(\d{1,2})", val.strip())
+    if m:
+        return f"{m.group(1)}-{m.group(2).zfill(2)}-{m.group(3).zfill(2)}"
+    m = re.match(r"(\d{4})[年.\/\-](\d{1,2})[月.\/\-](\d{1,2})", val.strip())
+    if m:
+        return f"{m.group(1)}-{m.group(2).zfill(2)}-{m.group(3).zfill(2)}"
+    return val.strip() if val.strip() else None
+
+
+def _eval_cross_field_compare(expr, fields_by_slot):
+    """跨槽位字段比较表达式求值器
+
+    {
+        "type": "cross_field_compare",
+        "field": "招待日期",
+        "field_slot": "审批单",
+        "field_type": "date",        // "date" or "number"
+        "tolerance": 0.01,           // 数值比较容差
+        "fallback_slot": "发票PDF",  // 基准字段备选槽位
+        "comparisons": [
+            {
+                "other_slot": "申请单",
+                "other_field": "申请日期",
+                "operator": "<=",
+                "message": "申请日期应早于招待日期",
+                "fallback_slot": "发票PDF",
+                "tolerance_days": 7   // 日期容差（天）
+            }
+        ]
+    }
+
+    运算符: <=, >=, ==, !=, >, <, ~ (近似, 需容差)
+    """
+    base_field = expr.get("field", "")
+    base_slot = expr.get("field_slot", "")
+    field_type = expr.get("field_type", "date")
+    comparisons = expr.get("comparisons", [])
+    default_tolerance = expr.get("tolerance", 0)
+
+    # 获取基准值
+    base_val = fields_by_slot.get(base_slot, {}).get(base_field)
+    if base_val is None:
+        fb = expr.get("fallback_slot")
+        if fb and fb in fields_by_slot:
+            base_val = fields_by_slot[fb].get(base_field)
+    if base_val is None:
+        return {
+            "rule_name": expr.get("_rule_name", "跨字段比较"),
+            "severity": expr.get("_severity", "高"),
+            "passed": True,
+            "detail": f"⚠️ 未找到槽位[{base_slot}]的字段[{base_field}]，跳过校验",
+        }
+
+    # 基准值标准化
+    if field_type == "date":
+        base_val = _parse_date_str(base_val)
+
+    parts = []
+    passed = True
+
+    for comp in comparisons:
+        other_slot = comp.get("other_slot", "")
+        other_field = comp.get("other_field", "")
+        operator = comp.get("operator", "==")
+        msg = comp.get("message", "")
+        tolerance = comp.get("tolerance_days", comp.get("tolerance", default_tolerance))
+        fb = comp.get("fallback_slot")
+
+        # 获取比较值
+        other_val = fields_by_slot.get(other_slot, {}).get(other_field)
+        if other_val is None and fb:
+            other_val = fields_by_slot.get(fb, {}).get(other_field)
+
+        if other_val is None:
+            parts.append(f"⚠️ 跳过: 未找到槽位[{other_slot}]的字段[{other_field}]")
+            continue
+
+        if field_type == "date":
+            other_val = _parse_date_str(other_val)
+            if other_val is None:
+                parts.append(f"⚠️ 跳过: 字段[{other_field}]日期解析失败")
+                continue
+
+        # 执行比较
+        ok = _compare_values(base_val, other_val, operator, tolerance, field_type)
+        if not ok:
+            passed = False
+            if msg:
+                parts.append(f"❌ {msg}")
+            else:
+                parts.append(f"❌ {other_field}({other_val}) {operator} {base_field}({base_val})")
+        else:
+            if msg:
+                parts.append(f"✅ {msg}")
+            elif operator == "~":
+                if field_type == "date":
+                    d1 = datetime.strptime(base_val, "%Y-%m-%d")
+                    d2 = datetime.strptime(other_val, "%Y-%m-%d")
+                    diff = abs((d1 - d2).days)
+                    parts.append(f"✅ {other_field}({other_val}) 与 {base_field}({base_val}) 相差 {diff} 天 (容差±{tolerance}天)")
+                else:
+                    parts.append(f"✅ {other_field}({other_val}) 与 {base_field}({base_val}) 相近")
+            else:
+                parts.append(f"✅ {other_field}({other_val}) {operator} {base_field}({base_val})")
+
+    return {
+        "rule_name": expr.get("_rule_name", "跨字段比较"),
+        "severity": expr.get("_severity", "高"),
+        "passed": passed,
+        "detail": " | ".join(parts) if parts else "无数据可校验",
+    }
+
+
+def _compare_values(base_val, other_val, operator, tolerance, field_type):
+    """执行两个值的比较"""
+    if field_type == "date":
+        b = str(base_val)
+        o = str(other_val)
+        if operator == "~":
+            try:
+                d1 = datetime.strptime(b, "%Y-%m-%d")
+                d2 = datetime.strptime(o, "%Y-%m-%d")
+                return abs((d1 - d2).days) <= tolerance
+            except (ValueError, TypeError):
+                return True
+        elif operator == "<=":
+            return o <= b
+        elif operator == ">=":
+            return o >= b
+        elif operator == "==":
+            return o == b
+        elif operator == "!=":
+            return o != b
+        elif operator == ">":
+            return o > b
+        elif operator == "<":
+            return o < b
+    else:
+        try:
+            b = float(base_val)
+            o = float(other_val)
+        except (ValueError, TypeError):
+            return True
+        if operator == "==":
+            return abs(b - o) <= tolerance
+        elif operator == "!=":
+            return abs(b - o) > tolerance
+        elif operator == "<=":
+            return o <= b + tolerance
+        elif operator == ">=":
+            return o >= b - tolerance
+        elif operator == ">":
+            return o > b + tolerance
+        elif operator == "<":
+            return o < b - tolerance
+    return True
+
+
+def _eval_keyword_match_expr(expr, fields_by_slot):
+    """关键词匹配表达式求值器
+
+    {
+        "type": "keyword_match",
+        "field": "商户全称",
+        "field_slot": "支付凭证",
+        "keywords": ["私人会所", "高档娱乐"],
+        "mode": "any"
+    }
+    """
+    target_field = expr.get("field", "")
+    target_slot = expr.get("field_slot", "")
+    keywords = expr.get("keywords", [])
+    mode = expr.get("mode", "any")
+
+    target_val = fields_by_slot.get(target_slot, {}).get(target_field, "")
+    if not target_val:
+        return {
+            "rule_name": expr.get("_rule_name", "关键词匹配"),
+            "severity": expr.get("_severity", "高"),
+            "passed": True,
+            "detail": f"⚠️ 未找到槽位[{target_slot}]的字段[{target_field}]，跳过",
+        }
+
+    matched = [kw for kw in keywords if kw in str(target_val)]
+    if mode == "all":
+        is_match = len(matched) == len(keywords)
+    else:
+        is_match = len(matched) > 0
+
+    if is_match:
+        return {
+            "rule_name": expr.get("_rule_name", "关键词匹配"),
+            "severity": expr.get("_severity", "高"),
+            "passed": False,
+            "detail": f"❌ [{target_slot}]{target_field} 命中关键词: {', '.join(matched)}",
+        }
+
+    return {
+        "rule_name": expr.get("_rule_name", "关键词匹配"),
+        "severity": expr.get("_severity", "高"),
+        "passed": True,
+        "detail": f"✅ [{target_slot}]{target_field} 未命中禁止关键词",
+    }
+
+
+def _eval_amount_threshold_expr(expr, fields_by_slot):
+    """金额阈值表达式求值器
+
+    {
+        "type": "amount_threshold",
+        "field": "人均费用",
+        "field_slot": "审批单",
+        "operator": ">",
+        "threshold": 200,
+        "message": "人均费用超标"
+    }
+    """
+    target_field = expr.get("field", "")
+    target_slot = expr.get("field_slot", "")
+    operator = expr.get("operator", ">")
+    threshold = expr.get("threshold", 0)
+    msg = expr.get("message", "")
+
+    target_val = fields_by_slot.get(target_slot, {}).get(target_field)
+    if target_val is None:
+        return {
+            "rule_name": expr.get("_rule_name", "金额阈值"),
+            "severity": expr.get("_severity", "高"),
+            "passed": True,
+            "detail": f"⚠️ 未找到槽位[{target_slot}]的字段[{target_field}]，跳过",
+        }
+
+    try:
+        val = float(target_val)
+    except (ValueError, TypeError):
+        return {
+            "rule_name": expr.get("_rule_name", "金额阈值"),
+            "severity": expr.get("_severity", "高"),
+            "passed": True,
+            "detail": f"⚠️ 字段[{target_field}]值[{target_val}]无法转换为数字",
+        }
+
+    ops = {">": lambda a, b: a > b, ">=": lambda a, b: a >= b,
+           "<": lambda a, b: a < b, "<=": lambda a, b: a <= b,
+           "==": lambda a, b: a == b, "!=": lambda a, b: a != b}
+    cmp_fn = ops.get(operator)
+    if cmp_fn is None:
+        return {
+            "rule_name": expr.get("_rule_name", "金额阈值"),
+            "severity": expr.get("_severity", "高"),
+            "passed": True,
+            "detail": f"⚠️ 无效运算符: {operator}",
+        }
+
+    if cmp_fn(val, threshold):
+        detail_msg = msg or f"[{target_slot}]{target_field}={val} {operator} {threshold}"
+        return {
+            "rule_name": expr.get("_rule_name", "金额阈值"),
+            "severity": expr.get("_severity", "高"),
+            "passed": False,
+            "detail": f"❌ {detail_msg}",
+        }
+
+    detail_msg = msg or f"[{target_slot}]{target_field}={val} 符合标准"
+    return {
+        "rule_name": expr.get("_rule_name", "金额阈值"),
+        "severity": expr.get("_severity", "高"),
+        "passed": True,
+        "detail": f"✅ {detail_msg}",
+    }
+
+
+# JSON 表达式求值器注册表
+EXPRESSION_EVALUATORS = {
+    "cross_field_compare": _eval_cross_field_compare,
+    "keyword_match": _eval_keyword_match_expr,
+    "amount_threshold": _eval_amount_threshold_expr,
+}
+
+
+def evaluate_expression(expr_dict, fields_by_slot, rule_name="", severity="高"):
+    """通用表达式求值入口 — 根据 type 分派到对应求值器"""
+    expr_type = expr_dict.get("type", "")
+    evaluator = EXPRESSION_EVALUATORS.get(expr_type)
+    if evaluator is None:
+        return {
+            "rule_name": rule_name or "未知规则",
+            "severity": severity,
+            "passed": True,
+            "detail": f"⚠️ 未知表达式类型: {expr_type}，跳过",
+        }
+
+    expr_dict["_rule_name"] = rule_name or "动态规则"
+    expr_dict["_severity"] = severity
+    return evaluator(expr_dict, fields_by_slot)
 
 # ===================================================================
 # 审核报告生成

@@ -54,6 +54,7 @@ textarea{min-height:60px;resize:vertical}
 .toast.show{opacity:1;transform:translateY(0)}
 .empty{text-align:center;padding:40px;color:var(--c2)}
 .filter-row{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.rule-cfg-panel{background:var(--bg2);border:1px solid var(--cb);border-radius:8px;padding:12px;margin-bottom:16px}
 .back-link{color:var(--ac);font-size:13px;text-decoration:none}
 .back-link:hover{text-decoration:underline}
 .rule-count{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--c2)}
@@ -69,6 +70,10 @@ textarea{min-height:60px;resize:vertical}
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn bp" onclick="openAddModal()">＋ 新增规则</button>
+      <button class="btn bs" onclick="openTemplateModal()">📋 规则模板</button>
+      <button class="btn" onclick="downloadTemplate()">📥 下载导入模板</button>
+      <button class="btn" onclick="document.getElementById('importFileInput').click()">📤 Excel导入</button>
+      <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
       <button class="btn" onclick="loadRules()">🔄 刷新</button>
     </div>
   </div>
@@ -116,6 +121,7 @@ textarea{min-height:60px;resize:vertical}
           <option value="一致性校验">一致性校验</option>
           <option value="合规性校验">合规性校验</option>
           <option value="经营风险">经营风险</option>
+          <option value="禁止性规定">禁止性规定</option>
           <option value="完整性校验">完整性校验</option>
           <option value="自定义">自定义</option>
         </select>
@@ -142,10 +148,107 @@ textarea{min-height:60px;resize:vertical}
         <textarea id="fDescription" placeholder="规则的详细说明"></textarea>
       </div>
       <div class="form-group">
-        <label class="form-label">check_expression <span style="color:var(--er)">*</span></label>
-        <input type="text" id="fCheckExpr" placeholder="对应的规则函数标识符">
-        <div class="form-hint">内置可选值：<code>amount_consistency</code>、<code>date_consistency</code>、<code>standard_compliance</code>、<code>business_status</code>、<code>payment_consistency</code>、<code>event_date</code>。自定义规则需先在代码中注册。</div>
+        <label class="form-label">规则类型 <span style="color:var(--er)">*</span></label>
+        <select id="fRuleType" onchange="onRuleTypeChange()">
+          <option value="builtin">系统内置函数</option>
+          <option value="cross_compare">跨字段比较（日期/金额一致性）</option>
+          <option value="keyword">关键词匹配（禁止场所/食材/烟酒）</option>
+          <option value="threshold">金额阈值（人均上限等）</option>
+        </select>
       </div>
+
+      <!-- 系统内置函数配置面板 -->
+      <div id="cfgBuiltin" class="rule-cfg-panel">
+        <div class="form-group">
+          <label class="form-label">函数标识符</label>
+          <select id="fBuiltinFunc">
+            <option value="amount_consistency">金额一致性</option>
+            <option value="date_consistency">日期一致性</option>
+            <option value="standard_compliance">招待标准合规性</option>
+            <option value="business_status">单位经营状态</option>
+            <option value="payment_consistency">支付凭证一致性</option>
+            <option value="event_date">活动函件日期</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 跨字段比较配置面板 -->
+      <div id="cfgCross" class="rule-cfg-panel" style="display:none">
+        <div class="form-group">
+          <label class="form-label">基准字段</label>
+          <div style="display:flex;gap:8px">
+            <select id="fBaseSlot" style="width:120px"></select>
+            <select id="fBaseField" style="flex:1"></select>
+          </div>
+          <div class="form-hint">字段列表自动从「字段提取规则」加载</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">比较条件</label>
+          <div id="compareRows"></div>
+          <button type="button" class="btn" style="margin-top:6px;font-size:12px;padding:4px 12px" onclick="addCompareRow()">&#8203;+ 添加条件</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">容差</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="fTolerance" placeholder="数值0.01，日期留空" style="width:80px">
+            <span id="toleranceUnit" style="font-size:12px;color:var(--c2)"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">字段类型</label>
+          <select id="fFieldType">
+            <option value="date">日期</option>
+            <option value="number">数值</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 关键词匹配配置面板 -->
+      <div id="cfgKeyword" class="rule-cfg-panel" style="display:none">
+        <div class="form-group">
+          <label class="form-label">检测字段</label>
+          <div style="display:flex;gap:8px">
+            <select id="fKwSlot" style="width:120px"></select>
+            <select id="fKwField" style="flex:1"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">关键词（逗号分隔）</label>
+          <textarea id="fKeywords" placeholder="私人会所,高档娱乐,烟酒专卖店" style="min-height:40px"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">匹配模式</label>
+          <select id="fKwMode">
+            <option value="any">任一匹配即触发</option>
+            <option value="all">全部匹配才触发</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 金额阈值配置面板 -->
+      <div id="cfgThreshold" class="rule-cfg-panel" style="display:none">
+        <div class="form-group">
+          <label class="form-label">检测字段</label>
+          <div style="display:flex;gap:8px">
+            <select id="fThSlot" style="width:120px"></select>
+            <select id="fThField" style="flex:1"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">阈值</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="fThOp" style="width:60px">
+              <option value=">">大于</option>
+              <option value=">=">大于等于</option>
+              <option value="<">小于</option>
+              <option value="<=">小于等于</option>
+            </select>
+            <input type="number" id="fThValue" placeholder="例如 400" style="width:100px">
+            <span style="font-size:12px;color:var(--c2)">元</span>
+          </div>
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="form-label">来源文档</label>
         <input type="text" id="fSourceDoc" placeholder="规则依据的文档或规定">
@@ -170,6 +273,24 @@ textarea{min-height:60px;resize:vertical}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 规则模板弹窗 -->
+<div class="modal" id="templateModal">
+  <div class="modal-box" style="max-width:700px">
+    <div class="modal-hdr">
+      <h3>📋 规则模板 — 一键应用</h3>
+      <button class="modal-close" onclick="closeTemplateModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--c2);margin-bottom:12px">选择下方模板，一键生成审核规则。已存在的规则会自动跳过。</p>
+      <div id="templateList"><p style="text-align:center;padding:20px;color:var(--c2)">加载中...</p></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn" onclick="closeTemplateModal()">关闭</button>
+        <button class="btn bp" onclick="applySelectedTemplates()">✅ 应用选中模板</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>// === 认证辅助：自动从 localStorage 读取 token 并附加到请求头 ===
 function getAuthToken() {
@@ -266,6 +387,144 @@ function esc(s) {
   return d.innerHTML;
 }
 
+// === 规则类型面板切换 ===
+function onRuleTypeChange() {
+  const type = document.getElementById('fRuleType').value;
+  document.getElementById('cfgBuiltin').style.display = (type === 'builtin') ? 'block' : 'none';
+  document.getElementById('cfgCross').style.display = (type === 'cross_compare') ? 'block' : 'none';
+  document.getElementById('cfgKeyword').style.display = (type === 'keyword') ? 'block' : 'none';
+  document.getElementById('cfgThreshold').style.display = (type === 'threshold') ? 'block' : 'none';
+
+  const ft = document.getElementById('fFieldType').value;
+  document.getElementById('toleranceUnit').textContent = ft === 'date' ? '天' : '元';
+}
+
+// === 槽位/字段下拉框填充 ===
+async function populateSlotFields() {
+  const slotNames = ['审批单', '申请单', '报账单', '发票XML', '发票PDF', '经营状态', '支付凭证', '支付流水', '活动函件'];
+
+  let slotFields = {};
+  try {
+    const res = await authFetch('/api/admin/review-rules/slot-fields');
+    if (res.ok) slotFields = await res.json();
+  } catch (e) { console.warn('Failed to load slot fields:', e); }
+
+  const selects = ['fBaseSlot', 'fKwSlot', 'fThSlot'];
+  selects.forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">选槽位</option>';
+    slotNames.forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
+    sel.onchange = () => {
+      const fieldSelId = selId.replace('Slot', 'Field');
+      updateFieldSelect(fieldSelId, sel.value, slotFields);
+    };
+  });
+
+  const compareRows = document.getElementById('compareRows');
+  if (compareRows) {
+    compareRows.querySelectorAll('.compare-slot').forEach(sel => {
+      sel.innerHTML = '<option value="">选槽位</option>';
+      slotNames.forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
+      sel.onchange = () => {
+        const row = sel.closest('.compare-row');
+        updateFieldSelect(row.querySelector('.compare-field'), sel.value, slotFields);
+      };
+    });
+  }
+}
+
+function updateFieldSelect(sel, slotName, slotFields) {
+  if (!sel) return;
+  const fields = slotFields[slotName] || [];
+  sel.innerHTML = '<option value="">选字段</option>';
+  fields.forEach(f => { sel.innerHTML += `<option value="${f}">${f}</option>`; });
+}
+
+// === 跨字段比较：添加比较行 ===
+function addCompareRow(slot, field, op, fb, tol) {
+  const row = document.createElement('div');
+  row.className = 'compare-row';
+  row.style.cssText = 'display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap;align-items:center';
+  row.innerHTML = `
+    <select class="compare-slot" style="width:90px"><option value="">选槽位</option></select>
+    <select class="compare-field" style="flex:1;min-width:80px"><option value="">选字段</option></select>
+    <select style="width:50px">
+      <option value="<=">≤</option><option value=">=">≥</option>
+      <option value="==">=</option><option value="!=">≠</option>
+      <option value="~">≈</option><option value=">">&gt;</option><option value="<">&lt;</option>
+    </select>
+    <input type="text" class="compare-fb" placeholder="fallback槽位" style="width:70px">
+    <input type="text" class="compare-tol" placeholder="容差" style="width:50px">
+    <button type="button" onclick="this.parentElement.remove()" style="background:none;border:1px solid var(--er);color:var(--er);border-radius:4px;cursor:pointer;font-size:11px;padding:1px 6px">×</button>
+  `;
+  document.getElementById('compareRows').appendChild(row);
+
+  setTimeout(() => populateSlotFields(), 50);
+
+  if (slot) row.querySelector('.compare-slot').value = slot;
+  if (field) setTimeout(() => row.querySelector('.compare-field').value = field, 100);
+  if (op) row.querySelectorAll('select')[1].value = op;
+  if (fb) row.querySelector('.compare-fb').value = fb;
+  if (tol) row.querySelector('.compare-tol').value = tol;
+}
+
+// === 构建 JSON 表达式：跨字段比较 ===
+function buildCrossCompareExpr() {
+  const baseSlot = document.getElementById('fBaseSlot').value;
+  const baseField = document.getElementById('fBaseField').value;
+  const fieldType = document.getElementById('fFieldType').value;
+  const tolerance = document.getElementById('fTolerance').value;
+
+  if (!baseSlot || !baseField) throw new Error('请选择基准字段');
+
+  const comparisons = [];
+  document.querySelectorAll('#compareRows .compare-row').forEach(row => {
+    const otherSlot = row.querySelector('.compare-slot').value;
+    const otherField = row.querySelector('.compare-field').value;
+    const operator = row.querySelectorAll('select')[1].value;
+    const fb = row.querySelector('.compare-fb').value.trim();
+    const tol = row.querySelector('.compare-tol').value.trim();
+
+    if (otherSlot && otherField) {
+      const comp = { other_slot: otherSlot, other_field: otherField, operator };
+      if (fb) comp.fallback_slot = fb;
+      if (tol) comp[fieldType === 'date' ? 'tolerance_days' : 'tolerance'] = parseFloat(tol);
+      comparisons.push(comp);
+    }
+  });
+
+  if (!comparisons.length) throw new Error('请至少添加一个比较条件');
+
+  const expr = { type: 'cross_field_compare', field: baseField, field_slot: baseSlot, field_type: fieldType, comparisons };
+  if (tolerance) expr.tolerance = parseFloat(tolerance);
+  return JSON.stringify(expr, null, 2);
+}
+
+// === 构建 JSON 表达式：关键词匹配 ===
+function buildKeywordExpr() {
+  const field = document.getElementById('fKwField').value;
+  const fieldSlot = document.getElementById('fKwSlot').value;
+  const keywords = document.getElementById('fKeywords').value.split(',').map(k => k.trim()).filter(k => k);
+  const mode = document.getElementById('fKwMode').value;
+
+  if (!keywords.length) throw new Error('请输入至少一个关键词');
+
+  return JSON.stringify({ type: 'keyword_match', field, field_slot: fieldSlot, keywords, mode }, null, 2);
+}
+
+// === 构建 JSON 表达式：金额阈值 ===
+function buildThresholdExpr() {
+  const field = document.getElementById('fThField').value;
+  const fieldSlot = document.getElementById('fThSlot').value;
+  const operator = document.getElementById('fThOp').value;
+  const threshold = document.getElementById('fThValue').value;
+
+  if (!field || !threshold) throw new Error('请选择字段并设置阈值');
+
+  return JSON.stringify({ type: 'amount_threshold', field, field_slot: fieldSlot, operator, threshold: parseFloat(threshold) }, null, 2);
+}
+
 async function toggleEnabled(id, current) {
   const action = current ? 'disable' : 'restore';
   try {
@@ -281,7 +540,7 @@ async function toggleEnabled(id, current) {
   }
 }
 
-function openAddModal() {
+async function openAddModal() {
   document.getElementById('modalTitle').textContent = '新增规则';
   document.getElementById('editId').value = '';
   document.getElementById('fCategory').value = '一致性校验';
@@ -289,12 +548,22 @@ function openAddModal() {
   document.getElementById('fClause').value = '';
   document.getElementById('fLevel').value = '高';
   document.getElementById('fDescription').value = '';
-  document.getElementById('fCheckExpr').value = '';
   document.getElementById('fSourceDoc').value = '';
+  document.getElementById('fRuleType').value = 'builtin';
+  document.getElementById('fBuiltinFunc').value = 'amount_consistency';
+  document.getElementById('fTolerance').value = '';
+  document.getElementById('fFieldType').value = 'date';
+  document.getElementById('fKeywords').value = '';
+  document.getElementById('fKwMode').value = 'any';
+  document.getElementById('fThOp').value = '>';
+  document.getElementById('fThValue').value = '';
+  document.getElementById('compareRows').innerHTML = '';
+  onRuleTypeChange();
+  await populateSlotFields();
   document.getElementById('ruleModal').classList.add('show');
 }
 
-function editRule(id) {
+async function editRule(id) {
   const r = rules.find(x => x.id === id);
   if (!r) return;
   document.getElementById('modalTitle').textContent = '编辑规则';
@@ -304,8 +573,47 @@ function editRule(id) {
   document.getElementById('fClause').value = r.clause || '';
   document.getElementById('fLevel').value = r.level;
   document.getElementById('fDescription').value = r.description || '';
-  document.getElementById('fCheckExpr').value = r.check_expression;
   document.getElementById('fSourceDoc').value = r.source_document || '';
+
+  await populateSlotFields();
+  try {
+    const expr = JSON.parse(r.check_expression);
+    if (expr.type === 'cross_field_compare') {
+      document.getElementById('fRuleType').value = 'cross_compare';
+      document.getElementById('fBaseSlot').value = expr.field_slot || '';
+      document.getElementById('fFieldType').value = expr.field_type || 'date';
+      document.getElementById('fTolerance').value = expr.tolerance || '';
+      setTimeout(() => {
+        document.getElementById('fBaseField').value = expr.field || '';
+      }, 100);
+      document.getElementById('compareRows').innerHTML = '';
+      (expr.comparisons || []).forEach(c => {
+        addCompareRow(c.other_slot, c.other_field, c.operator, c.fallback_slot || '', c.tolerance_days || '');
+      });
+    } else if (expr.type === 'keyword_match') {
+      document.getElementById('fRuleType').value = 'keyword';
+      document.getElementById('fKwSlot').value = expr.field_slot || '';
+      setTimeout(() => {
+        document.getElementById('fKwField').value = expr.field || '';
+      }, 100);
+      document.getElementById('fKeywords').value = (expr.keywords || []).join(', ');
+      document.getElementById('fKwMode').value = expr.mode || 'any';
+    } else if (expr.type === 'amount_threshold') {
+      document.getElementById('fRuleType').value = 'threshold';
+      document.getElementById('fThSlot').value = expr.field_slot || '';
+      setTimeout(() => {
+        document.getElementById('fThField').value = expr.field || '';
+      }, 100);
+      document.getElementById('fThOp').value = expr.operator || '>';
+      document.getElementById('fThValue').value = expr.threshold || '';
+    } else {
+      document.getElementById('fRuleType').value = 'builtin';
+    }
+  } catch {
+    document.getElementById('fRuleType').value = 'builtin';
+    document.getElementById('fBuiltinFunc').value = r.check_expression || '';
+  }
+  onRuleTypeChange();
   document.getElementById('ruleModal').classList.add('show');
 }
 
@@ -315,19 +623,39 @@ function closeModal() {
 
 async function saveRule() {
   const id = document.getElementById('editId').value;
+  const ruleType = document.getElementById('fRuleType').value;
+
+  let check_expression;
+  try {
+    if (ruleType === 'builtin') {
+      check_expression = document.getElementById('fBuiltinFunc').value;
+    } else if (ruleType === 'cross_compare') {
+      check_expression = buildCrossCompareExpr();
+    } else if (ruleType === 'keyword') {
+      check_expression = buildKeywordExpr();
+    } else if (ruleType === 'threshold') {
+      check_expression = buildThresholdExpr();
+    }
+  } catch(e) {
+    alert('配置错误: ' + e.message);
+    return;
+  }
+
   const data = {
     category: document.getElementById('fCategory').value,
     rule_name: document.getElementById('fRuleName').value.trim(),
     clause: document.getElementById('fClause').value.trim(),
     level: document.getElementById('fLevel').value,
     description: document.getElementById('fDescription').value.trim(),
-    check_expression: document.getElementById('fCheckExpr').value.trim(),
+    check_expression: check_expression,
     source_document: document.getElementById('fSourceDoc').value.trim(),
   };
+
   if (!data.rule_name || !data.check_expression) {
-    alert('规则名称和 check_expression 为必填项');
+    alert('规则名称和规则类型为必填项');
     return;
   }
+
   try {
     let res;
     if (id) {
@@ -387,6 +715,94 @@ function closeDetailModal() {
   document.getElementById('detailModal').classList.remove('show');
 }
 
+// === 规则模板 ===
+async function openTemplateModal() {
+  document.getElementById('templateModal').classList.add('show');
+  document.getElementById('templateList').innerHTML = '<p style="text-align:center;padding:20px;color:var(--c2)">加载中...</p>';
+  try {
+    const res = await authFetch('/api/admin/review-rules/templates');
+    if (!res.ok) throw new Error(await res.text());
+    const templates = await res.json();
+    if (!templates.length) {
+      document.getElementById('templateList').innerHTML = '<p style="text-align:center;padding:20px;color:var(--c2)">暂无模板</p>';
+      return;
+    }
+    let html = '<div style="display:flex;flex-direction:column;gap:8px">';
+    templates.forEach(t => {
+      html += `
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border:1px solid var(--cb);border-radius:8px;cursor:pointer">
+          <input type="checkbox" value="${t.template_id}" style="margin-top:3px">
+          <div>
+            <strong>${esc(t.name)}</strong>
+            <span class="badge badge-${levelClass(t.level)}" style="margin-left:8px">${esc(t.level)}</span>
+            <div style="font-size:12px;color:var(--c2);margin-top:2px">${esc(t.clause)}</div>
+            <div style="font-size:11px;color:var(--c2)">${esc(t.description)}</div>
+          </div>
+        </label>`;
+    });
+    html += '</div>';
+    document.getElementById('templateList').innerHTML = html;
+  } catch(e) {
+    document.getElementById('templateList').innerHTML = `<p style="text-align:center;padding:20px;color:var(--er)">加载失败: ${esc(e.message)}</p>`;
+  }
+}
+
+function closeTemplateModal() {
+  document.getElementById('templateModal').classList.remove('show');
+}
+
+async function applySelectedTemplates() {
+  const checkboxes = document.querySelectorAll('#templateList input[type="checkbox"]:checked');
+  if (!checkboxes.length) {
+    alert('请先选择至少一个模板');
+    return;
+  }
+  const templateIds = Array.from(checkboxes).map(cb => cb.value);
+  try {
+    const res = await authFetch('/api/admin/review-rules/apply-template', {
+      method: 'POST',
+      body: JSON.stringify({ template_ids: templateIds })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const result = await res.json();
+    toast(result.detail || '模板应用完成');
+    closeTemplateModal();
+    loadCategories();
+    loadRules();
+  } catch(e) {
+    alert('应用失败: ' + e.message);
+  }
+}
+
+// === Excel 导入 ===
+function downloadTemplate() {
+  window.open('/api/admin/review-rules/import-template', '_blank');
+}
+
+async function importExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = getAuthToken();
+    const res = await window.fetch('/api/admin/review-rules/import-excel', {
+      method: 'POST',
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+      body: formData
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const result = await res.json();
+    toast(result.detail || '导入完成');
+    loadCategories();
+    loadRules();
+  } catch(e) {
+    alert('导入失败: ' + e.message);
+  } finally {
+    event.target.value = '';
+  }
+}
+
 function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -400,6 +816,9 @@ document.getElementById('ruleModal').addEventListener('click', function(e) {
 });
 document.getElementById('detailModal').addEventListener('click', function(e) {
   if (e.target === this) closeDetailModal();
+});
+document.getElementById('templateModal').addEventListener('click', function(e) {
+  if (e.target === this) closeTemplateModal();
 });
 
 // 初始化
