@@ -420,52 +420,78 @@ async def query_qcc_company(body: dict):
         from qcc_scraper.config import QCC_URL
 
         def _run_scraper():
+            import time
             browser = None
+            t0 = time.time()
+            timings = []
             try:
+                t = time.time()
                 browser = BrowserManager().launch()
+                timings.append(f"launch={time.time()-t:.1f}s")
+
                 page = browser.page
-                # 如果已经在 QCC 首页，跳过导航节省 3 秒
+                t = time.time()
+                # 如果已经在 QCC 首页，跳过导航
                 if not page.url.startswith("https://www.qcc.com"):
                     page = browser.navigate_to(QCC_URL)
-                    page.wait_for_timeout(1000)
+                    timings.append(f"navigate={time.time()-t:.1f}s")
+                else:
+                    timings.append("navigate=skipped")
 
+                t = time.time()
                 if not check_and_login(page):
                     raise RuntimeError("登录失败，请在浏览器中完成登录后重试")
+                timings.append(f"login={time.time()-t:.1f}s")
 
+                t = time.time()
                 browser.close_popup()
+                timings.append(f"close_popup={time.time()-t:.1f}s")
 
-                # --- 快速搜索（跳过 CLI 的逐字输入和随机延迟）---
-                import time
-                # 定位搜索框并输入
+                # --- 快速搜索 ---
+                t = time.time()
                 input_sel = ".qccd-input, .qccd-input-group input, input[placeholder*='搜索'], input[placeholder*='企业']"
                 input_el = page.locator(input_sel).first
                 input_el.click(timeout=5000)
                 input_el.fill("")
                 input_el.fill(company_name)
-                page.wait_for_timeout(500)
-                # 点击搜索
+                page.wait_for_timeout(300)
+                timings.append(f"input={time.time()-t:.1f}s")
+
+                t = time.time()
                 btn_sel = ".qccd-input-search-button, .qccd-btn.qccd-btn-primary.qccd-input-search-button, button[class*='search-button']"
                 try:
                     page.locator(btn_sel).first.click(timeout=5000)
                 except Exception:
                     page.keyboard.press("Enter")
+                timings.append(f"click_search={time.time()-t:.1f}s")
+
                 # 等待结果加载
-                page.wait_for_timeout(3000)
+                t = time.time()
+                page.wait_for_timeout(2000)
                 # 检查 URL 是否变化（最多等 8 秒）
                 start = time.time()
                 while time.time() - start < 8:
                     if page.url != "https://www.qcc.com/" and page.url != "https://www.qcc.com":
                         break
                     page.wait_for_timeout(500)
-                page.wait_for_timeout(1000)
+                elapsed_search = time.time() - t
+                timings.append(f"wait_results={elapsed_search:.1f}s, url={page.url}")
 
+                t = time.time()
                 browser.close_popup()
+                timings.append(f"close_popup2={time.time()-t:.1f}s")
 
+                t = time.time()
                 collector = Collector(page)
                 companies = collector.extract_company_list()
+                timings.append(f"collect={time.time()-t:.1f}s, count={len(companies)}")
+
+                logger.info("QCC 查询耗时 {}: {}", company_name, " | ".join(timings))
                 return companies
 
             finally:
+                elapsed_total = time.time() - t0
+                logger.info("QCC 查询总计: {} -> {:.1f}s", company_name, elapsed_total)
                 if browser:
                     browser.close()
 
