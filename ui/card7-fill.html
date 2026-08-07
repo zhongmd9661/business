@@ -490,6 +490,19 @@
       .std-table { font-size: 12px; }
       .std-table .std-label { width: 70px; font-size: 11px; }
     }
+
+    /* QCC query button */
+    .qcc-query-wrap { display: flex; align-items: center; gap: 6px; }
+    .qcc-query-btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--color-accent); background: var(--color-accent); color: #fff; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); transition: all var(--transition); white-space: nowrap; flex-shrink: 0; }
+    .qcc-query-btn:hover { background: #2563eb; }
+    .qcc-query-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .qcc-query-btn .spinner { width: 14px; height: 14px; border-width: 2px; }
+    .qcc-query-result { margin-top: 8px; border-radius: var(--radius-sm); padding: 10px 12px; font-size: var(--font-size-xs); line-height: 1.6; }
+    .qcc-query-result.success { background: var(--color-success-bg); border: 1px solid #a7f3d0; color: #065f46; }
+    .qcc-query-result.error { background: var(--color-error-bg); border: 1px solid #fecaca; color: #991b1b; }
+    .qcc-query-result .qcc-status-badge { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 4px; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+    .qcc-query-result .qcc-status-badge.normal { background: #dcfce7; color: #166534; }
+    .qcc-query-result .qcc-status-badge.abnormal { background: #fee2e2; color: #991b1b; }
   </style>
 </head>
 <body>
@@ -660,7 +673,11 @@
           </div>
           <div class="form-field">
             <span class="form-field-label">招待对象单位</span>
-            <input type="text" id="scenario-A-org" class="form-input" oninput="checkInternalUnitAndSwitch('A')"  placeholder="请输入招待对象单位">
+            <div class="qcc-query-wrap">
+              <input type="text" id="scenario-A-org" class="form-input" oninput="checkInternalUnitAndSwitch('A')"  placeholder="请输入招待对象单位" style="flex:1;">
+              <button class="qcc-query-btn" onclick="queryQCC('A')" title="在企查查查询该企业">🔍 查状态</button>
+            </div>
+            <div class="qcc-query-result" id="qcc-result-A" style="display:none;"></div>
           </div>
           <div class="form-field">
             <span class="form-field-label">招待对象人数</span>
@@ -995,7 +1012,11 @@
           </div>
           <div class="form-field">
             <span class="form-field-label">招待对象单位</span>
-            <input type="text" id="scenario-C-org" class="form-input" oninput="checkInternalUnitAndSwitch('C')"  placeholder="请输入招待对象单位">
+            <div class="qcc-query-wrap">
+              <input type="text" id="scenario-C-org" class="form-input" oninput="checkInternalUnitAndSwitch('C')"  placeholder="请输入招待对象单位" style="flex:1;">
+              <button class="qcc-query-btn" onclick="queryQCC('C')" title="在企查查查询该企业">🔍 查状态</button>
+            </div>
+            <div class="qcc-query-result" id="qcc-result-C" style="display:none;"></div>
           </div>
           <div class="form-field">
             <span class="form-field-label">招待对象人数</span>
@@ -1405,7 +1426,11 @@
           </div>
           <div class="form-field">
             <span class="form-field-label">招待对象单位</span>
-            <input type="text" id="scenario-F-org" class="form-input" oninput="checkInternalUnitAndSwitch('F')"  placeholder="请输入招待对象单位">
+            <div class="qcc-query-wrap">
+              <input type="text" id="scenario-F-org" class="form-input" oninput="checkInternalUnitAndSwitch('F')"  placeholder="请输入招待对象单位" style="flex:1;">
+              <button class="qcc-query-btn" onclick="queryQCC('F')" title="在企查查查询该企业">🔍 查状态</button>
+            </div>
+            <div class="qcc-query-result" id="qcc-result-F" style="display:none;"></div>
           </div>
           <div class="form-field">
             <span class="form-field-label">招待对象人数</span>
@@ -3436,6 +3461,102 @@ async function submitRecord() {
       localStorage.removeItem('user');
       localStorage.removeItem('auth_token');
       window.location.href = '/login';
+    }
+
+    // ===== QCC 浏览器查询 =====
+    async function queryQCC(scenarioId) {
+      const orgInput = document.getElementById('scenario-' + scenarioId + '-org');
+      const resultDiv = document.getElementById('qcc-result-' + scenarioId);
+      const btn = event.currentTarget;
+
+      const name = orgInput.value.trim();
+      if (!name) {
+        showToast('⚠️ 请输入企业名称');
+        orgInput.focus();
+        return;
+      }
+
+      // Disable button and show loading
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> 查询中...';
+
+      // Clear previous result
+      resultDiv.style.display = 'none';
+      resultDiv.className = 'qcc-query-result';
+
+      try {
+        const response = await fetch('/api/qcc/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company_name: name })
+        });
+        const data = await response.json();
+
+        if (!data.success) {
+          resultDiv.className = 'qcc-query-result error';
+          resultDiv.innerHTML = '❌ ' + (data.error || '查询失败');
+          resultDiv.style.display = 'block';
+          return;
+        }
+
+        const companies = data.companies || [];
+        if (companies.length === 0) {
+          resultDiv.className = 'qcc-query-result error';
+          resultDiv.innerHTML = '⚠️ 未找到匹配的企业，请检查企业名称后重试';
+          resultDiv.style.display = 'block';
+          return;
+        }
+
+        // Take the first match
+        const company = companies[0];
+        const status = company.status || '未知';
+        const isAbnormal = ['注销', '吊销', '经营异常', '严重违法', '停业', '歇业', '迁出', '撤销', '被执行人', '失信被执行人'].some(s => status.includes(s));
+        const badgeClass = isAbnormal ? 'abnormal' : 'normal';
+
+        let html = '';
+        html += `<strong>🏢 ${escapeHtml(company.company_name)}</strong> `;
+        html += `<span class="qcc-status-badge ${badgeClass}">${escapeHtml(status)}</span>`;
+
+        if (company.credit_code) {
+          html += `<br>信用代码: ${escapeHtml(company.credit_code)}`;
+        }
+        if (company.legal_person) {
+          html += ` | 法人: ${escapeHtml(company.legal_person)}`;
+        }
+        if (company.registered_capital) {
+          html += ` | 资本: ${escapeHtml(company.registered_capital)}`;
+        }
+
+        if (isAbnormal) {
+          html += `<br><strong>⚠️ 该企业状态异常，建议不提交此接待记录</strong>`;
+        } else {
+          html += `<br>✅ 该企业经营状态正常`;
+        }
+
+        resultDiv.className = 'qcc-query-result ' + (isAbnormal ? 'error' : 'success');
+        resultDiv.innerHTML = html;
+        resultDiv.style.display = 'block';
+
+        // Sync to qichachaResultData so the submit validation uses it
+        qichachaResultData = {
+          company_name: company.company_name,
+          business_status: status,
+          is_abnormal: isAbnormal,
+          risk_count: 0,
+          risk_summary: isAbnormal ? '企业经营状态异常' : '未发现风险',
+          recommendation: isAbnormal ? '⚠️ 该企业经营状态为「' + status + '」，建议不提交。' : '✅ 该企业经营状态正常，可以提交。'
+        };
+
+        showToast('✅ 查询完成: ' + company.company_name);
+
+      } catch (err) {
+        resultDiv.className = 'qcc-query-result error';
+        resultDiv.innerHTML = '❌ 网络错误: ' + escapeHtml(err.message);
+        resultDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🔍 查状态';
+      }
     }
   </script>
   <script src="js/internal-units.js"></script>

@@ -1,4 +1,5 @@
 """企查查截图分析 API — 支持 RapidOCR（默认）和 VLM 两种识别方式"""
+import asyncio
 import base64
 import io
 import json
@@ -395,4 +396,94 @@ def _analyze_with_ocr(img: "Image.Image", device: str = "auto") -> dict:
             "img_width": img_w if 'img_w' in dir() else 0,
             "img_height": img_h if 'img_h' in dir() else 0,
             "_error": str(e)
+        }
+
+
+# ==================== QCC 浏览器自动查询 ====================
+
+@router.post("/qcc/query")
+async def query_qcc_company(body: dict):
+    """
+    通过浏览器自动查询企查查获取企业信息。
+    请求: POST /api/qcc/query  body: {"company_name": "腾讯"}
+    响应: {"success": true, "companies": [...]}
+    注意: 需要先运行 start_browser.py 启动 Edge 浏览器（CDP 端口 9223）
+    """
+    company_name = body.get("company_name", "").strip()
+    if not company_name:
+        raise HTTPException(400, "请输入企业名称")
+
+    try:
+        from qcc_scraper.browser import BrowserManager
+        from qcc_scraper.login_checker import check_and_login
+        from qcc_scraper.searcher import Searcher
+        from qcc_scraper.collector import Collector
+        from qcc_scraper.config import QCC_URL
+
+        def _run_scraper():
+            browser = None
+            try:
+                browser = BrowserManager().launch()
+                page = browser.navigate_to(QCC_URL)
+
+                if not check_and_login(page):
+                    raise RuntimeError("登录失败，请在浏览器中完成登录后重试")
+
+                browser.close_popup()
+
+                searcher = Searcher(page)
+                searcher.search(company_name)
+
+                browser.close_popup()
+
+                collector = Collector(page)
+                companies = collector.extract_company_list()
+                return companies
+
+            finally:
+                if browser:
+                    browser.close()
+
+        # 在后台线程运行（Playwright 是同步 API，避免阻塞 event loop）
+        companies = await asyncio.wait_for(
+            asyncio.to_thread(_run_scraper),
+            timeout=60.0
+        )
+
+        logger.info("QCC 查询成功: {} -> {} 条结果", company_name, len(companies))
+
+        return {
+            "success": True,
+            "query": company_name,
+            "count": len(companies),
+            "companies": companies,
+        }
+
+    except asyncio.TimeoutError:
+        logger.error("QCC 查询超时: {}", company_name)
+        return {
+            "success": False,
+            "error": "查询超时（60秒）。请检查网络连接或稍后重试。",
+            "companies": [],
+        }
+    except RuntimeError as e:
+        msg = str(e)
+        if "未检测到浏览器运行" in msg or "CDP" in msg:
+            return {
+                "success": False,
+                "error": "浏览器未启动。请先运行 start_browser.py 启动 Edge 浏览器。",
+                "companies": [],
+            }
+        return {
+            "success": False,
+            "error": msg,
+            "companies": [],
+        }
+    except Exception as e:
+        import traceback
+        logger.error(f"QCC 查询失败: {e}\n{traceback.format_exc()}")
+        return {
+            "success": False,
+            "error": f"查询失败: {str(e)}",
+            "companies": [],
         }
