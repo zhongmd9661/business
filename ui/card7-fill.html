@@ -503,6 +503,15 @@
     .qcc-query-result .qcc-status-badge { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 4px; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
     .qcc-query-result .qcc-status-badge.normal { background: #dcfce7; color: #166534; }
     .qcc-query-result .qcc-status-badge.abnormal { background: #fee2e2; color: #991b1b; }
+
+    .qcc-screenshot { margin-top: 8px; max-width: 100%; max-height: 300px; border-radius: 6px; border: 1px solid var(--color-border); cursor: zoom-in; display: block; }
+    .qcc-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center; cursor: zoom-out; }
+    .qcc-modal-overlay.show { display: flex; }
+    .qcc-modal-overlay img { max-width: 95vw; max-height: 90vh; border-radius: 8px; }
+    .qcc-modal-text { position: relative; background: #fff; border-radius: 8px; padding: 20px; max-width: 70vw; max-height: 80vh; overflow-y: auto; font-size: 12px; line-height: 1.8; white-space: pre-wrap; word-break: break-all; }
+    .qcc-modal-text .qcc-modal-close { position: absolute; top: 8px; right: 12px; background: #fff; border: 1px solid var(--color-border); border-radius: 4px; padding: 4px 12px; cursor: pointer; font-size: 13px; }
+    .qcc-raw-btn { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 4px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fff; cursor: pointer; font-size: var(--font-size-xs); font-family: var(--font-family); }
+    .qcc-raw-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
   </style>
 </head>
 <body>
@@ -3534,8 +3543,25 @@ async function submitRecord() {
         }
 
         resultDiv.className = 'qcc-query-result ' + (isAbnormal ? 'error' : 'success');
+
+        // 添加截图预览
+        if (data.screenshot) {
+          html += '<img class="qcc-screenshot" src="data:image/png;base64,' + data.screenshot + '" onclick="showQccScreenshot(this.src)" title="点击查看截图">';
+        }
+        // 添加原文按钮
+        if (data.raw_text) {
+          var rawBtnId = 'qcc-raw-btn-' + scenarioId;
+          html += '<button class="qcc-raw-btn" id="' + rawBtnId + '" onclick="showQccRawText(this)">📄 查看原文</button>';
+        }
+
         resultDiv.innerHTML = html;
         resultDiv.style.display = 'block';
+
+        // 把原文存到按钮的 data 属性
+        if (data.raw_text) {
+          var rawBtn = document.getElementById('qcc-raw-btn-' + scenarioId);
+          if (rawBtn) rawBtn.setAttribute('data-raw-text', data.raw_text);
+        }
 
         // Sync to qichachaResultData so the submit validation uses it
         qichachaResultData = {
@@ -3558,6 +3584,50 @@ async function submitRecord() {
         btn.innerHTML = '🔍 查状态';
       }
     }
+
+    // ===== QCC 截图弹窗 =====
+    function showQccScreenshot(src) {
+      var el = document.getElementById('qcc-screenshot-modal');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'qcc-screenshot-modal';
+        el.className = 'qcc-modal-overlay';
+        el.onclick = function() { el.classList.remove('show'); };
+        el.innerHTML = '<img src="' + src.replace(/"/g, '&quot;') + '" onclick="event.stopPropagation()">';
+        document.body.appendChild(el);
+      } else {
+        el.querySelector('img').src = src;
+      }
+      el.classList.add('show');
+    }
+
+    // ===== QCC 原文弹窗 =====
+    function showQccRawText(btnEl) {
+      var rawText = btnEl.getAttribute('data-raw-text') || '';
+      var el = document.getElementById('qcc-raw-text-modal');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'qcc-raw-text-modal';
+        el.className = 'qcc-modal-overlay';
+        el.onclick = function(e) { if (e.target === el) el.classList.remove('show'); };
+        el.innerHTML = '<div class="qcc-modal-text"><button class="qcc-modal-close" onclick="this.parentElement.parentElement.classList.remove('show')">✕ 关闭</button><div id="qcc-raw-body"></div></div>';
+        document.body.appendChild(el);
+      }
+      document.getElementById('qcc-raw-body').textContent = rawText;
+      el.classList.add('show');
+    }
+
+    // ESC 关闭弹窗
+    (function() {
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          var s = document.getElementById('qcc-screenshot-modal');
+          var r = document.getElementById('qcc-raw-text-modal');
+          if (s) s.classList.remove('show');
+          if (r) r.classList.remove('show');
+        }
+      });
+    })();
   </script>
   <script src="js/internal-units.js"></script>
 </body>

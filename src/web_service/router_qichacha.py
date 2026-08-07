@@ -486,8 +486,20 @@ async def query_qcc_company(body: dict):
                 companies = collector.extract_company_list()
                 timings.append(f"collect={time.time()-t:.1f}s, count={len(companies)}")
 
+                # 截图 (base64)
+                t = time.time()
+                screenshot_b64 = page.screenshot(full_page=False).encode("base64").decode("ascii")
+                timings.append(f"screenshot={time.time()-t:.1f}s")
+
+                # 页面原文
+                raw_text = ""
+                try:
+                    raw_text = page.inner_text("body", timeout=3000)
+                except Exception:
+                    pass
+
                 logger.info("QCC 查询耗时 {}: {}", company_name, " | ".join(timings))
-                return companies
+                return companies, screenshot_b64, raw_text
 
             finally:
                 elapsed_total = time.time() - t0
@@ -496,7 +508,7 @@ async def query_qcc_company(body: dict):
                     browser.close()
 
         # 在后台线程运行（Playwright 是同步 API，避免阻塞 event loop）
-        companies = await asyncio.wait_for(
+        companies, screenshot_b64, raw_text = await asyncio.wait_for(
             asyncio.to_thread(_run_scraper),
             timeout=60.0
         )
@@ -508,6 +520,8 @@ async def query_qcc_company(body: dict):
             "query": company_name,
             "count": len(companies),
             "companies": companies,
+            "screenshot": screenshot_b64,
+            "raw_text": raw_text,
         }
 
     except asyncio.TimeoutError:
