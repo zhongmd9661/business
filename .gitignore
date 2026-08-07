@@ -42,3 +42,22 @@ models/
 # OS
 .DS_Store
 Thumbs.db
+
+# Debug / temp files
+debug_*.py
+debug_*.png
+debug_*.html
+debug_*.txt
+fix_*.py
+impl_*.py
+setup_*.py
+add_*.py
+handle_*.py
+gen_*.py
+integrate_*.py
+span.*
+div
+*.bak*
+*.before-*
+*.current
+~$*.xlsx

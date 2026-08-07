@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Body, HTTPException, UploadFile, File, Form
 from loguru import logger
 from PIL import Image
 
@@ -402,7 +402,7 @@ def _analyze_with_ocr(img: "Image.Image", device: str = "auto") -> dict:
 # ==================== QCC 浏览器自动查询 ====================
 
 @router.post("/qcc/query")
-async def query_qcc_company(body: dict):
+async def query_qcc_company(body: dict = Body(...)):
     """
     通过浏览器自动查询企查查获取企业信息。
     请求: POST /api/qcc/query  body: {"company_name": "腾讯"}
@@ -465,15 +465,21 @@ async def query_qcc_company(body: dict):
                     page.keyboard.press("Enter")
                 timings.append(f"click_search={time.time()-t:.1f}s")
 
-                # 等待结果加载
+                # 等待结果加载 — 等 URL 变化 + 搜索结果行出现
                 t = time.time()
                 page.wait_for_timeout(2000)
-                # 检查 URL 是否变化（最多等 8 秒）
+                # 检查 URL 是否变化
                 start = time.time()
                 while time.time() - start < 8:
                     if page.url != "https://www.qcc.com/" and page.url != "https://www.qcc.com":
                         break
                     page.wait_for_timeout(500)
+                # 等待搜索结果行真正渲染出来（关键修复）
+                wait_start = time.time()
+                try:
+                    page.locator("a.title.copy-value").first.wait_for(timeout=10000)
+                except Exception:
+                    pass  # 超时则继续，Collector 会返回空列表
                 elapsed_search = time.time() - t
                 timings.append(f"wait_results={elapsed_search:.1f}s, url={page.url}")
 

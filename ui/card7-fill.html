@@ -3610,7 +3610,7 @@ async function submitRecord() {
         el.id = 'qcc-raw-text-modal';
         el.className = 'qcc-modal-overlay';
         el.onclick = function(e) { if (e.target === el) el.classList.remove('show'); };
-        el.innerHTML = '<div class="qcc-modal-text"><button class="qcc-modal-close" onclick="this.parentElement.parentElement.classList.remove('show')">✕ 关闭</button><div id="qcc-raw-body"></div></div>';
+        el.innerHTML = '<div class="qcc-modal-text"><button class="qcc-modal-close" onclick="this.parentElement.parentElement.classList.remove(&#39;show&#39;)">✕ 关闭</button><div id="qcc-raw-body"></div></div>';
         document.body.appendChild(el);
       }
       document.getElementById('qcc-raw-body').textContent = rawText;
