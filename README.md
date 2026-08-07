@@ -161,6 +161,7 @@ Copy-Item "01业务招待费材料案例\某批次" "data\input\" -Recurse
 | 招待费智能体主页 | `http://localhost:8006/ui-index` | 首页入口 |
 | 文件上传页 | `http://localhost:8006/upload` | 上传单据文件 |
 | 智能审核页 | `http://localhost:8006/audit` | 在线审核 |
+| 智能录入页 | `http://localhost:8006/ui/card7-fill.html` | 智能填写接待记录 |
 | 提交记录页 | `http://localhost:8006/records` | 查看历史记录 |
 | 参考资料页 | `http://localhost:8006/reference` | 制度文档参考 |
 | API 文档 | `http://localhost:8006/docs` | Swagger UI |
@@ -178,6 +179,7 @@ Copy-Item "01业务招待费材料案例\某批次" "data\input\" -Recurse
 | `router_standards.py` | 标准查询路由 |
 | `router_standards_admin.py` | 标准设置路由（密码保护） |
 | `router_application_form.py` | 申请表单生成路由 |
+| `router_qichacha.py` | 企查查截图分析 + 浏览器自动查询 |
 | `rule_sync.py` | 规则同步扫描器 |
 
 ### UI 界面
@@ -329,6 +331,73 @@ $env:ANTHROPIC_AUTH_TOKEN = "lmstudio"
 - **Python**：3.11+
 - **GPU**：NVIDIA CUDA 11.8 + cuDNN 8.9.7
 - **模型**：MinerU 模型通过 ModelScope 下载（约数 GB）
+
+## 企查查集成
+
+系统集成了两种企查查查询方式，用于核查接待单位的经营状态。
+
+### 方式 1：截图 OCR 分析
+
+通过上传企查查网页截图，自动识别企业经营状态。
+
+| 项目 | 说明 |
+|------|------|
+| API | `POST /api/qichacha/analyze` |
+| 引擎 | RapidOCR（默认，秒级）/ VLM 视觉大模型（慢，准确） |
+| 识别内容 | 企业名称、经营状态、风险数量、风险提示 |
+| 前端入口 | 填写页 → 企查查信用核查区域 → 上传截图 |
+
+### 方式 2：全自动浏览器采集（CLI 工具）
+
+通过 Playwright 控制 Edge 浏览器，自动在 qcc.com 搜索并采集企业信息。
+
+#### CLI 用法
+
+```powershell
+# 启动浏览器（需先运行）
+.venv\Scripts\python.exe start_browser.py
+
+# 在另一个终端执行查询
+.venv\Scripts\python.exe -m qcc_scraper 腾讯              # 默认 JSON 输出
+.venv\Scripts\python.exe -m qcc_scraper --format csv 腾讯  # 输出 CSV
+```
+
+#### Web 集成
+
+在填写页的"招待对象单位"输入框旁，点击 `🔍 查状态` 按钮，自动触发查询：
+
+1. 后端通过 CDP 连接已运行的 Edge 浏览器（端口 9223）
+2. 在 qcc.com 搜索输入的企业名称
+3. 采集搜索结果：企业名称、状态、法人、注册资本、信用代码、地址
+4. 返回企业状态 + 查询页面截图 + 页面原文
+
+#### API
+
+| 端点 | `POST /api/qcc/query` |
+|------|------|
+| 请求 | `{"company_name": "企业名称"}` |
+| 响应 | `{"success": true, "companies": [...], "screenshot": "base64...", "raw_text": "..."}` |
+| 前提 | 需先运行 `start_browser.py` 启动浏览器 |
+
+#### 查询结果
+
+- 企业名称 + 经营状态徽章（绿色=正常 / 红色=异常）
+- 查询页面截图（点击放大）
+- 页面原文（点击查看）
+- 提交时自动校验企业状态 — 异常企业阻止提交
+
+### 模块文件
+
+| 文件 | 职责 |
+|------|------|
+| `qcc_scraper/` | 浏览器采集模块 |
+| `qcc_scraper/browser.py` | Playwright CDP 连接管理 |
+| `qcc_scraper/login_checker.py` | 登录状态检测与恢复 |
+| `qcc_scraper/searcher.py` | 搜索操作封装 |
+| `qcc_scraper/collector.py` | 企业数据提取 |
+| `qcc_scraper/config.py` | 配置与 CSS 选择器 |
+| `src/web_service/router_qichacha.py` | API 路由（截图分析 + 浏览器查询） |
+| `start_browser.py` | 启动 Edge 浏览器（CDP 端口 9223） |
 
 ## 辅助脚本
 
