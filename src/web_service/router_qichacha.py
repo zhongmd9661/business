@@ -488,7 +488,7 @@ async def query_qcc_company(body: dict):
 
                 # 截图 (base64)
                 t = time.time()
-                screenshot_b64 = page.screenshot(full_page=False).encode("base64").decode("ascii")
+                screenshot_b64 = __import__("base64").b64encode(page.screenshot(full_page=False)).decode("ascii")
                 timings.append(f"screenshot={time.time()-t:.1f}s")
 
                 # 页面原文
